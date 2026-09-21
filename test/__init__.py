@@ -1,0 +1,1 @@
+# Omnididact test package

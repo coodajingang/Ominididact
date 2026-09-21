@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omnididact · 全材料系统化自我教育与研学引擎</title>
+    <link href="/static/css/fonts.css" rel="stylesheet">
+    <!-- Modular Stylesheets -->
+    <link rel="stylesheet" href="/static/css/study-theme.css">
+    <link rel="stylesheet" href="/static/css/study-layout.css">
+    <link rel="stylesheet" href="/static/css/study-reading.css">
+    <link rel="stylesheet" href="/static/css/study-chat.css">
+</head>
+<body>
+    <div class="ambient-glow"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="app-sidebar">
+            <div class="sidebar-header">
+                <div class="logo-row">
+                    <a href="/study" class="logo">
+                        <div class="logo-icon">📚</div>
+                        <h1>材料翻译研学</h1>
+                    </a>
+                    <div class="nav-links">
+                        <a href="/" class="nav-btn" title="返回聊天">💬 对话</a>
+                        <a href="/config" class="nav-btn" title="代理配置">⚙️ 配置</a>
+                        <button class="collapse-sidebar-btn" onclick="toggleSidebar()" title="隐藏侧边栏">◀</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-tabs">
+                    <button class="tab-btn active" id="tab-docs-btn" onclick="switchSidebarTab('docs')">📑 资料库</button>
+                    <button class="tab-btn" id="tab-toc-btn" onclick="switchSidebarTab('toc')">📖 章节大纲</button>
+                </div>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-section">
+                <input type="file" id="doc-file-input" accept=".pdf,.docx,.doc,.txt,.md,.markdown" onchange="handleFileUpload(event)">
+                <button class="upload-btn" onclick="document.getElementById('doc-file-input').click()">
+                    <span>➕ 上传文件 (PDF / DOC / TXT / MD)</span>
+                </button>
+            </div>
+
+            <!-- Documents List Container -->
+            <div class="sidebar-scroll" id="docs-list-container">
+                <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px;">加载中...</div>
+            </div>
+
+            <!-- Chapter TOC Container (Initially Hidden) -->
+            <div class="sidebar-scroll" id="toc-list-container" style="display: none;">
+                <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px;">请先选择文档</div>
+            </div>
+
+            <!-- Sidebar Footer: Provider & Model Settings -->
+            <div class="sidebar-footer">
+                <button class="sidebar-settings-btn" onclick="openProviderSettingsModal()" title="配置大模型 Providers 及全局默认模型">
+                    <span>⚙️ 模型与服务设置 (Providers)</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="toggle-sidebar-btn" id="btn-toggle-sidebar" onclick="toggleSidebar()" title="折叠/展开侧边栏">☰</button>
+                    <div class="header-doc-title" id="active-doc-title">请选择或上传文档</div>
+                    <span id="active-doc-badge" class="badge" style="display: none;">就绪</span>
+                </div>
+
+                <div class="header-right">
+                    <!-- Font Size Adjustment -->
+                    <div class="font-control-group" title="调节正文字体大小">
+                        <button class="font-btn" onclick="adjustFontSize(-1)">A-</button>
+                        <span class="font-size-label" id="font-size-display">17px</span>
+                        <button class="font-btn" onclick="adjustFontSize(1)">A+</button>
+                    </div>
+
+                    <!-- Reading Width Switch -->
+                    <button class="width-mode-btn" id="btn-width-toggle" onclick="toggleWidthMode()" title="切换阅读区域宽度">
+                        <span>↔ 宽度: <strong id="width-mode-display">标准</strong></span>
+                    </button>
+
+                    <!-- Bilingual Layout Switch (bilingual_book_maker inspired) -->
+                    <button class="width-mode-btn" id="btn-layout-toggle" onclick="toggleLayoutMode()" title="切换排版模式（上下对照 / 左右并排 / 卡片视图）">
+                        <span>📖 排版: <strong id="layout-mode-display">上下对照</strong></span>
+                    </button>
+
+                    <!-- Theme Switcher Dropdown -->
+                    <div class="theme-dropdown-container">
+                        <button class="width-mode-btn" id="btn-theme-toggle" onclick="toggleThemeMenu(event)" title="切换阅读主题风格">
+                            <span id="theme-btn-label">🎨 主题: 🌙 深邃夜色</span>
+                        </button>
+                        <div class="theme-dropdown-menu" id="theme-dropdown-menu" style="display: none;">
+                            <div class="theme-menu-item" data-theme-val="dark" onclick="selectTheme('dark')">🌙 深邃夜色 (默认)</div>
+                            <div class="theme-menu-item" data-theme-val="white" onclick="selectTheme('white')">☀️ 纯净雅白 (清晰)</div>
+                            <div class="theme-menu-item" data-theme-val="sepia" onclick="selectTheme('sepia')">📜 墨玉羊皮 (护眼暖黄)</div>
+                            <div class="theme-menu-item" data-theme-val="forest" onclick="selectTheme('forest')">🍵 雅致墨绿 (护眼豆沙)</div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Button -->
+                    <button class="btn" onclick="openSettingsModal()" title="设置翻译 Prompt 与延迟">
+                        <span>⚙️ 翻译设置</span>
+                    </button>
+
+                    <!-- AI Assistant Sidebar Toggle Button -->
+                    <button class="width-mode-btn" id="btn-toggle-ai-drawer" onclick="toggleAiDrawer()" title="打开/折叠 AI 研学助教侧边栏">
+                        <span>🤖 AI 研学</span>
+                    </button>
+
+                    <!-- Flashcard Dropdown -->
+                    <div class="theme-dropdown-container" id="flashcard-dropdown-container">
+                        <button class="width-mode-btn" id="btn-flashcard-toggle" onclick="toggleFlashcardMenu(event)" title="闪卡学习与独立管理">
+                            <span>🗂️ 闪卡: <strong id="top-flashcard-count">0</strong> 张</span>
+                        </button>
+                        <div class="theme-dropdown-menu" id="flashcard-dropdown-menu" style="display: none; min-width: 190px;">
+                            <div class="theme-menu-item" onclick="startFlashcardStudyFromStudy()">🧠 开始闪卡自测</div>
+                            <div class="theme-menu-item" onclick="startFlashcardErrorDrillFromStudy()">🎯 错题攻坚复习</div>
+                            <div class="theme-menu-item" onclick="openFlashcardManagementPage()">⚙️ 管理闪卡 (新标签页) ↗</div>
+                        </div>
+                    </div>
+
+                    <!-- Export Dropdown -->
+                    <div class="theme-dropdown-container" id="export-dropdown-container" style="display: none;">
+                        <button class="btn btn-primary" id="btn-export-toggle" onclick="toggleExportMenu(event)" title="导出双语研学材料">
+                            <span>📥 导出 ▾</span>
+                        </button>
+                        <div class="theme-dropdown-menu" id="export-dropdown-menu" style="display: none; min-width: 250px;">
+                            <div class="theme-menu-item" onclick="exportDocument('html')">🌐 导出双语电子书 (.html)</div>
+                            <div class="theme-menu-item" onclick="exportDocument('flashcards_html')">🗂️ 导出离线闪卡系统 (.html)</div>
+                            <div class="theme-menu-item" onclick="exportDocument('site_zip')">🚀 导出静态站点包 (Nginx / Cloudflare .zip)</div>
+                            <div class="theme-menu-item" onclick="exportDocument('markdown')">📄 导出单文件 Markdown (.md)</div>
+                            <div class="theme-menu-item" onclick="exportDocument('markdown_zip')">📦 导出 Markdown 资产包 (.zip)</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dual-Column Study Stage (Reading Stream + AI Sidecar Sidebar) -->
+            <div class="study-stage-wrapper" id="study-stage-wrapper">
+                <!-- Reading Container -->
+                <div class="reading-container" id="reading-container">
+                <!-- Extraction Progress State (For long documents) -->
+                <div class="extracting-state" id="extracting-state" style="display: none;">
+                    <div class="extracting-card">
+                        <div class="extracting-spinner"></div>
+                        <div class="extracting-card-title">正在深度解析文档版面与章节结构...</div>
+                        <div class="extracting-card-desc">
+                            长文档（数百至数千页）正在异步分批快速提取中，已跳过耗时 OCR 识别。<br>
+                            文档章节与双语排版就绪后将自动开启研读。
+                        </div>
+                        <div class="extracting-progress-track">
+                            <div class="extracting-progress-bar" id="extracting-bar-fill" style="width: 0%;"></div>
+                        </div>
+                        <div class="extracting-stats-row">
+                            <span id="extracting-page-info">正在处理: 第 0 / 0 页</span>
+                            <span id="extracting-percent-info" style="font-weight: 700; color: #a5b4fc;">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="empty-state" id="empty-state">
+                    <div class="empty-icon">📖</div>
+                    <div class="empty-title">欢迎使用文件材料翻译与研学中心</div>
+                    <div class="empty-desc">
+                        上传您的文献或技术文档后，系统将依据文档真实大纲目录完成分章并展示原图。<br>
+                        阅读过程中可按需点击段落翻译，随时与 AI 助教研读探讨！
+                    </div>
+                </div>
+
+                <!-- Floating Quick-Scroll Navigator -->
+                <div class="quick-scroll-navigator" id="quick-scroll-navigator" style="display: none;">
+                    <button class="quick-scroll-btn" id="btn-quick-top" onclick="quickScrollToTop()" title="快速回到顶部 (Home)">
+                        <span class="quick-icon">▲</span>
+                        <span class="quick-label">顶部</span>
+                    </button>
+                    <div class="quick-scroll-track" id="quick-scroll-track" onclick="onQuickScrollTrackClick(event)" title="点击或拖动快速跳转">
+                        <div class="quick-scroll-fill" id="quick-scroll-fill"></div>
+                        <div class="quick-scroll-thumb" id="quick-scroll-thumb">
+                            <span class="quick-scroll-bubble" id="quick-scroll-bubble">0%</span>
+                        </div>
+                    </div>
+                    <button class="quick-scroll-btn" id="btn-quick-bottom" onclick="quickScrollToBottom()" title="快速直达底部 (End)">
+                        <span class="quick-icon">▼</span>
+                        <span class="quick-label">底部</span>
+                    </button>
+                </div>
+
+                <div class="reading-content-inner" id="reading-content" style="display: none;">
+                    <div class="chapter-header">
+                        <div>
+                            <h2 class="chapter-title" id="active-chapter-title"></h2>
+                        </div>
+                        <div class="chapter-actions-group">
+                            <button class="btn btn-secondary" id="btn-chapter-chat" onclick="openChapterChat()" title="全章宏观脉络研读与考点梳理">
+                                <span>🧠 全章研读</span>
+                            </button>
+                            <button class="btn btn-secondary" onclick="promptAddChapterNote('header')" title="在本章开头添加全章导读或核心总结">
+                                <span>+ 章首总结</span>
+                            </button>
+                            <button class="btn btn-primary" id="btn-batch-translate-ch" onclick="toggleBatchTranslateCurrentChapter()" style="display: none;">
+                                <span>⚡ 批量翻译本章</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chapter Header Notes Container -->
+                    <div class="chapter-notes-block header-notes-block" id="chapter-header-notes-container" style="display: none;">
+                        <div class="chapter-notes-header">
+                            <span class="chapter-notes-title">📌 【本章总览与学习总结】</span>
+                            <button class="btn btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="promptAddChapterNote('header')">+ 新增总结</button>
+                        </div>
+                        <div class="chapter-notes-list" id="chapter-header-notes-list"></div>
+                    </div>
+
+                    <div id="paragraphs-stream"></div>
+
+                    <!-- Chapter Footer Notes Container -->
+                    <div class="chapter-notes-block footer-notes-block" id="chapter-footer-notes-container" style="display: none;">
+                        <div class="chapter-notes-header">
+                            <span class="chapter-notes-title">🎯 【本章回顾与考点总结】</span>
+                            <button class="btn btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="promptAddChapterNote('footer')">+ 新增回顾</button>
+                        </div>
+                        <div class="chapter-notes-list" id="chapter-footer-notes-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Sidecar Drawer (Resizable) -->
+            <div class="ai-drawer" id="ai-drawer">
+                <div class="drawer-resize-handle" id="drawer-resize-handle" title="拖拽调整窗口大小"></div>
+                <div class="drawer-header">
+                    <div class="drawer-header-top">
+                        <div class="drawer-title">
+                            <span class="drawer-title-icon">🤖</span>
+                            <span class="drawer-title-text">AI 研学助教</span>
+                        </div>
+                        <div class="drawer-header-actions">
+                            <div class="context-steppers" id="header-context-steppers" style="display: none;">
+                                <div class="stepper-item" title="向前包含前 N 段作为背景上下文（点击数字可直接输入）">
+                                    <span class="stepper-text">前带</span>
+                                    <button type="button" class="step-btn" onclick="adjustContextStep('prev', -1)">-</button>
+                                    <span id="step-prev-val" class="step-val" onclick="promptSetContextStep('prev')" title="点击可直接输入数值" style="cursor: pointer;">2</span>
+                                    <button type="button" class="step-btn" onclick="adjustContextStep('prev', 1)">+</button>
+                                    <span class="stepper-text">段</span>
+                                </div>
+                                <div class="stepper-item" title="向后包含后 M 段作为背景上下文（点击数字可直接输入）">
+                                    <span class="stepper-text">后带</span>
+                                    <button type="button" class="step-btn" onclick="adjustContextStep('next', -1)">-</button>
+                                    <span id="step-next-val" class="step-val" onclick="promptSetContextStep('next')" title="点击可直接输入数值" style="cursor: pointer;">2</span>
+                                    <button type="button" class="step-btn" onclick="adjustContextStep('next', 1)">+</button>
+                                    <span class="stepper-text">段</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-subtle-sm" onclick="clearCurrentChatHistory()" title="清空当前对话记录">🗑️ 清空</button>
+                            <button type="button" class="drawer-close-btn" onclick="closeAiDrawer()" title="关闭助教侧边栏">✕</button>
+                        </div>
+                    </div>
+                    <div class="drawer-header-subbar">
+                        <div class="drawer-model-bar">
+                            <span class="drawer-model-tag">⚡ 对话模型:</span>
+                            <select id="chat-active-model-select" class="chat-model-select-styled" onchange="onChatActiveModelChanged()" title="临时切换当前对话模型">
+                                <option value="">加载中...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected Paragraph Context Banner with Range Stepper -->
+                <div class="drawer-context-banner" id="drawer-context-banner">
+                    <div id="drawer-context-text" style="color: var(--text-quote); max-height: 180px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Quick Prompt Chips (Dynamic from Settings) -->
+                <div class="quick-chips-row" id="drawer-quick-prompts">
+                </div>
+
+                <!-- Messages Stream -->
+                <div class="drawer-messages" id="drawer-messages">
+                    <div class="chat-bubble-container">
+                        <div class="chat-bubble assistant">
+                            您好！我是您的专属文献研读助教。我已经阅读了您选中的段落，随时向我提问长难句、学术词汇或核心观点！
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="drawer-input-area">
+                    <textarea class="drawer-input" id="drawer-input" placeholder="输入您对该段落的疑问 (Enter 发送)..." onkeydown="handleDrawerInputKey(event)"></textarea>
+                    <button class="btn btn-primary" onclick="sendDrawerMessage()">发送</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <div class="modal-title">⚙️ 翻译 Prompt 与学习设置</div>
+                    <span id="setting-scope-badge" style="font-size: 11px; padding: 2px 7px; border-radius: 4px; background: rgba(99,102,241,0.2); color: #c7d2fe; font-weight: 500;"></span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="btn" id="btn-reset-doc-settings" style="display: none; padding: 3px 8px; font-size: 11px;" onclick="resetDocSettings()">↺ 恢复全局默认</button>
+                    <button class="drawer-close-btn" onclick="closeSettingsModal()">✕</button>
+                </div>
+            </div>
+
+            <div class="modal-body">
+                <!-- Section: Model Overrides for Current Document -->
+                <div class="settings-card-section">
+                    <div class="settings-section-title">🧠 翻译、研学与多模态模型选择</div>
+                    <div class="settings-section-desc">未指定时自动继承【全局默认配置】。如需修改，请先选择 Provider，再从下拉列表中搜索选择模型。</div>
+
+                    <!-- Translation Model Selection -->
+                    <div class="model-binding-row">
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">翻译 Provider</label>
+                            <select class="form-select" id="doc-trans-provider" onchange="onDocProviderChanged('trans')">
+                                <option value="">(跟随全局默认)</option>
+                            </select>
+                        </div>
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">翻译模型 (Model)</label>
+                            <div id="doc-trans-model-wrap"></div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Model Selection -->
+                    <div class="model-binding-row">
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">研学助教 Provider</label>
+                            <select class="form-select" id="doc-chat-provider" onchange="onDocProviderChanged('chat')">
+                                <option value="">(跟随全局默认)</option>
+                            </select>
+                        </div>
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">助教聊天模型 (Model)</label>
+                            <div id="doc-chat-model-wrap"></div>
+                        </div>
+                    </div>
+
+                    <!-- VLM Model Selection -->
+                    <div class="model-binding-row" style="margin-bottom: 4px;">
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">多模态 / OCR Provider</label>
+                            <select class="form-select" id="doc-vlm-provider" onchange="onDocProviderChanged('vlm')">
+                                <option value="">(跟随全局默认)</option>
+                            </select>
+                        </div>
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">多模态模型 (Model)</label>
+                            <div id="doc-vlm-model-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">调用后端大模型限速延迟（秒 / 次，默认 1.0s，单并发）</label>
+                    <input type="number" step="0.1" min="0.1" class="form-input" id="setting-delay">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">翻译 Prompt 模板（保留 {text} 占位符）</label>
+                    <textarea class="form-textarea" id="setting-prompt-template"></textarea>
+                </div>
+
+                <!-- Section 1: Paragraph Quick Prompts -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin-bottom: 0;">📝 按段研读 · 快捷提问定制</label>
+                        <button type="button" class="btn" style="padding: 3px 8px; font-size: 11px;" onclick="addParagraphQuickPromptItem()">+ 新增段落提问</button>
+                    </div>
+                    <div id="para-quick-prompts-editor" style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; padding-right: 4px;">
+                    </div>
+                </div>
+
+                <!-- Section 2: Chapter Quick Prompts -->
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin-bottom: 0;">🗺️ 全章研读 · 快捷提问定制</label>
+                        <button type="button" class="btn" style="padding: 3px 8px; font-size: 11px;" onclick="addChapterQuickPromptItem()">+ 新增全章提问</button>
+                    </div>
+                    <div id="chapter-quick-prompts-editor" style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; padding-right: 4px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn" onclick="closeSettingsModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveSettings()">保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provider Settings Modal -->
+    <div class="modal-overlay" id="provider-settings-modal">
+        <div class="modal-card" style="width: 720px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ 模型与服务提供商设置 (Providers)</div>
+                <button class="drawer-close-btn" onclick="closeProviderSettingsModal()">✕</button>
+            </div>
+            <div class="modal-body" style="flex: 1 1 auto; overflow-y: auto;">
+                <!-- Test Console Entrance Banner -->
+                <div class="test-console-banner">
+                    <div class="test-console-info">
+                        <strong>🧪 模型与多模态测试控制台 (原有测试界面)</strong>
+                        <span>保留现有的单页模型与多模态文档测试控制台，用于快速验证各 Provider 的连通性与多模态能力。</span>
+                    </div>
+                    <a href="/" target="_blank" class="test-console-link-btn" title="在新标签页中打开模型与多模态测试控制台">
+                        进入测试控制台 ↗
+                    </a>
+                </div>
+
+                <!-- Section 1: Global Default Models -->
+                <div class="settings-card-section">
+                    <div class="settings-section-title">🎯 全局默认模型设置 (Default Models)</div>
+                    <div class="settings-section-desc">为翻译、文献研学助教、多模态 OCR 指定全局生效的默认 Provider 与模型。</div>
+                    
+                    <div class="model-binding-row">
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">默认翻译 Provider</label>
+                            <select class="form-select" id="global-default-trans-provider" onchange="onGlobalDefaultProviderChange('trans')">
+                            </select>
+                        </div>
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">默认翻译模型 (Model)</label>
+                            <div id="global-default-trans-model-wrap"></div>
+                        </div>
+                    </div>
+
+                    <div class="model-binding-row">
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">默认助教聊天 Provider</label>
+                            <select class="form-select" id="global-default-chat-provider" onchange="onGlobalDefaultProviderChange('chat')">
+                            </select>
+                        </div>
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">默认助教聊天模型 (Model)</label>
+                            <div id="global-default-chat-model-wrap"></div>
+                        </div>
+                    </div>
+
+                    <div class="model-binding-row" style="margin-bottom: 4px;">
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">默认多模态 / OCR Provider</label>
+                            <select class="form-select" id="global-default-vlm-provider" onchange="onGlobalDefaultProviderChange('vlm')">
+                            </select>
+                        </div>
+                        <div class="model-binding-col">
+                            <label class="model-binding-label">默认多模态模型 (Model)</label>
+                            <div id="global-default-vlm-model-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Provider Details Config -->
+                <div class="settings-card-section">
+                    <div class="settings-section-title">🔌 Provider 服务参数与连通性配置</div>
+                    <div class="settings-section-desc">配置各后端服务的 API 地址与密钥凭据，支持一键测试连通性并拉取最新模型清单。</div>
+
+                    <!-- Provider Selector for Configuration -->
+                    <div class="provider-tab-bar">
+                        <button type="button" class="provider-tab-item active" id="ptab-btn-openai" onclick="switchProviderConfigTab('openai')">🌐 OpenAI 兼容</button>
+                        <button type="button" class="provider-tab-item" id="ptab-btn-ollama" onclick="switchProviderConfigTab('ollama')">🦙 Ollama</button>
+                        <button type="button" class="provider-tab-item" id="ptab-btn-lmstudio" onclick="switchProviderConfigTab('lmstudio')">🟢 LM Studio</button>
+                        <button type="button" class="provider-tab-item" id="ptab-btn-nvidia" onclick="switchProviderConfigTab('nvidia')">⚡ NVIDIA NIM</button>
+                        <button type="button" class="provider-tab-item" id="ptab-btn-amd" onclick="switchProviderConfigTab('amd')">🔴 AMD AI</button>
+                        <button type="button" class="provider-tab-item" id="ptab-btn-cloudflare" onclick="switchProviderConfigTab('cloudflare')">⛅ Cloudflare</button>
+                        <button type="button" class="provider-tab-item" id="ptab-btn-custom" style="display: none;" onclick="switchProviderConfigTab('custom')">🧩 自定义网关</button>
+                    </div>
+
+                    <!-- Provider Tabs Content -->
+                    <div id="pcfg-tab-openai" class="provider-tab-content">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">API Base URL (端点地址)</label>
+                            <input type="text" class="form-input" id="pcfg-openai-url" placeholder="https://api.deepseek.com/v1 或 https://openrouter.ai/api/v1">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">API Key (密钥)</label>
+                            <input type="password" class="form-input" id="pcfg-openai-key" placeholder="sk-...">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label class="form-label">推荐默认模型 (Model)</label>
+                            <input type="text" class="form-input" id="pcfg-openai-model" placeholder="deepseek-chat 或 deepseek-reasoner 等">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" class="btn" onclick="testProviderInConfig('openai_compatible')">🔍 测试连通性并拉取最新模型</button>
+                            <span id="pcfg-openai-test-result" style="font-size: 12px;"></span>
+                        </div>
+                    </div>
+
+                    <div id="pcfg-tab-ollama" class="provider-tab-content" style="display: none;">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">Ollama 服务地址</label>
+                            <input type="text" class="form-input" id="pcfg-ollama-url" placeholder="http://127.0.0.1:11434">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label class="form-label">推荐默认模型 (Model)</label>
+                            <input type="text" class="form-input" id="pcfg-ollama-model" placeholder="例如 qwen2.5:7b 或 llama3.2">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" class="btn" onclick="testProviderInConfig('ollama')">🔍 测试 Ollama 连通性并拉取本地模型</button>
+                            <span id="pcfg-ollama-test-result" style="font-size: 12px;"></span>
+                        </div>
+                    </div>
+
+                    <div id="pcfg-tab-lmstudio" class="provider-tab-content" style="display: none;">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">LM Studio API 地址 (OpenAI 兼容 Base URL)</label>
+                            <input type="text" class="form-input" id="pcfg-lmstudio-url" placeholder="http://127.0.0.1:1234/v1">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label class="form-label">推荐默认模型 (留空则自动使用 LM Studio 当前加载模型)</label>
+                            <input type="text" class="form-input" id="pcfg-lmstudio-model" placeholder="例如 local-model 或留空">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" class="btn" onclick="testProviderInConfig('lm_studio')">🔍 测试 LM Studio 连通性</button>
+                            <span id="pcfg-lmstudio-test-result" style="font-size: 12px;"></span>
+                        </div>
+                    </div>
+
+                    <div id="pcfg-tab-nvidia" class="provider-tab-content" style="display: none;">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">NVIDIA API 地址</label>
+                            <input type="text" class="form-input" id="pcfg-nvidia-url" placeholder="https://integrate.api.nvidia.com/v1">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">NVIDIA API Key (通常为 nvapi-...)</label>
+                            <input type="password" class="form-input" id="pcfg-nvidia-key" placeholder="nvapi-...">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label class="form-label">推荐默认模型 (Model)</label>
+                            <input type="text" class="form-input" id="pcfg-nvidia-model" placeholder="meta/llama-3.3-70b-instruct">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" class="btn" onclick="testProviderInConfig('nvidia')">🔍 测试 NVIDIA NIM 连通性</button>
+                            <span id="pcfg-nvidia-test-result" style="font-size: 12px;"></span>
+                        </div>
+                    </div>
+
+                    <div id="pcfg-tab-amd" class="provider-tab-content" style="display: none;">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">AMD 推理端点 (ROCm / vLLM 地址)</label>
+                            <input type="text" class="form-input" id="pcfg-amd-url" placeholder="http://127.0.0.1:8000/v1">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">API Key (可选)</label>
+                            <input type="password" class="form-input" id="pcfg-amd-key" placeholder="可选 Bearer Token">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label class="form-label">推荐默认模型 (Model)</label>
+                            <input type="text" class="form-input" id="pcfg-amd-model" placeholder="deepseek-ai/DeepSeek-R1-Distill-Qwen-32B">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" class="btn" onclick="testProviderInConfig('amd')">🔍 测试 AMD 端点连通性</button>
+                            <span id="pcfg-amd-test-result" style="font-size: 12px;"></span>
+                        </div>
+                    </div>
+
+                    <div id="pcfg-tab-cloudflare" class="provider-tab-content" style="display: none;">
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">Cloudflare Account ID</label>
+                            <input type="text" class="form-input" id="pcfg-cf-account" placeholder="Cloudflare 控制台中的 Account ID">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">Cloudflare API Token (具有 Workers AI 权限)</label>
+                            <input type="password" class="form-input" id="pcfg-cf-token" placeholder="Cloudflare API Token">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label class="form-label">推荐默认模型 (Model)</label>
+                            <input type="text" class="form-input" id="pcfg-cf-model" placeholder="@cf/meta/llama-3.3-70b-instruct">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" class="btn" onclick="testProviderInConfig('cloudflare')">🔍 测试 Cloudflare 连通性</button>
+                            <span id="pcfg-cf-test-result" style="font-size: 12px;"></span>
+                        </div>
+                    </div>
+
+                    <div id="pcfg-tab-custom" class="provider-tab-content" style="display: none;">
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+                            🧩 已加载自定义扩展网关插件（可通过 plugins 目录扩展企业私有模型平台）。
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" class="btn" onclick="testProviderInConfig('custom_gateway')">🔍 检测自定义网关状态</button>
+                            <span id="pcfg-custom-test-result" style="font-size: 12px;"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn" onclick="closeProviderSettingsModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveProviderSettings()">保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Edit Modal -->
+    <div class="modal-overlay" id="note-modal">
+        <div class="modal-card" id="note-modal-card">
+            <div class="modal-header modal-drag-handle" title="按住可随意拖拽移动窗口位置">
+                <div class="modal-title-wrap">
+                    <span class="drag-dots-icon">⠿</span>
+                    <div class="modal-title" id="note-modal-title">📝 编辑研读笔记 / 总结</div>
+                </div>
+                <div class="modal-header-actions">
+                    <button class="icon-action-btn" type="button" onclick="insertSelectedTextIntoNote()" title="将正文中鼠标划选的文字自动插入到当前笔记">📋 抓取网页选中文本</button>
+                    <button class="icon-action-btn" type="button" onclick="toggleModalMaximize('note-modal')" title="最大化 / 还原窗口">⛶</button>
+                    <button class="drawer-close-btn" onclick="closeNoteModal()" title="关闭 (Esc)">✕</button>
+                </div>
+            </div>
+            <div class="modal-body" style="flex: 1 1 auto; display: flex; flex-direction: column;">
+                <div class="form-group" style="margin-bottom: 0; display: flex; flex-direction: column; flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" id="note-modal-label" style="margin-bottom: 0;">笔记内容（支持 Markdown 语法、表格与要点排版）</label>
+                        <span style="font-size: 11px; color: var(--text-muted);">💡 页面背景清晰可见，您可随时在下方滚屏研读和划选文字</span>
+                    </div>
+                    <textarea class="form-textarea" id="note-modal-content" placeholder="输入您的学习心得、词汇辨析、技术推演或核心要点总结..." style="height: 340px; min-height: 240px; font-size: 14px; line-height: 1.65; flex: 1; resize: vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; color: var(--text-muted); opacity: 0.8;">顶栏可拖拽 · 边框可缩放 · Esc 键关闭</span>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="closeNoteModal()">取消</button>
+                    <button class="btn btn-primary" id="btn-save-note" onclick="submitNoteModal()">保存笔记</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Flashcard Creation Modal -->
+    <div class="modal-overlay" id="quick-flashcard-modal">
+        <div class="modal-card" id="quick-flashcard-modal-card">
+            <div class="modal-header modal-drag-handle" title="按住可随意拖拽移动窗口位置">
+                <div class="modal-title-wrap">
+                    <span class="drag-dots-icon">⠿</span>
+                    <div class="modal-title">🗂️ 快速制作考点闪卡</div>
+                </div>
+                <div class="modal-header-actions">
+                    <button class="icon-action-btn" type="button" onclick="toggleModalMaximize('quick-flashcard-modal')" title="最大化 / 还原窗口">⛶</button>
+                    <button class="drawer-close-btn" onclick="closeQuickFlashcardModal()" title="关闭 (Esc)">✕</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">闪卡题型</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-primary" id="qfc-type-btn-qa" onclick="selectQuickFlashcardType('qa')" style="flex: 1;">📝 问答卡 (QA)</button>
+                        <button type="button" class="btn btn-secondary" id="qfc-type-btn-cloze" onclick="selectQuickFlashcardType('cloze')" style="flex: 1;">🧩 镂空填空 (Cloze)</button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="form-label" id="qfc-label-front" style="margin-bottom: 0;">正面内容 (题目 / 考点概念语句)</label>
+                        <button type="button" class="btn-text-action" onclick="insertSelectedTextIntoQuickFc('front')" title="将当前正文中划选的文字填入正面">📋 填入网页选中文本</button>
+                    </div>
+                    <textarea class="form-textarea" id="qfc-input-front" placeholder="输入考点问题或包含{{挖空词}}的内容..." style="height: 130px; min-height: 90px; font-size: 13.5px; line-height: 1.55; resize: vertical;"></textarea>
+                    <div id="qfc-cloze-helper" style="display: none; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 11px; color: var(--text-muted);">
+                        <span>提示：选中文字后点击右侧按钮设为挖空</span>
+                        <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 11px;" onclick="wrapQuickFlashcardSelection()">✨ 设为镂空 {{...}}</button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="form-label" style="margin-bottom: 0;">反面内容 (答案 / 备考核心解析)</label>
+                        <button type="button" class="btn-text-action" onclick="insertSelectedTextIntoQuickFc('back')" title="将当前正文中划选的文字填入反面">📋 填入网页选中文本</button>
+                    </div>
+                    <textarea class="form-textarea" id="qfc-input-back" placeholder="输入标准答案及备考解析..." style="height: 170px; min-height: 110px; font-size: 13.5px; line-height: 1.55; resize: vertical;"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">考点标签 (逗号分隔)</label>
+                    <input type="text" class="form-input" id="qfc-input-tags" placeholder="例如：CISSP, 访问控制">
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; color: var(--text-muted); opacity: 0.8;">顶栏可拖拽 · 支持网页划选抓取 · Esc 键关闭</span>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" onclick="closeQuickFlashcardModal()">取消</button>
+                    <button class="btn btn-primary" id="btn-save-quick-fc" onclick="submitQuickFlashcard()">保存入卡片组</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Deletion Confirmation Modal -->
+    <div class="modal-overlay" id="delete-doc-modal" onclick="if(event.target===this) closeDeleteDocModal()">
+        <div class="modal-card" style="width: 440px;">
+            <div class="modal-header">
+                <div class="modal-title" style="color: #ef4444; display: flex; align-items: center; gap: 8px;">
+                    <span>⚠️</span>
+                    <span>确认物理删除文档</span>
+                </div>
+                <button class="drawer-close-btn" onclick="closeDeleteDocModal()">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 16px 20px;">
+                <div style="font-size: 14px; line-height: 1.6; color: var(--text-main); margin-bottom: 12px;">
+                    确定要彻底物理删除文档 <strong id="delete-doc-name" style="color: #fca5a5;">《...》</strong> 吗？
+                </div>
+                <div style="font-size: 12.5px; line-height: 1.6; color: var(--text-muted); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 10px 14px;">
+                    ⚠️ <strong>警告：此操作不可恢复！</strong><br>
+                    将永久物理删除磁盘上的原始文件、提取的全部章节、双语翻译、研学注解，以及<strong>该文档关联的全部考点闪卡</strong>。
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn" onclick="closeDeleteDocModal()">取消</button>
+                <button class="btn btn-danger" id="btn-confirm-delete-doc" onclick="executeDeleteDocument()" style="background: #ef4444; border-color: #ef4444; color: #fff;">🗑️ 确认永久删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modular JavaScript Files -->
+    <script src="/static/js/marked.min.js"></script>
+    <script src="/static/js/study_state.js"></script>
+    <script src="/static/js/study_utils.js"></script>
+    <script src="/static/js/study_theme.js"></script>
+    <script src="/static/js/study_docs.js"></script>
+    <script src="/static/js/study_reading.js"></script>
+    <script src="/static/js/study_notes.js"></script>
+    <script src="/static/js/study_chat.js"></script>
+    <script src="/static/js/study_flashcards.js"></script>
+    <script src="/static/js/study_settings.js"></script>
+    <script src="/static/js/study_app.js"></script>
+</body>
+</html>

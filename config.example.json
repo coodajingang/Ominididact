@@ -1,0 +1,89 @@
+{
+  "upstream_url": "https://api.openai.com/v1/chat/completions",
+  "cookies": {},
+  "models": [
+    {
+      "name": "deepseek-chat",
+      "model_url": "model_url",
+      "cluster_type": "operation",
+      "temperature": 0.7,
+      "max_tokens": 8192,
+      "top_p": 0.9,
+      "top_k": 20,
+      "repetition_penalty": 1.05,
+      "is_default": true,
+      "type": "text",
+      "is_thinking": false
+    },
+    {
+      "name": "gpt-4o",
+      "type": "vlm",
+      "temperature": 0.7,
+      "max_output_tokens": 4096,
+      "top_p": 0.95,
+      "repetition_penalty": 1.0,
+      "max_input_tiles": 12,
+      "is_default": true,
+      "is_thinking": false
+    }
+  ],
+  "debug_mode": false,
+  "study_settings": {
+    "model_call_delay": 1.0,
+    "llm_source": "lm_studio",
+    "lm_studio_base_url": "http://127.0.0.1:1234/v1",
+    "lm_studio_model": "",
+    "translation_prompt_template": "你是一位资深领域学术与专业知识翻译导师。\n请将待翻译的材料翻译为严谨、地道、符合专业学术规范的中文译文。\n\n【核心翻译与排版规范】：\n1. 【仅输出译文，严禁输出原文】：输出内容必须严格仅包含目标段落的中文翻译。严禁在输出中重复出现英文原文，严禁输出任何多余的开场白、问候语、翻译说明或结尾总结。\n2. 【专业术语精准对应】：严格遵循权威学术与专业术语规范。对于核心关键术语，建议在首次出现的中文译名后保留带括号的英文原文（如：零信任架构（Zero Trust Architecture）），方便研学对照与记忆。\n3. 【引用块排版格式】：所有中文译文必须严格采用 Markdown 引用块（以 `> ` 开头）展示。如果原文包含多个逻辑自然段，各段译文均以 `> ` 开头，段落之间用空行隔开。\n4. 【格式标记严格继承】：严格保留原文中的 Markdown 加粗（`**...**`）、斜体（`*...*`）、行内代码（`` `...` ``）等强调标记，将中文译文中对应的重点词句做相同标记。\n5. 【语流自然连贯】：自动修复原文断行和单词断连，行文要求逻辑严密、概念清晰，符合中文专业文献阅读理解习惯。\n\n【待处理英文段落】：\n{text}",
+    "paragraph_quick_prompts": [
+      {
+        "label": "深入解析概念",
+        "prompt": "请结合上下文深入解析本段落的核心概念、背后的技术原理与设计权衡。"
+      },
+      {
+        "label": "提炼考点卡片",
+        "prompt": "请将本段落的关键知识点提炼为 1-2 张高质量的问答/挖空记忆卡片。"
+      }
+    ],
+    "chapter_quick_prompts": [
+      {
+        "label": "本章知识脉络",
+        "prompt": "请对本章内容进行全局梳理，绘制结构化的知识点脑图框架。"
+      }
+    ]
+  },
+  "providers": {
+    "openai_compatible": {
+      "base_url": "https://api.openai.com/v1",
+      "api_key": "sk-your-openai-api-key",
+      "model": "gpt-4o"
+    },
+    "deepseek": {
+      "base_url": "https://api.deepseek.com/v1",
+      "api_key": "sk-your-deepseek-api-key",
+      "model": "deepseek-chat"
+    },
+    "ollama": {
+      "base_url": "http://127.0.0.1:11434",
+      "model": "qwen2.5:7b"
+    },
+    "lm_studio": {
+      "base_url": "http://127.0.0.1:1234/v1",
+      "model": ""
+    },
+    "nvidia": {
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "api_key": "",
+      "model": "meta/llama-3.3-70b-instruct"
+    },
+    "amd": {
+      "base_url": "http://127.0.0.1:8000/v1",
+      "api_key": "",
+      "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+    },
+    "cloudflare": {
+      "account_id": "",
+      "api_token": "",
+      "model": "@cf/meta/llama-3.3-70b-instruct"
+    }
+  }
+}

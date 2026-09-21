@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <script>
+        // 废弃此旧静态文件，自动重定向至基于 React/Vite 前端构建的全新模型与多模态测试终端
+        window.location.replace('/study?route=chat');
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Proxy 聊天终端</title>
+    <link href="/static/css/fonts.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+            --glass-bg: rgba(31, 41, 55, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --accent-primary: #6366f1;
+            --accent-secondary: #a855f7;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --success: #10b981;
+            --card-radius: 16px;
+            --sidebar-width: 320px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Ambient Glow Blobs */
+        .ambient-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(0,0,0,0) 70%);
+            z-index: 0;
+            pointer-events: none;
+            top: -200px;
+            right: -200px;
+        }
+
+        /* Layout Structure */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            position: relative;
+        }
+
+        /* Sidebar */
+        aside {
+            width: var(--sidebar-width);
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 25px 20px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo h2 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(to right, #fff, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .config-link-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .config-link-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-primary);
+        }
+
+        .model-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            margin-top: 10px;
+        }
+
+        .models-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 4px;
+        }
+
+        /* Custom Scrollbar for models list */
+        .models-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .models-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+        }
+
+        .model-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .model-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(99, 102, 241, 0.25);
+        }
+
+        .model-card.active {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+        }
+
+        .model-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .model-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #f3f4f6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 170px;
+        }
+
+        .type-badge {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .type-text {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+        }
+
+        .type-vlm {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+        }
+
+        .model-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Chat Window Area */
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: rgba(15, 23, 42, 0.3);
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            height: 70px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            background: rgba(17, 24, 39, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            justify-content: space-between;
+        }
+
+        .current-model-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .current-model-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Message Board */
+        .messages-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* Custom Scrollbar for Message Container */
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .messages-container::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+        }
+
+        /* Messages */
+        .message {
+            display: flex;
+            gap: 15px;
+            max-width: 85%;
+            animation: messageFadeIn 0.3s ease-out;
+        }
+
+        @keyframes messageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .message.user .avatar {
+            background: var(--accent-primary);
+        }
+
+        .message.assistant .avatar {
+            background: var(--accent-secondary);
+        }
+
+        .message-bubble {
+            padding: 16px 20px;
+            border-radius: 14px;
+            line-height: 1.6;
+            font-size: 14px;
+            word-break: break-word;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.user .message-bubble {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            color: #f3f4f6;
+            border-top-right-radius: 2px;
+        }
+
+        .message.assistant .message-bubble {
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid var(--glass-border);
+            color: #f3f4f6;
+            border-top-left-radius: 2px;
+            width: 100%;
+        }
+
+        /* Reasoning (Deep Thinking) Block */
+        .reasoning-block {
+            background: rgba(168, 85, 247, 0.04);
+            border-left: 3px solid var(--accent-secondary);
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #d8b4fe;
+        }
+
+        .reasoning-header {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #c084fc;
+        }
+
+        .reasoning-content {
+            font-style: italic;
+            white-space: pre-wrap;
+            opacity: 0.85;
+        }
+
+        .message-text {
+            white-space: pre-wrap;
+        }
+
+        .message-text code {
+            font-family: monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .message-text pre {
+            background: rgba(0,0,0,0.35);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 12px 0;
+            overflow-x: auto;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .message-text pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .message-image {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: block;
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            gap: 15px;
+            text-align: center;
+            padding: 0 40px;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Chat Input Area */
+        .chat-input-container {
+            padding: 16px 24px 24px 24px;
+            background: linear-gradient(to top, rgba(11, 15, 25, 0.95) 80%, rgba(11, 15, 25, 0));
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Document Preview & Pagination Panel */
+        .doc-preview-wrapper {
+            display: none;
+            flex-direction: column;
+            padding: 12px 16px;
+            background: rgba(23, 32, 51, 0.95);
+            border: 1px solid var(--glass-border);
+            border-bottom: none;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            backdrop-filter: blur(12px);
+            gap: 10px;
+            animation: messageFadeIn 0.2s ease-out;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .doc-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .doc-file-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden;
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .doc-type-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .doc-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 320px;
+        }
+
+        .doc-pages-badge {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .doc-controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.5);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .doc-range-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .doc-range-input {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            width: 140px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .doc-range-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .doc-btn-sm {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .doc-btn-sm:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        /* Visual Thumbnail Strip Container with Arrow Controls */
+        .doc-thumb-container-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            padding: 0 2px;
+        }
+
+        .doc-thumbnail-strip {
+            display: flex;
+            gap: 10px;
+            overflow-x: scroll !important;
+            overflow-y: hidden;
+            padding: 6px 4px 12px 4px;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: #6366f1 rgba(15, 23, 42, 0.8);
+        }
+
+        .doc-thumbnail-strip::-webkit-scrollbar {
+            height: 8px !important;
+            display: block !important;
+        }
+
+        .doc-thumbnail-strip::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 4px;
+        }
+
+        .doc-thumbnail-strip::-webkit-scrollbar-thumb {
+            background: #6366f1;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .doc-thumbnail-strip::-webkit-scrollbar-thumb:hover {
+            background: #818cf8;
+        }
+
+        .doc-scroll-btn {
+            position: absolute;
+            top: calc(50% - 14px);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(99, 102, 241, 0.6);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .doc-scroll-btn.left {
+            left: 2px;
+        }
+
+        .doc-scroll-btn.right {
+            right: 2px;
+        }
+
+        .doc-scroll-btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            transform: scale(1.1);
+        }
+
+        .doc-thumb-item {
+            position: relative;
+            flex-shrink: 0;
+            width: 76px;
+            height: 106px;
+            background: #0f172a;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .doc-thumb-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .doc-thumb-item.selected {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+        }
+
+        .doc-thumb-item.load-more-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-style: dashed;
+            border-color: rgba(99, 102, 241, 0.4);
+            background: rgba(99, 102, 241, 0.08);
+            font-size: 11px;
+            color: #c7d2fe;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .doc-thumb-item.load-more-card:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--accent-primary);
+        }
+
+        .doc-thumb-img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            background: #fff;
+        }
+
+        .doc-thumb-footer {
+            height: 22px;
+            background: rgba(15, 23, 42, 0.95);
+            font-size: 10px;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+
+        .doc-thumb-check {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: transparent;
+            transition: all 0.15s;
+        }
+
+        .doc-thumb-item.selected .doc-thumb-check {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+
+        /* Message doc badges and grid */
+        .message-doc-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #c7d2fe;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .message-images-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .message-grid-img {
+            max-width: 180px;
+            max-height: 130px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            object-fit: cover;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .message-grid-img:hover {
+            transform: scale(1.03);
+        }
+
+        .converting-indicator {
+            display: none;
+            padding: 8px 12px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #c7d2fe;
+            border-radius: 8px;
+            font-size: 12px;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        /* Image Attachment Preview Box */
+        .image-preview-wrapper {
+            display: none;
+            padding: 10px;
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid var(--glass-border);
+            border-bottom: none;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .image-preview {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .image-preview-name {
+            font-size: 12px;
+            color: var(--text-muted);
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .remove-image-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px;
+        }
+
+        .remove-image-btn:hover {
+            color: #ef4444;
+        }
+
+        .input-box {
+            display: flex;
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+            align-items: flex-end;
+            padding: 10px 15px;
+            transition: all 0.3s;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        .input-box:focus-within {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            background: rgba(31, 41, 55, 0.8);
+        }
+
+        textarea {
+            flex-grow: 1;
+            min-width: 0;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            max-height: 200px;
+            min-height: 24px;
+            height: 24px;
+            resize: none;
+            padding: 3px 10px 3px 0;
+            outline: none;
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .input-action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .input-action-btn:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .input-action-btn.disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.5);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Markdown Tables & Content */
+        .md-table-wrapper {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(15, 23, 42, 0.4);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .md-table-wrapper table.md-table,
+        .message-bubble table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+            line-height: 1.5;
+            text-align: left;
+            margin: 0;
+        }
+
+        .md-table th,
+        .message-bubble table th {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            font-weight: 700;
+            padding: 8px 12px;
+            border-bottom: 2px solid var(--glass-border);
+            border-right: 1px solid var(--glass-border);
+            white-space: nowrap;
+        }
+        .md-table th:last-child,
+        .message-bubble table th:last-child {
+            border-right: none;
+        }
+
+        .md-table td,
+        .message-bubble table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid var(--glass-border);
+            border-right: 1px solid var(--glass-border);
+            color: var(--text-main);
+            vertical-align: top;
+        }
+        .md-table td:last-child,
+        .message-bubble table td:last-child {
+            border-right: none;
+        }
+
+        .md-table tbody tr:nth-child(even),
+        .message-bubble table tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .md-table tbody tr:hover,
+        .message-bubble table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .md-table tbody tr:last-child td,
+        .message-bubble table tbody tr:last-child td {
+            border-bottom: none;
+        }
+    </style>
+    <script src="/static/js/marked.min.js"></script>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside>
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">AG</div>
+                    <h2>LLM Proxy 终端</h2>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <a href="/study" class="config-link-btn" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.15)); border-color: rgba(99, 102, 241, 0.4); color: #e0e7ff;">
+                        📚 材料翻译与研学中心
+                    </a>
+                    <a href="/config" class="config-link-btn">
+                        ⚙️ 配置模型与鉴权参数
+                    </a>
+                </div>
+            </div>
+
+            <div class="model-section-title">可用模型列表</div>
+            <div class="models-list" id="models-list">
+                <!-- Dynamically populated -->
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main>
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="current-model-info">
+                    <span class="current-model-name" id="header-model-name">正在加载模型...</span>
+                    <span class="type-badge type-text" id="header-model-type">TEXT</span>
+                </div>
+            </div>
+
+            <!-- Messages Window -->
+            <div class="messages-container" id="messages-container">
+                <div class="empty-state" id="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <h3>开启新的对话</h3>
+                    <p>选择左侧的模型，输入您的问题即可开始。支持多模态模型上传图片进行分析。</p>
+                </div>
+            </div>
+
+            <!-- Input Controls -->
+            <div class="chat-input-container">
+                <!-- Converting Loading Notification -->
+                <div class="converting-indicator" id="converting-indicator">
+                    <span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span>
+                    <span id="converting-status-text">正在将选中的页面转换为高清图片并上传至 VLM 存储...</span>
+                </div>
+
+                <!-- Document Attachment & Page Selection Panel -->
+                <div class="doc-preview-wrapper" id="doc-preview-wrapper">
+                    <div class="doc-header-row">
+                        <div class="doc-file-meta">
+                            <span class="doc-type-icon" id="doc-type-icon">📄</span>
+                            <div>
+                                <div class="doc-name" id="doc-name">document.pdf</div>
+                                <span class="doc-pages-badge" id="doc-pages-badge">共 0 页</span>
+                            </div>
+                        </div>
+                        <button class="remove-image-btn" onclick="clearAttachedDocument()" title="移除文件">&times;</button>
+                    </div>
+
+                    <div class="doc-controls-row">
+                        <div class="doc-range-group">
+                            <span>📄 分页范围:</span>
+                            <input type="text" class="doc-range-input" id="doc-range-input" placeholder="例如: 1-3, 5" oninput="handleRangeInput(this.value)">
+                            <span id="doc-selected-count" style="color: var(--accent-primary); font-weight:600;">已选 0 页</span>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="doc-btn-sm" onclick="selectAllPages()">全选</button>
+                            <button class="doc-btn-sm" onclick="selectFirstNPages(3)">前3页</button>
+                            <button class="doc-btn-sm" onclick="clearPageSelection()">清空</button>
+                        </div>
+                    </div>
+
+                    <!-- Visual Thumbnail Strip with Left / Right Scroll Controls -->
+                    <div class="doc-thumb-container-wrapper">
+                        <button class="doc-scroll-btn left" id="doc-scroll-left" onclick="scrollThumbnailStrip(-260)" title="向左滚动">‹</button>
+                        <div class="doc-thumbnail-strip" id="doc-thumbnail-strip">
+                            <!-- Dynamically populated page thumbnails -->
+                        </div>
+                        <button class="doc-scroll-btn right" id="doc-scroll-right" onclick="scrollThumbnailStrip(260)" title="向右滚动">›</button>
+                    </div>
+                </div>
+
+                <!-- Legacy Single Image Preview Wrapper -->
+                <div class="image-preview-wrapper" id="image-preview-wrapper">
+                    <img src="" alt="Preview" class="image-preview" id="image-preview">
+                    <span class="image-preview-name" id="image-preview-name">image.png</span>
+                    <button class="remove-image-btn" onclick="clearAttachedImage()">&times;</button>
+                </div>
+
+                <!-- Input Box -->
+                <div class="input-box">
+                    <textarea id="chat-textarea" placeholder="输入消息或提示词... (Shift+Enter换行)" oninput="autoGrowTextarea()"></textarea>
+                    
+                    <div class="input-actions">
+                        <!-- Hidden input for document / image file upload -->
+                        <input type="file" id="doc-file-input" accept=".pdf,.pptx,.ppt,.docx,.doc,image/*" style="display: none;" onchange="handleDocumentSelection(this.files[0])">
+                        
+                        <button class="input-action-btn disabled" id="attach-doc-btn" title="上传文档/图片 (PDF, PPT, Word, 图片 - 仅多模态模型支持)" onclick="triggerDocumentUpload()">
+                            📎
+                        </button>
+                        <button class="send-btn" id="send-msg-btn" onclick="sendMessage()" title="发送">
+                            ➔
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentModel = null;
+        let attachedImageBase64 = null;
+        let attachedImageName = null;
+        let attachedImageMime = null;
+
+        // Document attachment state
+        let attachedDocumentFile = null;
+        let documentMetadata = null; // { filename, file_type, total_pages, thumbnails }
+        let selectedPagesSet = new Set();
+        let isProcessingDocument = false;
+
+        let messagesHistory = [];
+
+        // Load models list on boot
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchModels();
+            
+            // Textarea submit hook
+            document.getElementById('chat-textarea').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Horizontal mouse wheel scrolling for thumbnail strip
+            const thumbStrip = document.getElementById('doc-thumbnail-strip');
+            if (thumbStrip) {
+                thumbStrip.addEventListener('wheel', (e) => {
+                    if (e.deltaY !== 0) {
+                        e.preventDefault();
+                        thumbStrip.scrollLeft += e.deltaY * 1.5;
+                    }
+                }, { passive: false });
+            }
+
+            // Drag and drop onto chat input container
+            const inputContainer = document.querySelector('.chat-input-container');
+            inputContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                inputContainer.style.background = 'rgba(99, 102, 241, 0.1)';
+            });
+            inputContainer.addEventListener('dragleave', () => {
+                inputContainer.style.background = '';
+            });
+            inputContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                inputContainer.style.background = '';
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleDocumentSelection(e.dataTransfer.files[0]);
+                }
+            });
+        });
+
+        // Auto-growing input box
+        function autoGrowTextarea() {
+            const textarea = document.getElementById('chat-textarea');
+            textarea.style.height = '24px';
+            textarea.style.height = Math.min(textarea.scrollHeight - 6, 200) + 'px';
+        }
+
+        // Scroll thumbnail strip horizontally with arrow buttons
+        function scrollThumbnailStrip(offset) {
+            const strip = document.getElementById('doc-thumbnail-strip');
+            if (strip) {
+                strip.scrollBy({ left: offset, behavior: 'smooth' });
+            }
+        }
+
+        // Fetch models list from API
+        async function fetchModels() {
+            try {
+                const configResp = await fetch('/api/config');
+                const config = await configResp.json();
+                
+                const models = config.models || [];
+                renderModels(models);
+            } catch (e) {
+                console.error("加载模型列表失败", e);
+                document.getElementById('header-model-name').textContent = "加载失败，请检查服务";
+            }
+        }
+
+        // Render models to sidebar
+        function renderModels(models) {
+            const container = document.getElementById('models-list');
+            container.innerHTML = '';
+
+            models.forEach(model => {
+                const isVlm = model.type === 'vlm';
+                const isDefault = model.is_default;
+                
+                const card = document.createElement('div');
+                card.className = `model-card ${isDefault ? 'active' : ''}`;
+                card.dataset.name = model.name;
+                
+                const badgeClass = isVlm ? 'type-vlm' : 'type-text';
+                const badgeLabel = isVlm ? 'VLM' : 'Text';
+                
+                card.innerHTML = `
+                    <div class="model-card-header">
+                        <span class="model-name" title="${model.name}">${model.name}</span>
+                        <span class="type-badge ${badgeClass}">${badgeLabel}</span>
+                    </div>
+                    <div class="model-desc">
+                        <span>Temp: ${model.temperature}</span>
+                        ${isVlm ? `<span>Tiles: ${model.max_input_tiles}</span>` : `<span>Tokens: ${model.max_tokens}</span>`}
+                        <span>Thinking: ${model.is_thinking ? 'Yes' : 'No'}</span>
+                    </div>
+                `;
+                
+                card.onclick = () => selectModel(model);
+                container.appendChild(card);
+                
+                if (isDefault && !currentModel) {
+                    selectModel(model);
+                }
+            });
+
+            if (!currentModel && models.length > 0) {
+                selectModel(models[0]);
+            }
+        }
+
+        // Select a model
+        function selectModel(model) {
+            currentModel = model;
+            
+            document.querySelectorAll('.model-card').forEach(card => card.classList.remove('active'));
+            const activeCard = document.querySelector(`.model-card[data-name="${model.name}"]`);
+            if (activeCard) activeCard.classList.add('active');
+
+            document.getElementById('header-model-name').textContent = model.name;
+            const typeBadge = document.getElementById('header-model-type');
+            
+            const isVlm = model.type === 'vlm';
+            if (isVlm) {
+                typeBadge.textContent = "VLM 多模态";
+                typeBadge.className = "type-badge type-vlm";
+                document.getElementById('attach-doc-btn').classList.remove('disabled');
+            } else {
+                typeBadge.textContent = "TEXT 文本";
+                typeBadge.className = "type-badge type-text";
+                document.getElementById('attach-doc-btn').classList.add('disabled');
+                clearAttachedDocument();
+                clearAttachedImage();
+            }
+        }
+
+        // Trigger hidden document input
+        function triggerDocumentUpload() {
+            if (currentModel && currentModel.type === 'vlm') {
+                document.getElementById('doc-file-input').click();
+            }
+        }
+
+        // Handle selected document or image
+        async function handleDocumentSelection(file) {
+            if (!file) return;
+            if (!currentModel || currentModel.type !== 'vlm') {
+                alert("当前选中的是非多模态模型，请先在左侧选择多模态 VLM 模型！");
+                return;
+            }
+
+            attachedDocumentFile = file;
+            clearAttachedImage();
+
+            // Display loading banner
+            const previewWrapper = document.getElementById('doc-preview-wrapper');
+            previewWrapper.style.display = 'flex';
+            document.getElementById('doc-name').textContent = `${file.name} (正在快速解析页面...)`;
+            document.getElementById('doc-pages-badge').textContent = '解析中...';
+            document.getElementById('doc-thumbnail-strip').innerHTML = '<div style="padding: 10px; color: var(--text-muted); font-size:12px;">⏳ 正在提取文档分页缩略图，请稍候...</div>';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('start_page', '1');
+            formData.append('limit', '24');
+
+            try {
+                const response = await fetch('/api/document/inspect', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(await response.text());
+                }
+
+                const resData = await response.json();
+                documentMetadata = resData.data;
+
+                // Render document header info
+                document.getElementById('doc-name').textContent = documentMetadata.filename;
+                document.getElementById('doc-pages-badge').textContent = `共 ${documentMetadata.total_pages} 页`;
+                
+                // Icon mapping
+                const ext = documentMetadata.file_type;
+                let icon = '📄';
+                if (ext === 'pdf') icon = '📑';
+                else if (ext === 'pptx') icon = '📊';
+                else if (ext === 'docx') icon = '📝';
+                else if (ext === 'image') icon = '🖼️';
+                document.getElementById('doc-type-icon').textContent = icon;
+
+                // Default selection: if pages <= 4, select all; else select first 3 pages
+                selectedPagesSet.clear();
+                const defaultCount = Math.min(documentMetadata.total_pages, 3);
+                for (let p = 1; p <= defaultCount; p++) {
+                    selectedPagesSet.add(p);
+                }
+
+                updateRangeInputAndBadge();
+                renderThumbnailStrip();
+
+            } catch (err) {
+                console.error("文档解析错误:", err);
+                document.getElementById('doc-name').textContent = `${file.name} (解析失败: ${err.message})`;
+            }
+        }
+
+        // Load more thumbnails on demand for large documents (e.g. 50+ pages)
+        async function loadMoreThumbnails() {
+            if (!attachedDocumentFile || !documentMetadata) return;
+            const nextStart = documentMetadata.thumbnails.length + 1;
+            if (nextStart > documentMetadata.total_pages) return;
+
+            const loadCard = document.getElementById('doc-load-more-card');
+            if (loadCard) loadCard.innerHTML = '<span>⏳</span><span>加载中...</span>';
+
+            const formData = new FormData();
+            formData.append('file', attachedDocumentFile);
+            formData.append('start_page', nextStart);
+            formData.append('limit', '24');
+
+            try {
+                const response = await fetch('/api/document/inspect', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) throw new Error(await response.text());
+                const resData = await response.json();
+                const moreData = resData.data;
+                
+                documentMetadata.thumbnails = documentMetadata.thumbnails.concat(moreData.thumbnails);
+                documentMetadata.has_more = moreData.has_more;
+                renderThumbnailStrip();
+            } catch (e) {
+                console.error("加载更多缩略图失败:", e);
+                alert(`加载更多缩略图失败: ${e.message}`);
+            }
+        }
+
+        // Render page thumbnails
+        function renderThumbnailStrip() {
+            const strip = document.getElementById('doc-thumbnail-strip');
+            strip.innerHTML = '';
+
+            if (!documentMetadata || !documentMetadata.thumbnails || documentMetadata.thumbnails.length === 0) {
+                strip.innerHTML = '<div style="padding: 10px; color: var(--text-muted); font-size:12px;">已载入文档（单页或无缩略图模式）</div>';
+                return;
+            }
+
+            documentMetadata.thumbnails.forEach(item => {
+                const pageNum = item.page;
+                const isSelected = selectedPagesSet.has(pageNum);
+
+                const thumbDiv = document.createElement('div');
+                thumbDiv.className = `doc-thumb-item ${isSelected ? 'selected' : ''}`;
+                thumbDiv.dataset.page = pageNum;
+                thumbDiv.onclick = () => togglePageSelection(pageNum);
+
+                thumbDiv.innerHTML = `
+                    <img src="${item.thumbnail}" class="doc-thumb-img" alt="P.${pageNum}">
+                    <div class="doc-thumb-check">${isSelected ? '✓' : ''}</div>
+                    <div class="doc-thumb-footer">P.${pageNum}</div>
+                `;
+
+                strip.appendChild(thumbDiv);
+            });
+
+            // If there are more pages beyond current loaded thumbnails, show lazy load more card
+            if (documentMetadata.has_more) {
+                const nextStart = documentMetadata.thumbnails.length + 1;
+                const nextEnd = Math.min(documentMetadata.total_pages, nextStart + 23);
+                const loadMoreDiv = document.createElement('div');
+                loadMoreDiv.className = 'doc-thumb-item load-more-card';
+                loadMoreDiv.id = 'doc-load-more-card';
+                loadMoreDiv.title = `点击加载第 ${nextStart} ~ ${nextEnd} 页预览`;
+                loadMoreDiv.innerHTML = `
+                    <span style="font-size:18px;">➕</span>
+                    <span>加载更多</span>
+                    <span style="font-size:9px; opacity:0.8;">P.${nextStart}-${nextEnd}</span>
+                `;
+                loadMoreDiv.onclick = () => loadMoreThumbnails();
+                strip.appendChild(loadMoreDiv);
+            }
+        }
+
+
+        // Toggle individual page selection
+        function togglePageSelection(pageNum) {
+            if (selectedPagesSet.has(pageNum)) {
+                selectedPagesSet.delete(pageNum);
+            } else {
+                selectedPagesSet.add(pageNum);
+            }
+            updateRangeInputAndBadge();
+            updateThumbnailUI();
+        }
+
+        // Select all pages
+        function selectAllPages() {
+            if (!documentMetadata) return;
+            for (let p = 1; p <= documentMetadata.total_pages; p++) {
+                selectedPagesSet.add(p);
+            }
+            updateRangeInputAndBadge();
+            updateThumbnailUI();
+        }
+
+        // Select first N pages
+        function selectFirstNPages(n) {
+            if (!documentMetadata) return;
+            selectedPagesSet.clear();
+            for (let p = 1; p <= Math.min(documentMetadata.total_pages, n); p++) {
+                selectedPagesSet.add(p);
+            }
+            updateRangeInputAndBadge();
+            updateThumbnailUI();
+        }
+
+        // Clear page selection
+        function clearPageSelection() {
+            selectedPagesSet.clear();
+            updateRangeInputAndBadge();
+            updateThumbnailUI();
+        }
+
+        // Parse range input from user
+        function handleRangeInput(val) {
+            if (!documentMetadata) return;
+            selectedPagesSet.clear();
+            const max = documentMetadata.total_pages;
+            
+            if (!val || val.trim().toLowerCase() === 'all' || val.trim() === '全部') {
+                for (let p = 1; p <= max; p++) selectedPagesSet.add(p);
+            } else {
+                const parts = val.split(',');
+                for (const part of parts) {
+                    const trimmed = part.trim();
+                    if (trimmed.includes('-')) {
+                        const [s, e] = trimmed.split('-').map(x => parseInt(x.trim()));
+                        if (!isNaN(s) && !isNaN(e)) {
+                            for (let p = Math.min(s, e); p <= Math.max(s, e); p++) {
+                                if (p >= 1 && p <= max) selectedPagesSet.add(p);
+                            }
+                        }
+                    } else {
+                        const p = parseInt(trimmed);
+                        if (!isNaN(p) && p >= 1 && p <= max) selectedPagesSet.add(p);
+                    }
+                }
+            }
+
+            document.getElementById('doc-selected-count').textContent = `已选 ${selectedPagesSet.size} / ${max} 页`;
+            updateThumbnailUI();
+        }
+
+        // Format set to range string
+        function updateRangeInputAndBadge() {
+            if (!documentMetadata) return;
+            const pages = Array.from(selectedPagesSet).sort((a, b) => a - b);
+            
+            let rangeStr = "";
+            if (pages.length === documentMetadata.total_pages) {
+                rangeStr = `1-${documentMetadata.total_pages}`;
+            } else if (pages.length > 0) {
+                const ranges = [];
+                let start = pages[0], prev = pages[0];
+                for (let i = 1; i < pages.length; i++) {
+                    if (pages[i] === prev + 1) {
+                        prev = pages[i];
+                    } else {
+                        ranges.push(start === prev ? `${start}` : `${start}-${prev}`);
+                        start = prev = pages[i];
+                    }
+                }
+                ranges.push(start === prev ? `${start}` : `${start}-${prev}`);
+                rangeStr = ranges.join(', ');
+            }
+
+            document.getElementById('doc-range-input').value = rangeStr;
+            document.getElementById('doc-selected-count').textContent = `已选 ${selectedPagesSet.size} / ${documentMetadata.total_pages} 页`;
+        }
+
+        // Update thumbnail borders and checkmarks
+        function updateThumbnailUI() {
+            document.querySelectorAll('.doc-thumb-item').forEach(el => {
+                const pageNum = parseInt(el.dataset.page);
+                const isSelected = selectedPagesSet.has(pageNum);
+                if (isSelected) {
+                    el.classList.add('selected');
+                    el.querySelector('.doc-thumb-check').textContent = '✓';
+                } else {
+                    el.classList.remove('selected');
+                    el.querySelector('.doc-thumb-check').textContent = '';
+                }
+            });
+        }
+
+        // Clear attached document
+        function clearAttachedDocument() {
+            attachedDocumentFile = null;
+            documentMetadata = null;
+            selectedPagesSet.clear();
+            document.getElementById('doc-file-input').value = '';
+            document.getElementById('doc-preview-wrapper').style.display = 'none';
+            document.getElementById('converting-indicator').style.display = 'none';
+        }
+
+        // Clear legacy attached image
+        function clearAttachedImage() {
+            attachedImageBase64 = null;
+            attachedImageName = null;
+            attachedImageMime = null;
+            document.getElementById('image-preview-wrapper').style.display = 'none';
+        }
+
+        // Send a message
+        async function sendMessage() {
+            if (isProcessingDocument) return;
+            const textarea = document.getElementById('chat-textarea');
+            const contentText = textarea.value.trim();
+            
+            if (!contentText && !attachedDocumentFile && !attachedImageBase64) return;
+            if (!currentModel) return;
+
+            const isVlm = currentModel.type === 'vlm';
+            
+            // Hide empty state on first message
+            const emptyState = document.getElementById('empty-state');
+            if (emptyState) emptyState.style.display = 'none';
+
+            // Reset textarea height
+            textarea.value = '';
+            textarea.style.height = '24px';
+
+            let userBubbleHtml = '';
+            const userMsg = {
+                role: "user",
+                content: ""
+            };
+
+            // 1. Process Document Upload & Conversion if a document is attached
+            if (isVlm && attachedDocumentFile) {
+                if (selectedPagesSet.size === 0) {
+                    alert("请至少选择一个要分析的页面！");
+                    return;
+                }
+
+                isProcessingDocument = true;
+                const convertingIndicator = document.getElementById('converting-indicator');
+                convertingIndicator.style.display = 'flex';
+                document.getElementById('converting-status-text').textContent = 
+                    `正在将《${attachedDocumentFile.name}》选中的 ${selectedPagesSet.size} 页转换为图片并上传到后端存储...`;
+
+                const sortedPages = Array.from(selectedPagesSet).sort((a, b) => a - b);
+                const pageRangeParam = sortedPages.join(',');
+
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', attachedDocumentFile);
+                uploadFormData.append('pages', pageRangeParam);
+
+                let uploadedPages = [];
+                try {
+                    const convertResp = await fetch('/api/document/convert_and_upload', {
+                        method: 'POST',
+                        body: uploadFormData
+                    });
+
+                    if (!convertResp.ok) {
+                        throw new Error(await convertResp.text());
+                    }
+
+                    const convertData = await convertResp.json();
+                    uploadedPages = convertData.data.uploaded_pages || [];
+                } catch (convErr) {
+                    isProcessingDocument = false;
+                    convertingIndicator.style.display = 'none';
+                    alert(`文档页面转换/上传失败: ${convErr.message}`);
+                    return;
+                }
+
+                convertingIndicator.style.display = 'none';
+                isProcessingDocument = false;
+
+                // Build Multimodal Message items
+                const contentList = [];
+                let thumbsHtml = '<div class="message-images-grid">';
+                for (const up of uploadedPages) {
+                    contentList.push({
+                        type: "image_url",
+                        image_url: {
+                            url: up.token,
+                            saver_type: 2
+                        }
+                    });
+                    thumbsHtml += `<img src="${up.preview}" class="message-grid-img" title="第 ${up.page} 页" alt="P.${up.page}">`;
+                }
+                thumbsHtml += '</div>';
+
+                contentList.push({
+                    type: "text",
+                    text: contentText || "请分析上述文档页面中的内容。"
+                });
+
+                userMsg.content = contentList;
+
+                // Render User Bubble
+                userBubbleHtml = `
+                    <div class="message-doc-badge">📑 ${escapeHtml(attachedDocumentFile.name)} (已转换 ${uploadedPages.length} 页)</div>
+                    ${thumbsHtml}
+                    <div class="message-text">${escapeHtml(contentText || "请分析上述文档页面中的内容。")}</div>
+                `;
+
+                clearAttachedDocument();
+
+            } else if (isVlm && attachedImageBase64) {
+                // Single base64 image message structure
+                userMsg.content = [
+                    {
+                        type: "image_url",
+                        image_url: {
+                            url: attachedImageBase64,
+                            saver_type: 2
+                        }
+                    },
+                    {
+                        type: "text",
+                        text: contentText
+                    }
+                ];
+                userBubbleHtml = `<img src="${attachedImageBase64}" class="message-image" alt="Image">`;
+                userBubbleHtml += `<div class="message-text">${escapeHtml(contentText)}</div>`;
+                clearAttachedImage();
+            } else {
+                // Standard text message structure
+                userMsg.content = contentText;
+                userBubbleHtml = `<div class="message-text">${escapeHtml(contentText)}</div>`;
+            }
+
+            // Append user message to history
+            messagesHistory.push(userMsg);
+
+            // Render User Bubble
+            renderMessageBubble("user", userBubbleHtml);
+
+            // Render Assistant bubble skeleton
+            const assistantBubbleId = `msg-${Date.now()}`;
+            renderMessageBubble("assistant", `
+                <div class="reasoning-block" id="reasoning-block-${assistantBubbleId}" style="display: none;">
+                    <div class="reasoning-header">🧠 深度思考中...</div>
+                    <div class="reasoning-content" id="reasoning-${assistantBubbleId}"></div>
+                </div>
+                <div class="message-text" id="text-${assistantBubbleId}">▋</div>
+            `, assistantBubbleId);
+
+            // Trigger Stream completions call
+            await fetchStreamingCompletions(assistantBubbleId);
+        }
+
+        // Helper to escape HTML tags
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // Render message bubble
+        function renderMessageBubble(role, innerHTML, id = null) {
+            const container = document.getElementById('messages-container');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+            if (id) msgDiv.id = id;
+
+            const letter = role === 'user' ? 'U' : 'AI';
+            msgDiv.innerHTML = `
+                <div class="avatar">${letter}</div>
+                <div class="message-bubble">
+                    ${innerHTML}
+                </div>
+            `;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function wrapMarkdownTables(html) {
+            if (!html) return '';
+            return html
+                .replace(/<table(\s*[^>]*)>/gi, '<div class="md-table-wrapper"><table class="md-table"$1>')
+                .replace(/<\/table>/gi, '</table></div>');
+        }
+
+        function parseMarkdownTablesFallback(text) {
+            const tableRegex = /((?:^[ \t]*\|.+?\|[ \t]*(?:\r?\n|$))+)/gm;
+            return text.replace(tableRegex, (block) => {
+                const lines = block.trim().split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                if (lines.length < 2) return block;
+                const sepLine = lines[1];
+                if (!/^[|:\-\s]+$/.test(sepLine) || !sepLine.includes('-')) {
+                    return block;
+                }
+                const parseRow = (line) => {
+                    let cells = line.split('|');
+                    if (cells.length > 0 && cells[0].trim() === '') cells.shift();
+                    if (cells.length > 0 && cells[cells.length - 1].trim() === '') cells.pop();
+                    return cells.map(c => c.trim());
+                };
+                const headers = parseRow(lines[0]);
+                let html = '<div class="md-table-wrapper"><table class="md-table"><thead><tr>';
+                headers.forEach(h => {
+                    html += `<th>${escapeHtml(h)}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                for (let i = 2; i < lines.length; i++) {
+                    const rowCells = parseRow(lines[i]);
+                    html += '<tr>';
+                    for (let j = 0; j < headers.length; j++) {
+                        html += `<td>${escapeHtml(rowCells[j] !== undefined ? rowCells[j] : '')}</td>`;
+                    }
+                    html += '</tr>';
+                }
+                html += '</tbody></table></div>\n';
+                return html;
+            });
+        }
+
+        // Markdown parsing with full table and GFM support
+        function formatMarkdown(text) {
+            if (!text) return '';
+            if (typeof marked !== 'undefined' && marked.parse) {
+                try {
+                    if (marked.setOptions) {
+                        marked.setOptions({ gfm: true, breaks: true });
+                    }
+                    let parsed = marked.parse(text);
+                    return wrapMarkdownTables(parsed);
+                } catch (e) {
+                    console.warn('marked.parse error in chat:', e);
+                }
+            }
+
+            let withTables = parseMarkdownTablesFallback(text);
+            let formatted = escapeHtml(withTables);
+            formatted = formatted.replace(/&lt;(\/?(div|table|thead|tbody|tr|th|td)[^&gt;]*)&gt;/gi, '<$1>');
+            formatted = formatted.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+            formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
+            formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            formatted = formatted.replace(/\n/g, '<br>');
+            return formatted;
+        }
+
+        // Stream Completions HTTP Client Reader
+        async function fetchStreamingCompletions(bubbleId) {
+            const reasoningEl = document.getElementById(`reasoning-${bubbleId}`);
+            const reasoningBlock = document.getElementById(`reasoning-block-${bubbleId}`);
+            const textEl = document.getElementById(`text-${bubbleId}`);
+
+            let reasoningContent = "";
+            let finalContent = "";
+
+            try {
+                const response = await fetch('/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: currentModel.name,
+                        messages: messagesHistory,
+                        stream: true
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(await response.text() || `Server error ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split("\n");
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        const cleanLine = line.trim();
+                        if (!cleanLine || !cleanLine.startsWith("data:")) continue;
+                        const rawData = cleanLine.slice(5).trim();
+                        if (rawData === "[DONE]") continue;
+
+                        try {
+                            const parsed = JSON.parse(rawData);
+                            const choice = parsed.choices && parsed.choices[0];
+                            if (!choice) continue;
+
+                            if (choice.delta && choice.delta.reasoning_content) {
+                                reasoningContent += choice.delta.reasoning_content;
+                                reasoningEl.textContent = reasoningContent;
+                                reasoningBlock.style.display = 'block';
+                            }
+                            if (choice.delta && choice.delta.content) {
+                                finalContent += choice.delta.content;
+                                textEl.innerHTML = formatMarkdown(finalContent) + "▋";
+                            }
+                        } catch (e) {
+                            console.error("SSE解析错误", e);
+                        }
+                    }
+                    document.getElementById('messages-container').scrollTop = document.getElementById('messages-container').scrollHeight;
+                }
+                textEl.innerHTML = formatMarkdown(finalContent);
+                messagesHistory.push({
+                    role: "assistant",
+                    content: finalContent,
+                    reasoning_content: reasoningContent || undefined
+                });
+
+            } catch (e) {
+                console.error(e);
+                textEl.innerHTML = `<span style="color: var(--danger);">[连接错误: ${escapeHtml(e.message)}]</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

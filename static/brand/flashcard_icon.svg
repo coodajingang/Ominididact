@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" fill="none">
+  <!-- Omnididact Flashcard Icon · 灵感星芒闪卡 (Insight Spark Flashcards) -->
+  <style>
+    :root {
+      --fc-color: #f8fafc;
+    }
+    .fc-stroke { stroke: var(--fc-color, currentColor); }
+    .fc-fill-back { fill: var(--fc-color, currentColor); fill-opacity: 0.12; }
+    .fc-fill-front { fill: var(--fc-color, currentColor); fill-opacity: 0.22; }
+    .fc-spark { fill: var(--fc-color, currentColor); }
+    .fc-line { stroke: var(--fc-color, currentColor); }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --fc-color: #0f172a;
+      }
+      .fc-fill-back { fill-opacity: 0.08; }
+      .fc-fill-front { fill-opacity: 0.16; }
+    }
+  </style>
+  <!-- Back Card -->
+  <rect x="22" y="28" width="46" height="56" rx="7" stroke-width="3.5" class="fc-stroke fc-fill-back" transform="rotate(-10 45 56)" />
+  <!-- Front Card -->
+  <rect x="34" y="22" width="46" height="56" rx="7" stroke-width="3.5" class="fc-stroke fc-fill-front" transform="rotate(6 57 50)" />
+  <!-- Front Card Lines -->
+  <g transform="rotate(6 57 50)">
+    <line x1="43" y1="36" x2="67" y2="36" stroke-width="2.8" stroke-linecap="round" class="fc-line" />
+    <line x1="43" y1="44" x2="71" y2="44" stroke-width="2.8" stroke-linecap="round" class="fc-line" />
+    <line x1="43" y1="52" x2="58" y2="52" stroke-width="2.8" stroke-linecap="round" opacity="0.6" class="fc-line" />
+  </g>
+  <!-- Flash / Insight Spark Star (✦) -->
+  <path d="M 83 13 C 83 21 85 23 93 23 C 85 23 83 25 83 33 C 83 25 81 23 73 23 C 81 23 83 21 83 13 Z" class="fc-spark" />
+  <circle cx="92" cy="34" r="2.2" class="fc-spark" opacity="0.75" />
+</svg>

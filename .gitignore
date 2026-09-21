@@ -1,0 +1,106 @@
+# ==============================================================================
+# Omnididact .gitignore
+# ==============================================================================
+
+# User runtime data & local configurations
+data/
+config.json
+*.db
+*.sqlite3
+
+# Maintainer & Internal promotion notes (Excluded from open-source repository)
+maintainer_notes/
+_internal/
+docs/PROMOTION_GUIDE.md
+THEME_PALETTES.md
+
+# Scratchpads & Temp workspaces
+scratch/
+tmp/
+temp/
+
+# Agent / IDE internal directories
+agents/
+.agents/
+.gemini/
+.antigravity/
+.system_generated/
+
+# Frontend dependencies and production build outputs
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Bundles, archives, and offline export packages
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+packages/
+dist_packages/
+study_library_static_site.zip
+
+# Python byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Unit test / coverage / pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Private / Intranet Plugins (Excluded from public releases)
+plugins/intranet_jh/

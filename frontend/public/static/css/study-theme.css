@@ -1,0 +1,468 @@
+:root {
+            --bg-gradient: linear-gradient(135deg, #0a0e17 0%, #101626 100%);
+            --sidebar-bg: rgba(15, 23, 42, 0.88);
+            --card-bg: rgba(30, 41, 59, 0.45);
+            --card-hover-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-active: rgba(99, 102, 241, 0.5);
+            --accent-primary: #6366f1;
+            --accent-primary-hover: #4f46e5;
+            --accent-secondary: #a855f7;
+            --accent-glow: rgba(99, 102, 241, 0.2);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-quote: #cbd5e1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --quote-border: #818cf8;
+            --quote-bg: rgba(99, 102, 241, 0.09);
+            --header-bg: rgba(15, 23, 42, 0.75);
+            --drawer-bg: rgba(15, 23, 42, 0.96);
+            --drawer-header-bg: rgba(15, 23, 42, 0.9);
+            --bubble-assist-bg: rgba(30, 41, 59, 0.7);
+            --modal-bg: #1e293b;
+            --input-bg: rgba(0, 0, 0, 0.3);
+            --note-card-bg: rgba(99, 102, 241, 0.07);
+            --note-card-border: rgba(99, 102, 241, 0.28);
+            --chapter-title-gradient: linear-gradient(to right, #ffffff, #c4b5fd);
+            --sidebar-width: 320px;
+            --drawer-width: 460px;
+            --font-size-base: 17px;
+            --reading-max-width: 900px;
+
+            /* Typography Variables */
+            --heading-color: #ffffff;
+            --heading-secondary: #f8fafc;
+            --heading-sub: #e2e8f0;
+            --text-strong: #ffffff;
+            --text-em: #cbd5e1;
+            --code-inline-bg: rgba(0, 0, 0, 0.4);
+            --code-inline-border: rgba(255, 255, 255, 0.12);
+            --code-inline-text: #fca5a5;
+
+            /* Subtle Controls & Secondary Buttons */
+            --btn-subtle-bg: rgba(0, 0, 0, 0.3);
+            --btn-subtle-border: var(--glass-border);
+            --btn-subtle-text: var(--text-muted);
+            --btn-subtle-hover-bg: rgba(255, 255, 255, 0.1);
+            --btn-subtle-hover-text: #ffffff;
+            --btn-secondary-bg: rgba(255, 255, 255, 0.05);
+            --btn-secondary-border: var(--glass-border);
+            --btn-secondary-text: var(--text-main);
+            --btn-secondary-hover-bg: rgba(255, 255, 255, 0.12);
+
+            /* Upload Button */
+            --upload-btn-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.15));
+            --upload-btn-border: var(--accent-primary);
+            --upload-btn-text: #e0e7ff;
+            --upload-btn-hover-bg: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(168, 85, 247, 0.25));
+            --upload-btn-hover-border: #a5b4fc;
+            --upload-btn-hover-text: #ffffff;
+
+            /* Floating Action Bar & Action Chips */
+            --actions-bar-bg: rgba(15, 23, 42, 0.94);
+            --actions-bar-border: rgba(255, 255, 255, 0.14);
+            --actions-bar-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+            --chip-bg: rgba(255, 255, 255, 0.05);
+            --chip-border: var(--glass-border);
+            --chip-text: var(--text-muted);
+            --chip-hover-bg: rgba(255, 255, 255, 0.14);
+            --chip-hover-text: #ffffff;
+            --chip-hover-border: var(--accent-primary);
+            --chip-chat-bg: rgba(99, 102, 241, 0.18);
+            --chip-chat-border: rgba(99, 102, 241, 0.4);
+            --chip-chat-text: #c7d2fe;
+            --chip-chat-hover-bg: var(--accent-primary);
+            --chip-chat-hover-text: #ffffff;
+        }
+
+        /* 纯净雅白 (White Theme) */
+        body[data-theme="white"] {
+            --bg-gradient: #f8fafc;
+            --sidebar-bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --card-hover-bg: #f8fafc;
+            --glass-border: #e2e8f0;
+            --glass-border-active: #6366f1;
+            --accent-primary: #4f46e5;
+            --accent-primary-hover: #4338ca;
+            --accent-secondary: #7c3aed;
+            --accent-glow: rgba(79, 70, 229, 0.15);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-quote: #334155;
+            --quote-border: #4f46e5;
+            --quote-bg: #eef2ff;
+            --header-bg: rgba(255, 255, 255, 0.92);
+            --drawer-bg: #ffffff;
+            --drawer-header-bg: #f8fafc;
+            --bubble-assist-bg: #f1f5f9;
+            --modal-bg: #ffffff;
+            --input-bg: #f8fafc;
+            --note-card-bg: #f0f4ff;
+            --note-card-border: #c7d2fe;
+            --chapter-title-gradient: linear-gradient(to right, #0f172a, #4338ca);
+
+            /* Typography */
+            --heading-color: #0f172a;
+            --heading-secondary: #1e293b;
+            --heading-sub: #334155;
+            --text-strong: #0f172a;
+            --text-em: #475569;
+            --code-inline-bg: #f1f5f9;
+            --code-inline-border: #cbd5e1;
+            --code-inline-text: #b91c1c;
+
+            /* Subtle Controls & Secondary Buttons */
+            --btn-subtle-bg: #f1f5f9;
+            --btn-subtle-border: #cbd5e1;
+            --btn-subtle-text: #475569;
+            --btn-subtle-hover-bg: #e2e8f0;
+            --btn-subtle-hover-text: #0f172a;
+            --btn-secondary-bg: #ffffff;
+            --btn-secondary-border: #cbd5e1;
+            --btn-secondary-text: #1e293b;
+            --btn-secondary-hover-bg: #f8fafc;
+
+            /* Upload Button */
+            --upload-btn-bg: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(124, 58, 237, 0.05));
+            --upload-btn-border: #818cf8;
+            --upload-btn-text: #4338ca;
+            --upload-btn-hover-bg: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(124, 58, 237, 0.1));
+            --upload-btn-hover-border: #4f46e5;
+            --upload-btn-hover-text: #312e81;
+
+            /* Floating Action Bar & Action Chips */
+            --actions-bar-bg: rgba(255, 255, 255, 0.96);
+            --actions-bar-border: #cbd5e1;
+            --actions-bar-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --chip-bg: #f8fafc;
+            --chip-border: #e2e8f0;
+            --chip-text: #475569;
+            --chip-hover-bg: #e0e7ff;
+            --chip-hover-text: #4338ca;
+            --chip-hover-border: #818cf8;
+            --chip-chat-bg: rgba(79, 70, 229, 0.1);
+            --chip-chat-border: rgba(79, 70, 229, 0.3);
+            --chip-chat-text: #4338ca;
+            --chip-chat-hover-bg: #4f46e5;
+            --chip-chat-hover-text: #ffffff;
+        }
+        body[data-theme="white"] .ambient-glow {
+            opacity: 0;
+        }
+        body[data-theme="white"] .doc-card-title,
+        body[data-theme="white"] .header-doc-title,
+        body[data-theme="white"] .empty-title,
+        body[data-theme="white"] .modal-title,
+        body[data-theme="white"] .chapter-notes-title {
+            color: #0f172a;
+        }
+
+        /* 墨玉羊皮 (Sepia Theme) */
+        body[data-theme="sepia"] {
+            --bg-gradient: #f5eedc;
+            --sidebar-bg: #ece2cb;
+            --card-bg: #faf4e6;
+            --card-hover-bg: #f3ecd7;
+            --glass-border: #dfd3b9;
+            --glass-border-active: #b45309;
+            --accent-primary: #b45309;
+            --accent-primary-hover: #92400e;
+            --accent-secondary: #d97706;
+            --accent-glow: rgba(180, 83, 9, 0.15);
+            --text-main: #292524;
+            --text-muted: #78716c;
+            --text-quote: #44403c;
+            --quote-border: #b45309;
+            --quote-bg: #f0e6ce;
+            --header-bg: rgba(245, 238, 220, 0.92);
+            --drawer-bg: #faf4e6;
+            --drawer-header-bg: #f3ecd7;
+            --bubble-assist-bg: #ece2cb;
+            --modal-bg: #faf4e6;
+            --input-bg: #f5eedc;
+            --note-card-bg: #f1e5cb;
+            --note-card-border: #d7c5a0;
+            --chapter-title-gradient: linear-gradient(to right, #292524, #78350f);
+
+            /* Typography */
+            --heading-color: #1c1917;
+            --heading-secondary: #292524;
+            --heading-sub: #44403c;
+            --text-strong: #1c1917;
+            --text-em: #78350f;
+            --code-inline-bg: #ede3cb;
+            --code-inline-border: #d7c5a0;
+            --code-inline-text: #9a3412;
+
+            /* Subtle Controls & Secondary Buttons */
+            --btn-subtle-bg: #eae1ca;
+            --btn-subtle-border: #d5c7a9;
+            --btn-subtle-text: #574c3e;
+            --btn-subtle-hover-bg: #dfd2b5;
+            --btn-subtle-hover-text: #1c1917;
+            --btn-secondary-bg: #faf4e6;
+            --btn-secondary-border: #d5c7a9;
+            --btn-secondary-text: #44403c;
+            --btn-secondary-hover-bg: #f1e6ce;
+
+            /* Upload Button */
+            --upload-btn-bg: linear-gradient(135deg, rgba(180, 83, 9, 0.08), rgba(217, 119, 6, 0.05));
+            --upload-btn-border: #b45309;
+            --upload-btn-text: #78350f;
+            --upload-btn-hover-bg: linear-gradient(135deg, rgba(180, 83, 9, 0.15), rgba(217, 119, 6, 0.1));
+            --upload-btn-hover-border: #92400e;
+            --upload-btn-hover-text: #451a03;
+
+            /* Floating Action Bar & Action Chips */
+            --actions-bar-bg: #faf4e6;
+            --actions-bar-border: #dfd3b9;
+            --actions-bar-shadow: 0 4px 16px rgba(120, 53, 15, 0.15);
+            --chip-bg: #f3ecdb;
+            --chip-border: #dfd3b9;
+            --chip-text: #574c3e;
+            --chip-hover-bg: #e8ddc4;
+            --chip-hover-text: #1c1917;
+            --chip-hover-border: #b45309;
+            --chip-chat-bg: rgba(180, 83, 9, 0.14);
+            --chip-chat-border: rgba(180, 83, 9, 0.35);
+            --chip-chat-text: #92400e;
+            --chip-chat-hover-bg: #b45309;
+            --chip-chat-hover-text: #ffffff;
+        }
+        body[data-theme="sepia"] .ambient-glow {
+            opacity: 0;
+        }
+        body[data-theme="sepia"] .doc-card-title,
+        body[data-theme="sepia"] .header-doc-title,
+        body[data-theme="sepia"] .empty-title,
+        body[data-theme="sepia"] .modal-title,
+        body[data-theme="sepia"] .chapter-notes-title {
+            color: #292524;
+        }
+
+        /* 雅致墨绿 (Forest Theme) */
+        body[data-theme="forest"] {
+            --bg-gradient: linear-gradient(135deg, #091712 0%, #11251e 100%);
+            --sidebar-bg: rgba(12, 27, 22, 0.92);
+            --card-bg: rgba(18, 38, 32, 0.55);
+            --card-hover-bg: rgba(23, 49, 41, 0.7);
+            --glass-border: rgba(45, 90, 75, 0.35);
+            --glass-border-active: #10b981;
+            --accent-primary: #10b981;
+            --accent-primary-hover: #059669;
+            --accent-secondary: #34d399;
+            --accent-glow: rgba(16, 185, 129, 0.2);
+            --text-main: #ecfdf5;
+            --text-muted: #6ee7b7;
+            --text-quote: #d1fae5;
+            --quote-border: #10b981;
+            --quote-bg: rgba(16, 185, 129, 0.12);
+            --header-bg: rgba(12, 27, 22, 0.85);
+            --drawer-bg: rgba(12, 27, 22, 0.97);
+            --drawer-header-bg: rgba(12, 27, 22, 0.92);
+            --bubble-assist-bg: rgba(20, 42, 35, 0.8);
+            --modal-bg: #132a22;
+            --input-bg: rgba(6, 17, 14, 0.5);
+            --note-card-bg: rgba(16, 185, 129, 0.1);
+            --note-card-border: rgba(16, 185, 129, 0.3);
+            --chapter-title-gradient: linear-gradient(to right, #ecfdf5, #6ee7b7);
+
+            /* Typography */
+            --heading-color: #ecfdf5;
+            --heading-secondary: #d1fae5;
+            --heading-sub: #a7f3d0;
+            --text-strong: #ffffff;
+            --text-em: #6ee7b7;
+            --code-inline-bg: rgba(6, 17, 14, 0.6);
+            --code-inline-border: rgba(45, 90, 75, 0.4);
+            --code-inline-text: #fca5a5;
+
+            /* Subtle Controls & Secondary Buttons */
+            --btn-subtle-bg: rgba(6, 17, 14, 0.45);
+            --btn-subtle-border: rgba(45, 90, 75, 0.4);
+            --btn-subtle-text: #6ee7b7;
+            --btn-subtle-hover-bg: rgba(16, 185, 129, 0.15);
+            --btn-subtle-hover-text: #ecfdf5;
+            --btn-secondary-bg: rgba(18, 38, 32, 0.6);
+            --btn-secondary-border: rgba(45, 90, 75, 0.4);
+            --btn-secondary-text: #d1fae5;
+            --btn-secondary-hover-bg: rgba(16, 185, 129, 0.18);
+
+            /* Upload Button */
+            --upload-btn-bg: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+            --upload-btn-border: #10b981;
+            --upload-btn-text: #a7f3d0;
+            --upload-btn-hover-bg: linear-gradient(135deg, rgba(16, 185, 129, 0.28), rgba(5, 150, 105, 0.2));
+            --upload-btn-hover-border: #34d399;
+            --upload-btn-hover-text: #ffffff;
+
+            /* Floating Action Bar & Action Chips */
+            --actions-bar-bg: rgba(12, 27, 22, 0.96);
+            --actions-bar-border: rgba(45, 90, 75, 0.45);
+            --actions-bar-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+            --chip-bg: rgba(18, 38, 32, 0.6);
+            --chip-border: rgba(45, 90, 75, 0.4);
+            --chip-text: #6ee7b7;
+            --chip-hover-bg: rgba(16, 185, 129, 0.2);
+            --chip-hover-text: #ecfdf5;
+            --chip-hover-border: #10b981;
+            --chip-chat-bg: rgba(16, 185, 129, 0.2);
+            --chip-chat-border: rgba(16, 185, 129, 0.45);
+            --chip-chat-text: #a7f3d0;
+            --chip-chat-hover-bg: #10b981;
+            --chip-chat-hover-text: #ffffff;
+        }
+        body[data-theme="forest"] .doc-card-title,
+        body[data-theme="forest"] .header-doc-title,
+        body[data-theme="forest"] .empty-title,
+        body[data-theme="forest"] .modal-title,
+        body[data-theme="forest"] .chapter-notes-title {
+            color: #ecfdf5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Top Ambient Glow */
+        .ambient-glow {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.03) 50%, transparent 70%);
+            top: -250px;
+            right: 15%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* -------------------------------------------------------------
+           Markdown Tables & Content Typography Styling
+           ------------------------------------------------------------- */
+        .md-table-wrapper {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            margin: 12px 0;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+            background: rgba(15, 23, 42, 0.4);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .md-table-wrapper table.md-table,
+        table.md-table,
+        .para-english table,
+        .para-chinese-quote table,
+        .note-card-content table,
+        .bubble table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+            line-height: 1.5;
+            text-align: left;
+            margin: 0;
+        }
+
+        .md-table th,
+        table th {
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text-main, #f8fafc);
+            font-weight: 700;
+            padding: 9px 13px;
+            border-bottom: 2px solid var(--glass-border, rgba(255, 255, 255, 0.15));
+            border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+            white-space: nowrap;
+        }
+
+        .md-table th:last-child,
+        table th:last-child {
+            border-right: none;
+        }
+
+        .md-table td,
+        table td {
+            padding: 8px 13px;
+            border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+            border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.06));
+            color: var(--text-main, #e2e8f0);
+            vertical-align: top;
+        }
+
+        .md-table td:last-child,
+        table td:last-child {
+            border-right: none;
+        }
+
+        .md-table tbody tr:nth-child(even),
+        table tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .md-table tbody tr:hover,
+        table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        .md-table tbody tr:last-child td,
+        table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .md-table-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+        .md-table-wrapper::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .md-table-wrapper::-webkit-scrollbar-thumb {
+            background: var(--glass-border, rgba(255, 255, 255, 0.15));
+            border-radius: 3px;
+        }
+        .md-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary, #6366f1);
+        }
+
+        /* Light/Paper themes adaptation */
+        body[data-theme="paper"] .md-table-wrapper,
+        body[data-theme="light"] .md-table-wrapper {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+        body[data-theme="paper"] .md-table th,
+        body[data-theme="light"] .md-table th {
+            background: rgba(0, 0, 0, 0.04);
+            border-bottom-color: rgba(0, 0, 0, 0.15);
+            border-right-color: rgba(0, 0, 0, 0.06);
+            color: #1e293b;
+        }
+        body[data-theme="paper"] .md-table td,
+        body[data-theme="light"] .md-table td {
+            border-bottom-color: rgba(0, 0, 0, 0.06);
+            border-right-color: rgba(0, 0, 0, 0.06);
+            color: #334155;
+        }
+        body[data-theme="paper"] .md-table tbody tr:nth-child(even),
+        body[data-theme="light"] .md-table tbody tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.02);
+        }
+        body[data-theme="paper"] .md-table tbody tr:hover,
+        body[data-theme="light"] .md-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.06);
+        }
+

@@ -1,0 +1,4196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SM-2 闪卡记忆中心 · Omnididact</title>
+    <link rel="icon" type="image/svg+xml" href="/static/brand/flashcard_icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0a0e17;
+            --bg-gradient: linear-gradient(135deg, #0a0e17 0%, #101626 100%);
+            --header-bg: rgba(15, 23, 42, 0.82);
+            --card-bg: rgba(30, 41, 59, 0.55);
+            --card-hover-bg: rgba(30, 41, 59, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-border-active: rgba(99, 102, 241, 0.6);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #6366f1;
+            --accent-primary-hover: #4f46e5;
+            --accent-secondary: #a855f7;
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --modal-bg: #1e293b;
+            --input-bg: rgba(0, 0, 0, 0.35);
+            --flashcard-front-bg: #1e293b;
+            --flashcard-back-bg: #0f172a;
+            --cloze-mask-bg: rgba(99, 102, 241, 0.25);
+            --cloze-mask-border: rgba(99, 102, 241, 0.6);
+            --cloze-mask-text: #a5b4fc;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        body.theme-white {
+            --bg-base: #f8fafc;
+            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            --header-bg: rgba(255, 255, 255, 0.92);
+            --card-bg: #ffffff;
+            --card-hover-bg: #f8fafc;
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --glass-border-active: rgba(79, 70, 229, 0.5);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-primary: #4f46e5;
+            --accent-primary-hover: #4338ca;
+            --accent-secondary: #7c3aed;
+            --accent-glow: rgba(79, 70, 229, 0.15);
+            --modal-bg: #ffffff;
+            --input-bg: #f1f5f9;
+            --flashcard-front-bg: #ffffff;
+            --flashcard-back-bg: #f8fafc;
+            --cloze-mask-bg: rgba(79, 70, 229, 0.12);
+            --cloze-mask-border: rgba(79, 70, 229, 0.4);
+            --cloze-mask-text: #4338ca;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #2563eb;
+        }
+
+        body.theme-sepia {
+            --bg-base: #f5eedc;
+            --bg-gradient: linear-gradient(135deg, #f5eedc 0%, #ede3cc 100%);
+            --header-bg: rgba(245, 238, 220, 0.92);
+            --card-bg: #faf4e6;
+            --card-hover-bg: #fdfbf7;
+            --glass-border: rgba(120, 113, 108, 0.18);
+            --glass-border-active: rgba(180, 83, 9, 0.6);
+            --text-main: #292524;
+            --text-muted: #78716c;
+            --accent-primary: #b45309;
+            --accent-primary-hover: #92400e;
+            --accent-secondary: #d97706;
+            --accent-glow: rgba(180, 83, 9, 0.15);
+            --modal-bg: #faf4e6;
+            --input-bg: #ede3cc;
+            --flashcard-front-bg: #fffdf9;
+            --flashcard-back-bg: #f5eedc;
+            --cloze-mask-bg: rgba(180, 83, 9, 0.14);
+            --cloze-mask-border: rgba(180, 83, 9, 0.5);
+            --cloze-mask-text: #92400e;
+            --success-color: #047857;
+            --warning-color: #b45309;
+            --danger-color: #b91c1c;
+            --info-color: #0369a1;
+        }
+
+        body.theme-forest {
+            --bg-base: #091712;
+            --bg-gradient: linear-gradient(135deg, #091712 0%, #11251e 100%);
+            --header-bg: rgba(9, 23, 18, 0.88);
+            --card-bg: rgba(18, 38, 32, 0.65);
+            --card-hover-bg: rgba(18, 38, 32, 0.9);
+            --glass-border: rgba(110, 231, 183, 0.15);
+            --glass-border-active: rgba(16, 185, 129, 0.6);
+            --text-main: #ecfdf5;
+            --text-muted: #6ee7b7;
+            --accent-primary: #10b981;
+            --accent-primary-hover: #059669;
+            --accent-secondary: #34d399;
+            --accent-glow: rgba(16, 185, 129, 0.25);
+            --modal-bg: #11251e;
+            --input-bg: rgba(0, 0, 0, 0.4);
+            --flashcard-front-bg: #12261f;
+            --flashcard-back-bg: #091712;
+            --cloze-mask-bg: rgba(16, 185, 129, 0.2);
+            --cloze-mask-border: rgba(16, 185, 129, 0.5);
+            --cloze-mask-text: #6ee7b7;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #f87171;
+            --info-color: #38bdf8;
+        }
+
+        .flashcard-brand-icon,
+        img[src*="flashcard_icon"] {
+            transition: filter 0.25s ease;
+        }
+        body.theme-white .flashcard-brand-icon,
+        body.theme-white img[src*="flashcard_icon"] {
+            filter: contrast(1.7) brightness(0.22);
+        }
+        body.theme-sepia .flashcard-brand-icon,
+        body.theme-sepia img[src*="flashcard_icon"] {
+            filter: sepia(0.9) hue-rotate(-25deg) brightness(0.38) contrast(1.35);
+        }
+        body.theme-forest .flashcard-brand-icon,
+        body.theme-forest img[src*="flashcard_icon"] {
+            filter: hue-rotate(85deg) brightness(0.95) saturate(0.7);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* Top Navigation Bar */
+        .top-navbar {
+            height: 64px;
+            background: var(--header-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--card-bg);
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            transform: translateX(-2px);
+        }
+
+        .nav-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title {
+            font-size: 17px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .doc-badge {
+            background: var(--cloze-mask-bg);
+            border: 1px solid var(--cloze-mask-border);
+            color: var(--cloze-mask-text);
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            max-width: 240px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .theme-select {
+            padding: 7px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Tab Navigation Bar */
+        .tabs-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .tab-btn {
+            padding: 9px 20px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: var(--card-bg);
+        }
+
+        .tab-btn.active {
+            color: #ffffff;
+            background: var(--accent-primary);
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+
+        body.theme-white .tab-btn.active {
+            color: #ffffff;
+        }
+
+        .tab-badge {
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: inherit;
+        }
+
+        /* Main Container */
+        .main-content {
+            flex: 1;
+            max-width: 1240px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px 28px 60px;
+            box-sizing: border-box;
+            transition: max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Toolbar & Filters */
+        .filter-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 24px;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            padding: 14px 18px;
+            border-radius: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .search-input {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 13px;
+            min-width: 220px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .action-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: #ffffff;
+            box-shadow: 0 2px 8px var(--accent-glow);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            border-color: var(--glass-border);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-color);
+            color: #ffffff;
+        }
+
+        /* Card Grid Layout */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 18px;
+        }
+
+        .card-item {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            height: 290px;
+            box-sizing: border-box;
+        }
+
+        .card-item:hover {
+            border-color: var(--glass-border-active);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .card-badges {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .badge-qa {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .badge-cloze {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-chapter {
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--text-muted);
+            border: 1px solid var(--glass-border);
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .badge-error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-state-new {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        .badge-state-mastered {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+        }
+
+        .badge-state-learning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+        }
+
+        .card-item-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding-right: 4px;
+        }
+
+        .card-item-body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .card-item-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .card-item-body::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+
+        .card-item-body::-webkit-scrollbar-thumb:hover {
+            background: var(--glass-border-active);
+        }
+
+        .card-front-text {
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1.55;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            font-family: 'Noto Serif SC', serif;
+            word-break: break-word;
+        }
+
+        .card-back-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            background: var(--input-bg);
+            padding: 10px 12px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-primary);
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 10px;
+        }
+
+        .tag-chip {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .card-item-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 10px;
+            border-top: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        .card-time {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--card-hover-bg);
+            color: var(--text-main);
+            border-color: var(--glass-border);
+        }
+
+        /* Cloze Blanks Preview Styling */
+        .cloze-blank {
+            display: inline-block;
+            background: var(--cloze-mask-bg);
+            color: var(--cloze-mask-text);
+            border: 1px solid var(--cloze-mask-border);
+            padding: 1px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            margin: 0 3px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .cloze-blank.revealed {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.6);
+            color: var(--success-color);
+        }
+
+        /* 3D Flip Study Mode Stage */
+        .study-stage {
+            max-width: 760px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .study-progress-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .progress-bar-container {
+            flex: 1;
+            margin: 0 20px;
+            height: 8px;
+            background: var(--input-bg);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* 3D Flip Card Container */
+        .flip-scene {
+            perspective: 1200px;
+            width: 100%;
+            height: clamp(400px, 58vh, 560px);
+            min-height: 380px;
+            position: relative;
+        }
+
+        .flip-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flip-card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 18px;
+            border: 1px solid var(--glass-border);
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+            transition: border-color 0.3s;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .card-face-front {
+            background: var(--flashcard-front-bg);
+        }
+
+        .card-face-back {
+            background: var(--flashcard-back-bg);
+            transform: rotateY(180deg);
+        }
+
+        .card-face-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        .card-face-body {
+            flex: 1;
+            min-height: 0; /* allows child to shrink and scroll inside flex container */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 14px 4px;
+            overflow-y: auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .study-prompt-text {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.6;
+            color: var(--text-main);
+            font-family: 'Noto Serif SC', serif;
+            max-width: 95%;
+            word-break: break-word;
+            overflow-y: auto;
+            max-height: 100%;
+            margin: auto 0;
+            padding: 4px;
+        }
+
+        .study-answer-text {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-main);
+            text-align: left;
+            width: 100%;
+            max-width: 95%;
+            background: var(--input-bg);
+            padding: 16px 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent-primary);
+            word-break: break-word;
+            overflow-y: auto;
+            max-height: 100%;
+            margin: auto 0;
+            box-sizing: border-box;
+        }
+
+        .card-face-footer {
+            flex-shrink: 0;
+            padding-top: 10px;
+        }
+
+        .study-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Rating Actions Bar */
+        .rating-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 5;
+        }
+
+        .rating-btn {
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .rating-btn span {
+            font-size: 11px;
+            font-weight: 400;
+            opacity: 0.8;
+        }
+
+        .btn-again {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: var(--danger-color);
+        }
+        .btn-again:hover {
+            background: var(--danger-color);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .btn-hard {
+            background: rgba(245, 158, 11, 0.15);
+            border-color: rgba(245, 158, 11, 0.4);
+            color: var(--warning-color);
+        }
+        .btn-hard:hover {
+            background: var(--warning-color);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .btn-good {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: var(--info-color);
+        }
+        .btn-good:hover {
+            background: var(--info-color);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .btn-easy {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.4);
+            color: var(--success-color);
+        }
+        .btn-easy:hover {
+            background: var(--success-color);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        /* Statistics Tiles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        /* Modal Dialog */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--modal-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 820px;
+            padding: 28px;
+            box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+            animation: modalPop 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.96); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+            line-height: 1.5;
+        }
+
+        .type-selector-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--input-bg);
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .type-btn.active {
+            border-color: var(--accent-primary);
+            background: var(--cloze-mask-bg);
+            color: var(--text-main);
+        }
+
+        .cloze-helper-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .helper-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--accent-primary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .helper-btn:hover {
+            background: var(--cloze-mask-bg);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            background: #1e293b;
+            color: #ffffff;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.7;
+        }
+
+        .empty-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        /* Table styles for stats */
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .stats-table th, .stats-table td {
+            padding: 12px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 13px;
+        }
+
+        /* ========================================================== */
+        /* Card Chat Assistant Drawer & Styles */
+        /* ========================================================== */
+        :root {
+            --card-chat-width: 430px;
+            --chat-font-size: 14px;
+        }
+
+        /* Prevent layout stutter during drawer drag */
+        body.card-chat-resizing .top-navbar,
+        body.card-chat-resizing .tabs-header,
+        body.card-chat-resizing .main-content,
+        body.card-chat-resizing .card-chat-drawer,
+        body.card-chat-resizing .study-stage {
+            transition: none !important;
+        }
+
+        @media (min-width: 769px) {
+            body.card-chat-open .top-navbar {
+                padding-right: calc(var(--card-chat-width) + 28px);
+                transition: padding-right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            body.card-chat-open .tabs-header {
+                width: calc(100% - var(--card-chat-width));
+                margin-right: var(--card-chat-width);
+                box-sizing: border-box;
+                transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), margin 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            body.card-chat-open .main-content {
+                max-width: calc(100% - var(--card-chat-width));
+                width: calc(100% - var(--card-chat-width));
+                margin-left: 0;
+                margin-right: auto;
+                padding-left: 28px;
+                padding-right: 28px;
+                box-sizing: border-box;
+            }
+
+            #pane-study.drawer-open .study-stage {
+                margin: 0 auto;
+                max-width: 760px;
+                width: 100%;
+            }
+        }
+
+        .card-chat-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: var(--card-chat-width);
+            min-width: 340px;
+            max-width: 92vw;
+            background: var(--card-bg);
+            border-left: 1px solid var(--glass-border);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.22);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-chat-drawer.resizing {
+            transition: none !important;
+            user-select: none;
+        }
+
+        .card-chat-resizer {
+            position: absolute;
+            top: 0;
+            left: -4px;
+            bottom: 0;
+            width: 8px;
+            cursor: ew-resize;
+            z-index: 50;
+            transition: background 0.2s;
+        }
+
+        .card-chat-resizer:hover,
+        .card-chat-drawer.resizing .card-chat-resizer {
+            background: rgba(99, 102, 241, 0.4);
+        }
+
+        .card-chat-drawer.open {
+            transform: translateX(0);
+        }
+
+        .card-chat-header {
+            padding: 14px 18px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.04);
+            flex-shrink: 0;
+        }
+
+        .card-chat-model-bar {
+            padding: 0 16px 10px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.04);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .card-chat-model-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            width: 100%;
+            height: 30px;
+            padding: 0 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .card-chat-model-pill:hover {
+            border-color: var(--accent-primary);
+            background: var(--input-bg);
+        }
+
+        .card-chat-model-popover {
+            position: absolute;
+            top: calc(100% - 2px);
+            left: 16px;
+            right: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            padding: 12px;
+            z-index: 50;
+            display: none;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .card-chat-model-popover.show {
+            display: block;
+        }
+
+        .popover-provider-pills {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .popover-provider-btn {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--glass-border);
+            background: var(--input-bg);
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+
+        .popover-provider-btn.active {
+            background: var(--accent-primary);
+            color: #ffffff;
+            border-color: var(--accent-primary);
+        }
+
+        .popover-model-list {
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .popover-model-item {
+            padding: 6px 8px;
+            font-size: 11px;
+            border-radius: 6px;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.12s;
+        }
+
+        .popover-model-item:hover {
+            background: var(--input-bg);
+        }
+
+        .popover-model-item.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .card-chat-prompts-bar {
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--glass-border);
+            background: var(--input-bg);
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+
+        .card-chat-prompts-scroll {
+            display: flex;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .prompt-chip-btn {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            border: 1px solid var(--glass-border);
+            background: var(--card-bg);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+
+        .prompt-chip-btn:hover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--accent-primary);
+            transform: translateY(-1px);
+        }
+
+        .btn-chat-chip {
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            color: var(--accent-primary);
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .btn-chat-chip:hover {
+            background: rgba(99, 102, 241, 0.18);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.15);
+        }
+
+        #btn-toggle-card-chat {
+            border-radius: 9999px !important;
+            padding: 3px 11px !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+            background: rgba(99, 102, 241, 0.1) !important;
+            color: var(--accent-primary) !important;
+            border: 1px solid rgba(99, 102, 241, 0.3) !important;
+            transition: all 0.15s ease-in-out !important;
+        }
+
+        #btn-toggle-card-chat:hover,
+        #btn-toggle-card-chat.active {
+            background: var(--accent-primary) !important;
+            color: #ffffff !important;
+            border-color: var(--accent-primary) !important;
+        }
+
+        .card-chat-messages {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .card-chat-messages::-webkit-scrollbar {
+            width: 5px;
+        }
+        .card-chat-messages::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+
+        .card-chat-welcome {
+            text-align: center;
+            padding: 28px 16px;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px dashed var(--glass-border);
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .card-bubble {
+            max-width: 88%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: var(--chat-font-size, 13px);
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .card-bubble.user {
+            align-self: flex-end;
+            background: var(--accent-primary);
+            color: #ffffff;
+            border-bottom-right-radius: 2px;
+        }
+
+        .card-bubble.assistant {
+            align-self: flex-start;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            border-bottom-left-radius: 2px;
+        }
+
+        .card-bubble-divider {
+            text-align: center;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .card-bubble-divider span {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            padding: 2px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            display: inline-block;
+        }
+
+        .card-chat-input-bar {
+            padding: 12px 14px;
+            border-top: 1px solid var(--glass-border);
+            background: var(--card-bg);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .card-chat-textarea {
+            flex: 1;
+            height: 38px;
+            min-height: 38px;
+            max-height: 100px;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 9px 10px;
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--text-main);
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .card-chat-textarea:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .card-chat-send-btn {
+            height: 38px;
+            padding: 0 14px;
+            font-size: 13px;
+            font-weight: 500;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            box-sizing: border-box;
+        }
+
+        .card-chat-send-btn.stopping {
+            background: #ef4444 !important;
+            border-color: #ef4444 !important;
+            color: #ffffff !important;
+        }
+
+        .card-chat-send-btn.stopping:hover {
+            background: #dc2626 !important;
+            border-color: #dc2626 !important;
+        }
+
+        /* Markdown Tables & Content */
+        .md-table-wrapper {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(15, 23, 42, 0.4);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .md-table-wrapper table.md-table,
+        .card-front-text table,
+        .card-back-text table,
+        .study-prompt-text table,
+        .study-answer-text table,
+        .card-chat-bubble table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            line-height: 1.45;
+            text-align: left;
+            margin: 0;
+        }
+
+        .md-table th,
+        .card-item table th,
+        .card-face table th,
+        .card-chat-bubble table th {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            font-weight: 700;
+            padding: 7px 11px;
+            border-bottom: 2px solid var(--glass-border);
+            border-right: 1px solid var(--glass-border);
+            white-space: nowrap;
+        }
+        .md-table th:last-child,
+        .card-item table th:last-child,
+        .card-face table th:last-child,
+        .card-chat-bubble table th:last-child {
+            border-right: none;
+        }
+
+        .md-table td,
+        .card-item table td,
+        .card-face table td,
+        .card-chat-bubble table td {
+            padding: 6px 11px;
+            border-bottom: 1px solid var(--glass-border);
+            border-right: 1px solid var(--glass-border);
+            color: var(--text-main);
+            vertical-align: top;
+        }
+        .md-table td:last-child,
+        .card-item table td:last-child,
+        .card-face table td:last-child,
+        .card-chat-bubble table td:last-child {
+            border-right: none;
+        }
+
+        .md-table tbody tr:nth-child(even),
+        .card-item table tbody tr:nth-child(even),
+        .card-face table tbody tr:nth-child(even),
+        .card-chat-bubble table tbody tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .md-table tbody tr:hover,
+        .card-item table tbody tr:hover,
+        .card-face table tbody tr:hover,
+        .card-chat-bubble table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.08);
+        }
+        .md-table tbody tr:last-child td,
+        .card-item table tbody tr:last-child td,
+        .card-face table tbody tr:last-child td,
+        .card-chat-bubble table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ========================================================== */
+        /* Mobile Responsive Breakpoints (Phone & Tablet Support)      */
+        /* ========================================================== */
+        @media (max-width: 768px) {
+            .top-navbar {
+                padding: 8px 12px;
+                gap: 8px;
+            }
+            .nav-left {
+                min-width: 0;
+                flex: 1 1 auto;
+                gap: 8px;
+            }
+            .back-btn {
+                padding: 4px 8px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+            .nav-title-group {
+                gap: 4px;
+            }
+            .page-title {
+                font-size: 13.5px;
+            }
+            .doc-badge {
+                max-width: 120px;
+                font-size: 11px;
+                padding: 2px 6px;
+            }
+            .theme-select {
+                padding: 5px 8px;
+                font-size: 12px;
+            }
+
+            /* Horizontal touch-scrollable tabs header */
+            .tabs-header {
+                justify-content: flex-start;
+                padding: 6px 10px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                white-space: nowrap;
+                gap: 6px;
+            }
+            .tabs-header::-webkit-scrollbar {
+                display: none;
+            }
+            .tab-btn {
+                padding: 7px 12px;
+                font-size: 13px;
+                flex-shrink: 0;
+            }
+
+            /* Main Workspace Area */
+            .main-content {
+                padding: 12px 10px 48px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            /* Toolbar Stacking */
+            .filter-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 12px;
+                margin-bottom: 16px;
+            }
+            .filter-group {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .search-input {
+                width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+                font-size: 13px;
+            }
+            .filter-select {
+                width: 100%;
+                box-sizing: border-box;
+                font-size: 13px;
+            }
+            .action-group {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .action-group .btn {
+                justify-content: center;
+                padding: 8px 6px;
+                font-size: 12px;
+                text-align: center;
+            }
+
+            /* Single-column cards grid */
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .card-item {
+                height: auto;
+                min-height: 230px;
+                padding: 14px;
+            }
+
+            /* Study Stage */
+            .study-stage {
+                width: 100%;
+                max-width: 100%;
+                gap: 12px;
+            }
+            .study-progress-card {
+                padding: 10px 12px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .progress-bar-container {
+                order: 3;
+                width: 100%;
+                flex: 0 0 100%;
+                margin: 6px 0 0 0;
+            }
+            .flip-scene {
+                height: clamp(320px, 52vh, 460px);
+                min-height: 300px;
+            }
+            .card-face {
+                padding: 16px 14px;
+                border-radius: 14px;
+            }
+            .study-prompt-text {
+                font-size: 16.5px;
+                line-height: 1.55;
+                max-width: 100%;
+            }
+            .study-answer-text {
+                font-size: 14px;
+                padding: 12px 14px;
+                max-width: 100%;
+            }
+            .study-hint {
+                display: none; /* keyboard hints not needed on mobile touch screen */
+            }
+            .card-face > div:last-child {
+                flex-direction: column;
+                gap: 6px;
+                align-items: flex-start !important;
+            }
+
+            /* 2-column Touch Friendly Rating Buttons */
+            .rating-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                margin-top: 8px;
+            }
+            .rating-btn {
+                padding: 10px 6px;
+                font-size: 13px;
+                min-height: 48px;
+                border-radius: 10px;
+            }
+            .rating-btn span {
+                font-size: 10.5px;
+            }
+
+            /* Full Screen AI Drawer on Mobile */
+            .card-chat-drawer {
+                width: 100%;
+                max-width: 100vw;
+                border-left: none;
+            }
+            .card-chat-header {
+                padding: 10px 14px;
+            }
+            .card-chat-input-bar {
+                padding: 8px 10px;
+            }
+
+            /* Stats Grid */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+            .stat-card {
+                padding: 12px;
+                gap: 4px;
+            }
+            .stat-value {
+                font-size: 22px;
+            }
+            .stat-label {
+                font-size: 11.5px;
+            }
+            .stats-table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                font-size: 12px;
+            }
+            .stats-table th, .stats-table td {
+                padding: 8px 10px;
+                white-space: nowrap;
+            }
+
+            /* Settings Tab */
+            #pane-settings > div {
+                padding: 18px 14px !important;
+                border-radius: 12px;
+            }
+
+            /* Modal Dialogs */
+            .modal-overlay {
+                padding: 12px;
+            }
+            .modal-content {
+                padding: 18px 14px;
+                border-radius: 14px;
+                max-height: 90vh;
+                overflow-y: auto;
+                width: 95%;
+            }
+            .modal-header {
+                margin-bottom: 14px;
+            }
+            .modal-title {
+                font-size: 16px;
+            }
+            .form-group {
+                margin-bottom: 14px;
+            }
+            .form-input, .form-textarea, .form-select {
+                font-size: 14px;
+                padding: 8px 10px;
+            }
+            .type-btn {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-title {
+                display: none;
+            }
+            .doc-badge {
+                max-width: 140px;
+            }
+            .flip-scene {
+                height: clamp(280px, 50vh, 420px);
+                min-height: 270px;
+            }
+            .card-face {
+                padding: 12px 10px;
+            }
+            .study-prompt-text {
+                font-size: 15px;
+            }
+            .study-answer-text {
+                font-size: 13.5px;
+                padding: 10px 10px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script src="/static/js/marked.min.js"></script>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="top-navbar">
+        <div class="nav-left">
+            <a href="#" class="back-btn" id="btn-back-to-study">
+                <span>←</span> 返回研学阅读
+            </a>
+            <div class="nav-title-group">
+                <div class="page-title" style="display: flex; align-items: center; gap: 8px;">
+                    <img src="/static/brand/flashcard_icon.svg" alt="Flashcards" style="width: 22px; height: 22px; border-radius: 6px; vertical-align: middle;" />
+                    <span>SM-2 闪卡记忆中心</span>
+                </div>
+                <div class="doc-badge" id="top-doc-title">正在载入文档...</div>
+            </div>
+        </div>
+        <div class="nav-right">
+            <select class="theme-select" id="theme-selector" onchange="changeTheme(this.value)">
+                <option value="dark">🌙 深邃夜色</option>
+                <option value="white">☀️ 纯净雅白</option>
+                <option value="sepia">📜 墨玉羊皮</option>
+                <option value="forest">🍵 雅致墨绿</option>
+            </select>
+        </div>
+    </header>
+
+    <!-- Tab Navigation Bar -->
+    <nav class="tabs-header">
+        <button class="tab-btn active" onclick="switchTab('manage')">
+            <span>🗂️ 卡片管理</span>
+            <span class="tab-badge" id="badge-manage-count">0</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('study')">
+            <span>🧠 智能自测</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('errors')">
+            <span>🎯 错题攻坚</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('stats')">
+            <span>📊 学情统计</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('settings')">
+            <span>🎨 偏好设置</span>
+        </button>
+    </nav>
+
+    <!-- Main Workspace Area -->
+    <main class="main-content">
+
+        <!-- Tab 1: 卡片管理 (Manage) -->
+        <section class="tab-pane active" id="pane-manage">
+            <div class="filter-toolbar">
+                <div class="filter-group">
+                    <input type="text" class="search-input" id="search-keyword" placeholder="搜索题目、答案或标签..." oninput="handleSearchInput()">
+                    <select class="filter-select" id="filter-type" onchange="loadCardsList()">
+                        <option value="all">全部题型</option>
+                        <option value="qa">问答卡 (QA)</option>
+                        <option value="cloze">镂空填空 (Cloze)</option>
+                    </select>
+                    <select class="filter-select" id="filter-chapter" onchange="loadCardsList()">
+                        <option value="all">全章节</option>
+                    </select>
+                </div>
+                <div class="action-group">
+                    <button class="btn btn-secondary" onclick="exportCardsJson()">📤 导出 JSON</button>
+                    <button class="btn btn-secondary" onclick="exportOfflineFlashcardHtml()" title="导出可独立运行的静态离线闪卡学习页 (适用于 Nginx / Cloudflare Pages)">🌐 导出离线 HTML</button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('file-import-json').click()">📥 导入 JSON</button>
+                    <input type="file" id="file-import-json" accept=".json" style="display: none;" onchange="handleImportJson(event)">
+                    <button class="btn btn-primary" onclick="openCreateCardModal()">+ 新建闪卡</button>
+                </div>
+            </div>
+
+            <!-- Cards Grid -->
+            <div class="cards-grid" id="cards-grid-container">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- Tab 2: 智能自测 (Study Mode) -->
+        <section class="tab-pane" id="pane-study">
+            <div class="study-stage">
+                <!-- Active Card Studying View -->
+                <div id="study-active-view">
+                    <!-- Study Progress Bar -->
+                    <div class="study-progress-card">
+                        <div style="font-size: 14px; font-weight: 600;" id="study-index-label">卡片 1 / 10</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="study-progress-bar"></div>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="restartStudySession()">🔄 重新开始</button>
+                            <button class="btn btn-primary" id="btn-toggle-card-chat" style="padding: 4px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;" onclick="toggleCardChatDrawer()" title="展开/收起 AI 助教答疑 (快捷键 C)">
+                                <span>🤖 助教答疑</span>
+                                <kbd style="font-size: 10px; opacity: 0.85; background: rgba(0,0,0,0.2); padding: 1px 5px; border-radius: 4px; font-family: monospace;">C</kbd>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3D Flip Card Scene -->
+                    <div class="flip-scene" id="flip-scene">
+                        <div class="flip-card" id="active-flip-card" onclick="handleCardFlipClick(event)">
+                            <!-- Front Face -->
+                            <div class="card-face card-face-front">
+                                <div class="card-face-header">
+                                    <div class="card-badges">
+                                        <span class="badge badge-qa" id="study-front-type">QA</span>
+                                        <span class="badge badge-chapter" id="study-front-chapter">Chapter</span>
+                                    </div>
+                                    <div class="study-hint">
+                                        <span>按 [Space] 或点击翻面 ↻</span>
+                                    </div>
+                                </div>
+                                <div class="card-face-body">
+                                    <div class="study-prompt-text" id="study-front-text">题目加载中...</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 12px;">
+                                    <span id="study-card-stats-preview">已学 0 次</span>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <button class="btn-chat-chip" onclick="event.stopPropagation(); triggerCardChatPrompt('hint')" title="获取线索，不剧透答案">💡 启发线索</button>
+                                        <span>点击卡片查看答案</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Back Face -->
+                            <div class="card-face card-face-back">
+                                <div class="card-face-header">
+                                    <div class="card-badges">
+                                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">💡 参考答案与解析</span>
+                                    </div>
+                                    <div class="study-hint">
+                                        <span>按 1~4 快捷评分</span>
+                                    </div>
+                                </div>
+                                <div class="card-face-body">
+                                    <div class="study-answer-text" id="study-back-text">答案加载中...</div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 12px;">
+                                    <span>根据记忆难度评分：1=忘 2=难 3=记 4=熟</span>
+                                    <div style="display: flex; gap: 6px; align-items: center;">
+                                        <button class="btn-chat-chip" onclick="event.stopPropagation(); triggerCardChatPrompt('explain')" title="深入剖析考点原理">📖 深度解析</button>
+                                        <button class="btn-chat-chip" onclick="event.stopPropagation(); triggerCardChatPrompt('mnemonic')" title="联想记忆与速记口诀">🧠 巧记秘籍</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rating Actions -->
+                    <div class="rating-bar" id="rating-bar-container">
+                        <button class="rating-btn btn-again" onclick="rateCurrentCard(1)">
+                            [1] 忘记 / 再来
+                            <span>重置间隔 · 进错题</span>
+                        </button>
+                        <button class="rating-btn btn-hard" onclick="rateCurrentCard(2)">
+                            [2] 困难 / 模糊
+                            <span>微调间隔 · 强化</span>
+                        </button>
+                        <button class="rating-btn btn-good" onclick="rateCurrentCard(3)">
+                            [3] 良好 / 记得
+                            <span>标准间隔复习</span>
+                        </button>
+                        <button class="rating-btn btn-easy" onclick="rateCurrentCard(4)">
+                            [4] 熟练 / 掌握
+                            <span>跃升间隔 · 巩固</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Session Complete View (Shown when round finishes) -->
+                <div id="study-complete-view" style="display: none;">
+                    <div class="empty-state" style="padding: 50px 20px; background: var(--card-bg); border-radius: 18px; border: 1px solid var(--glass-border);">
+                        <div class="empty-icon">🏆</div>
+                        <div class="empty-title" style="font-size: 20px; margin-bottom: 8px;">恭喜！本轮闪卡自测已全部完成！</div>
+                        <div style="font-size: 14px; color: var(--text-muted); max-width: 480px; margin: 0 auto 24px; line-height: 1.6;">
+                            所有练习卡片的记忆状态与 SM-2 间隔复习周期均已同步至文档知识库中。
+                        </div>
+                        <div style="display: flex; justify-content: center; gap: 14px;">
+                            <button class="btn btn-secondary" onclick="restartStudySession()">🔄 再练一轮</button>
+                            <button class="btn btn-primary" onclick="switchTab('manage')">🗂️ 返回卡片管理</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty Queue View (Shown when no cards exist) -->
+                <div id="study-empty-view" style="display: none;">
+                    <div class="empty-state" style="padding: 50px 20px; background: var(--card-bg); border-radius: 18px; border: 1px solid var(--glass-border);">
+                        <div class="empty-icon">🎉</div>
+                        <div class="empty-title" id="study-empty-title">当前文档暂无可自测的闪卡</div>
+                        <div style="font-size: 13px; margin-top: 14px;">
+                            <button class="btn btn-primary" onclick="switchTab('manage')">🗂️ 返回卡片管理</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flashcard AI Assistant Drawer (Slide-over) -->
+            <div class="card-chat-drawer" id="card-chat-drawer">
+                <!-- Left Border Resize Handle -->
+                <div class="card-chat-resizer" id="card-chat-resizer" title="按住拖拽调整助教窗口宽度"></div>
+
+                <div class="card-chat-header">
+                    <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                        <span style="font-size: 16px;">🤖</span>
+                        <div style="min-width: 0;">
+                            <div style="font-size: 14px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">闪卡研学助教</div>
+                            <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="card-chat-target-badge">聚焦：卡片 1</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <button class="icon-btn" onclick="clearCardChatMessages()" title="清空本次对话">🧹</button>
+                        <button class="icon-btn" onclick="closeCardChatDrawer()" title="关闭助教 (Esc / C)">✕</button>
+                    </div>
+                </div>
+
+                <!-- Compact Provider | Model Selector Pill (Matching Paragraph Chat) -->
+                <div class="card-chat-model-bar">
+                    <button type="button" class="card-chat-model-pill" id="card-chat-model-pill-btn" onclick="toggleCardChatModelPopover()" title="切换对话服务商与模型">
+                        <div style="display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden;">
+                            <span style="font-size: 13px;">🖥️</span>
+                            <span style="font-weight: 600; font-size: 11px; white-space: nowrap;" id="card-chat-current-provider-name">服务商</span>
+                            <span style="opacity: 0.4; font-size: 11px;">｜</span>
+                            <span style="font-family: monospace; font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="card-chat-current-model-name">选择模型</span>
+                        </div>
+                        <span style="font-size: 10px; opacity: 0.6;">▾</span>
+                    </button>
+
+                    <!-- Popover Dropdown Panel -->
+                    <div class="card-chat-model-popover" id="card-chat-model-popover">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 11px; font-weight: 700; color: var(--text-main);">切换对话服务商与模型</span>
+                            <span style="font-size: 10px; color: var(--text-muted);">点选即生效</span>
+                        </div>
+                        <div class="popover-provider-pills" id="card-chat-provider-pills">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <div class="popover-model-list" id="card-chat-popover-models">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Hidden selects kept for backward compatibility and payload querying -->
+                    <select id="card-chat-provider-select" style="display: none;"></select>
+                    <select id="card-chat-model-select" style="display: none;"></select>
+                </div>
+
+                <!-- Quick Prompts Toolbar -->
+                <div class="card-chat-prompts-bar">
+                    <div class="card-chat-prompts-scroll" id="card-chat-quick-prompts">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="card-chat-messages" id="card-chat-messages">
+                    <div class="card-chat-welcome">
+                        <div style="font-size: 28px; margin-bottom: 8px;">🎓</div>
+                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text-main);">闪卡研学助教已就绪</div>
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                            卡片正面想不起？点击【💡 启发线索】获取引导；<br>
+                            翻看答案有疑惑？点击【📖 深度解析】或【🧠 巧记秘籍】深入研学。<br>
+                            <span style="opacity: 0.7; font-size: 11px;">（💡 对话按卡片独立本地缓存）</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Row -->
+                <div class="card-chat-input-bar">
+                    <textarea class="card-chat-textarea" id="card-chat-input" placeholder="输入关于当前卡片的疑问 (Enter 发送, Shift+Enter 换行)..." rows="1" onkeydown="handleCardChatKeydown(event)"></textarea>
+                    <button class="btn btn-primary card-chat-send-btn" id="card-chat-send-btn" onclick="submitCardChatMessage()">
+                        <span>发送</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: 错题攻坚 (Errors) -->
+        <section class="tab-pane" id="pane-errors">
+            <div class="filter-toolbar">
+                <div class="filter-group">
+                    <div style="font-size: 14px; font-weight: 700; color: var(--danger-color);" id="errors-count-summary">
+                        🎯 待攻坚错题：0 张
+                    </div>
+                </div>
+                <div class="action-group">
+                    <button class="btn btn-secondary" onclick="clearAllErrors()">🔄 清除全部错题标记</button>
+                    <button class="btn btn-primary" onclick="startErrorDrillSession()">🚀 立即开始错题攻坚</button>
+                </div>
+            </div>
+            <div class="cards-grid" id="error-cards-grid-container">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- Tab 4: 学情统计 (Stats) -->
+        <section class="tab-pane" id="pane-stats">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">总卡片数</div>
+                    <div class="stat-value" id="stat-total">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">今日待复习</div>
+                    <div class="stat-value" style="color: var(--warning-color);" id="stat-due">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">已熟练掌握</div>
+                    <div class="stat-value" style="color: var(--success-color);" id="stat-mastered">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">易错薄弱卡</div>
+                    <div class="stat-value" style="color: var(--danger-color);" id="stat-error">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">综合掌握率</div>
+                    <div class="stat-value" style="color: var(--accent-primary);" id="stat-rate">0%</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 12px;">📚 各章节卡片分布与掌握概况</h3>
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>章节编号 / 名称</th>
+                            <th>闪卡总数</th>
+                            <th>已掌握卡数</th>
+                            <th>错题记录</th>
+                            <th>掌握率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chapter-stats-tbody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Tab 5: 偏好设置 (Settings) -->
+        <section class="tab-pane" id="pane-settings">
+            <div style="max-width: 600px; margin: 0 auto; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 28px;">
+                <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 20px;">🎨 闪卡学习个性化设置</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">卡片正面字体大小</label>
+                    <select class="form-select" id="pref-font-size" onchange="savePreferences()">
+                        <option value="small">标准 (18px)</option>
+                        <option value="medium" selected>适中舒适 (22px)</option>
+                        <option value="large">清晰特大 (26px)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">镂空填空 (Cloze) 视觉样式</label>
+                    <select class="form-select" id="pref-cloze-style" onchange="savePreferences()">
+                        <option value="badge" selected>圆角色块胶囊 [ 遮罩 ]</option>
+                        <option value="underline">下划线填空 [ _________ ]</option>
+                        <option value="dotted">虚线框 [ ········· ]</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">翻转过渡动画</label>
+                    <select class="form-select" id="pref-flip-anim" onchange="savePreferences()">
+                        <option value="flip3d" selected>3D 立体平滑翻转 (0.6s)</option>
+                        <option value="instant">极速瞬间切换 (无动画)</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 24px; color: var(--text-muted); font-size: 12px; line-height: 1.6;">
+                    💡 提示：本页配置自动关联并隔离保存在当前文档目录下，更换文档后自动继承对应文档的闪卡偏好。
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Create / Edit Card Modal -->
+    <div class="modal-overlay" id="card-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-card-title">新建闪卡</div>
+                <button class="modal-close-btn" onclick="closeCardModal()">✕</button>
+            </div>
+
+            <div class="type-selector-tabs">
+                <div class="type-btn active" id="type-btn-qa" onclick="selectCardType('qa')">
+                    📝 问答卡 (QA)
+                </div>
+                <div class="type-btn" id="type-btn-cloze" onclick="selectCardType('cloze')">
+                    🧩 镂空填空 (Cloze)
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" id="label-front-content">正面内容 (题目 / 考点概念)</label>
+                <textarea class="form-textarea" id="input-card-front" placeholder="例如：什么是隐含拒绝（Implicit Deny）？" style="height: 130px; min-height: 90px;"></textarea>
+                <div class="cloze-helper-bar" id="cloze-helper-box" style="display: none;">
+                    <span>提示：用 {{挖空词}} 标记填空，或选中文本后点击右侧按钮</span>
+                    <button class="helper-btn" type="button" onclick="wrapSelectedTextWithCloze()">✨ 设为镂空 {{...}}</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" id="label-back-content">反面内容 (答案 / 核心解析)</label>
+                <textarea class="form-textarea" id="input-card-back" placeholder="标准答案及解析..." style="height: 180px; min-height: 120px;"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">所属章节</label>
+                <select class="form-select" id="input-card-chapter">
+                    <option value="">未指定章节 (全篇通用)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">标签 (逗号分隔)</label>
+                <input type="text" class="form-input" id="input-card-tags" placeholder="例如：CISSP, 访问控制, 核心概念">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+                <button class="btn btn-secondary" id="btn-modal-cancel" onclick="closeCardModal()">取消</button>
+                <button class="btn btn-primary" id="btn-modal-save" onclick="saveCardForm()">保存闪卡</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Component -->
+    <div class="toast" id="toast-msg"></div>
+
+    <script>
+        // Global State
+        const urlParams = new URLSearchParams(window.location.search);
+        const docId = (window.OFFLINE_FLASHCARDS_DATA && window.OFFLINE_FLASHCARDS_DATA.doc_id) || urlParams.get('doc_id');
+        const isOfflineMode = !!window.OFFLINE_FLASHCARDS_DATA;
+        const initialMode = urlParams.get('mode') || 'manage';
+
+        let allCards = [];
+        let chaptersList = [];
+        let activeCardForEdit = null;
+        let activeCardType = 'qa';
+
+        // Study Session State
+        let studyQueue = [];
+        let currentStudyIndex = 0;
+        let isCardFlipped = false;
+
+        // Offline storage helpers
+        function getOfflineCards() {
+            const key = 'offline_flashcards_' + docId;
+            const stored = localStorage.getItem(key);
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) return parsed;
+                } catch(e) {
+                    console.error("解析本地离线闪卡异常", e);
+                }
+            }
+            const initial = (window.OFFLINE_FLASHCARDS_DATA && window.OFFLINE_FLASHCARDS_DATA.cards) || [];
+            localStorage.setItem(key, JSON.stringify(initial));
+            return initial;
+        }
+
+        function saveOfflineCards(cards) {
+            const key = 'offline_flashcards_' + docId;
+            localStorage.setItem(key, JSON.stringify(cards));
+        }
+
+        function exportOfflineFlashcardHtml() {
+            if (isOfflineMode) {
+                exportCardsJson();
+                return;
+            }
+            window.open(`/api/study/documents/${docId}/export?format=flashcards_html`, '_blank');
+        }
+
+        // Init page
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!docId) {
+                alert("未指定文档 ID，请从研学中心打开闪卡页面！");
+                window.location.href = '/study';
+                return;
+            }
+
+            // Setup Back Link
+            const backBtn = document.getElementById('btn-back-to-study');
+            if (isOfflineMode) {
+                backBtn.href = window.OFFLINE_FLASHCARDS_DATA.index_link || 'index.html';
+                backBtn.textContent = '📖 返回研学文献';
+                if (window.OFFLINE_FLASHCARDS_DATA.portal_link) {
+                    const portalBtn = document.createElement('a');
+                    portalBtn.href = window.OFFLINE_FLASHCARDS_DATA.portal_link;
+                    portalBtn.className = 'back-btn';
+                    portalBtn.style.marginRight = '8px';
+                    portalBtn.innerHTML = '<span>🏠</span> 知识库大厅';
+                    backBtn.parentElement.insertBefore(portalBtn, backBtn);
+                }
+                // 导出离线模式下，隐藏 导出 JSON、导出离线 HTML、导入 JSON、新建闪卡 按钮组
+                const actionGroup = document.querySelector('.filter-toolbar .action-group');
+                if (actionGroup) {
+                    actionGroup.style.display = 'none';
+                }
+            } else {
+                backBtn.href = `/study?doc_id=${encodeURIComponent(docId)}`;
+            }
+
+            // Init Theme
+            initTheme();
+
+            // Load Document Info & Chapters
+            await loadDocInfo();
+
+            // Load Cards & Render
+            await loadCardsList();
+
+            // Switch to initial tab
+            if (initialMode === 'study') {
+                switchTab('study');
+            } else if (initialMode === 'errors') {
+                switchTab('errors');
+            }
+
+            // Keyboard Shortcuts for Study
+            setupKeyboardShortcuts();
+
+            // Card Chat Resizer
+            initCardChatResizer();
+        });
+
+        function initCardChatResizer() {
+            const resizer = document.getElementById('card-chat-resizer');
+            const drawer = document.getElementById('card-chat-drawer');
+            if (!resizer || !drawer) return;
+
+            // Restore saved width with bounds check
+            const savedWidth = localStorage.getItem('card_chat_drawer_width');
+            if (savedWidth) {
+                const num = parseInt(savedWidth, 10);
+                const maxAllowed = Math.max(340, window.innerWidth - 380);
+                const clamped = Math.min(maxAllowed, Math.max(340, num));
+                drawer.style.width = `${clamped}px`;
+                document.documentElement.style.setProperty('--card-chat-width', `${clamped}px`);
+            }
+
+            // Restore saved chat font size if set
+            const savedChatFontSize = localStorage.getItem('study_chat_font_size');
+            if (savedChatFontSize) {
+                document.documentElement.style.setProperty('--chat-font-size', `${savedChatFontSize}px`);
+            }
+
+            let isResizing = false;
+
+            resizer.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                drawer.classList.add('resizing');
+                document.body.classList.add('card-chat-resizing');
+                document.body.style.cursor = 'ew-resize';
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const minWidth = 340;
+                const maxWidth = Math.max(340, window.innerWidth - 380);
+                const newWidth = Math.min(maxWidth, Math.max(minWidth, window.innerWidth - e.clientX));
+                drawer.style.width = `${newWidth}px`;
+                document.documentElement.style.setProperty('--card-chat-width', `${newWidth}px`);
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    drawer.classList.remove('resizing');
+                    document.body.classList.remove('card-chat-resizing');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    localStorage.setItem('card_chat_drawer_width', drawer.style.width);
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768 && drawer) {
+                    const currentWidth = parseInt(drawer.style.width, 10) || 430;
+                    const maxAllowed = Math.max(340, window.innerWidth - 380);
+                    if (currentWidth > maxAllowed) {
+                        drawer.style.width = `${maxAllowed}px`;
+                        document.documentElement.style.setProperty('--card-chat-width', `${maxAllowed}px`);
+                    }
+                }
+            });
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('study_theme') || 'sepia';
+            const wasChatOpen = (typeof isCardChatOpen !== 'undefined') && isCardChatOpen;
+            document.body.className = `theme-${savedTheme}`;
+            if (wasChatOpen) document.body.classList.add('card-chat-open');
+            document.getElementById('theme-selector').value = savedTheme;
+        }
+
+        function changeTheme(theme) {
+            const wasChatOpen = (typeof isCardChatOpen !== 'undefined') && isCardChatOpen;
+            document.body.className = `theme-${theme}`;
+            if (wasChatOpen) document.body.classList.add('card-chat-open');
+            localStorage.setItem('study_theme', theme);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-msg');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        async function loadDocInfo() {
+            if (isOfflineMode) {
+                const meta = window.OFFLINE_FLASHCARDS_DATA;
+                document.getElementById('top-doc-title').textContent = `《${meta.title || meta.filename || '研学材料'}》`;
+                chaptersList = meta.chapters || [];
+                populateChapterFilters();
+                return;
+            }
+            try {
+                const resp = await fetch(`/api/study/documents/${docId}`);
+                if (resp.ok) {
+                    const res = await resp.json();
+                    const meta = res.data;
+                    document.getElementById('top-doc-title').textContent = `《${meta.title || meta.filename || '研学材料'}》`;
+                    chaptersList = meta.chapters || [];
+                    populateChapterFilters();
+                }
+            } catch (err) {
+                console.error("加载文档信息异常", err);
+            }
+        }
+
+        function populateChapterFilters() {
+            const filterChapter = document.getElementById('filter-chapter');
+            const inputCardChapter = document.getElementById('input-card-chapter');
+            if (!filterChapter || !inputCardChapter) return;
+
+            while (filterChapter.options.length > 1) filterChapter.remove(1);
+            while (inputCardChapter.options.length > 1) inputCardChapter.remove(1);
+
+            chaptersList.forEach(ch => {
+                const opt = document.createElement('option');
+                opt.value = ch.chapter_id;
+                opt.textContent = ch.title || ch.chapter_id;
+                filterChapter.appendChild(opt);
+
+                const opt2 = document.createElement('option');
+                opt2.value = ch.chapter_id;
+                opt2.textContent = ch.title || ch.chapter_id;
+                inputCardChapter.appendChild(opt2);
+            });
+        }
+
+        function switchTab(tabKey, preserveQueue = false) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+            const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabKey));
+            if (targetBtn) targetBtn.classList.add('active');
+
+            const targetPane = document.getElementById(`pane-${tabKey}`);
+            if (targetPane) targetPane.classList.add('active');
+
+            if (tabKey === 'study') {
+                if (!preserveQueue) {
+                    startStudySession(false);
+                }
+            } else {
+                closeCardChatDrawer();
+                if (tabKey === 'errors') {
+                    renderErrorCards();
+                } else if (tabKey === 'stats') {
+                    renderStatsDashboard();
+                }
+            }
+        }
+
+        // ==========================================================
+        // Cards Loading & Rendering
+        // ==========================================================
+        async function loadCardsList() {
+            const typeFilter = document.getElementById('filter-type').value;
+            const chapterFilter = document.getElementById('filter-chapter').value;
+            const kw = document.getElementById('search-keyword').value.trim().toLowerCase();
+
+            if (isOfflineMode) {
+                let cards = getOfflineCards();
+                if (typeFilter && typeFilter !== 'all') {
+                    cards = cards.filter(c => c.type === typeFilter);
+                }
+                if (chapterFilter && chapterFilter !== 'all') {
+                    cards = cards.filter(c => c.chapter_id === chapterFilter);
+                }
+                if (kw) {
+                    cards = cards.filter(c =>
+                        (c.front || '').toLowerCase().includes(kw) ||
+                        (c.back || '').toLowerCase().includes(kw) ||
+                        ((c.tags || []).join(' ')).toLowerCase().includes(kw)
+                    );
+                }
+                allCards = cards;
+                const totalCards = getOfflineCards();
+                const mistakeCards = totalCards.filter(c => c.stats?.is_mistake ?? ((c.stats?.lapses || 0) > 0));
+
+                const manageBadge = document.getElementById('badge-manage-count');
+                if (manageBadge) manageBadge.textContent = totalCards.length;
+                const errBadge = document.getElementById('badge-error-count');
+                if (errBadge) errBadge.textContent = mistakeCards.length;
+                const errSummary = document.getElementById('errors-count-summary');
+                if (errSummary) errSummary.textContent = `🎯 待攻坚错题：${mistakeCards.length} 张`;
+
+                renderCardsGrid(allCards, 'cards-grid-container');
+                return;
+            }
+
+            let url = `/api/study/documents/${docId}/flashcards?type=${typeFilter}&chapter_id=${chapterFilter}`;
+            if (kw) url += `&keyword=${encodeURIComponent(kw)}`;
+
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) return;
+                const res = await resp.json();
+                allCards = res.data.cards || [];
+                const summary = res.data.summary || {};
+
+                // Update count badges
+                const manageBadge = document.getElementById('badge-manage-count');
+                if (manageBadge) manageBadge.textContent = allCards.length;
+                const errBadge = document.getElementById('badge-error-count');
+                if (errBadge) errBadge.textContent = summary.error_count || 0;
+                const errSummary = document.getElementById('errors-count-summary');
+                if (errSummary) errSummary.textContent = `🎯 待攻坚错题：${getActiveMistakeCards().length} 张`;
+
+                renderCardsGrid(allCards, 'cards-grid-container');
+            } catch (err) {
+                console.error("加载卡片失败", err);
+            }
+        }
+
+        function handleSearchInput() {
+            loadCardsList();
+        }
+
+        function renderCardsGrid(cards, targetContainerId = 'cards-grid-container') {
+            const container = document.getElementById(targetContainerId);
+            if (!container) return;
+
+            if (cards.length === 0) {
+                const isErrorView = targetContainerId === 'error-cards-grid-container';
+                const emptyTitle = isErrorView ? '太棒了！当前没有任何待攻坚错题' : '当前尚无闪卡';
+                const emptySubtitle = isErrorView ?
+                    '在平时的自测中若点击【忘记/再来】，卡片将自动进入该错题池；连续 2 次答对或 1 次熟练掌握将自动毕业移出。' :
+                    (isOfflineMode ? '当前文档暂无闪卡。' : '点击右上角【+ 新建闪卡】，或在研学阅读页面点击【🗂️ 制卡】/ Chat 助教一键生成！');
+                const emptyIcon = isErrorView ? '🌟' : '🗂️';
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="empty-icon">${emptyIcon}</div>
+                        <div class="empty-title">${emptyTitle}</div>
+                        <div style="font-size: 13px;">${emptySubtitle}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = cards.map(c => {
+                const isCloze = c.type === 'cloze';
+                const typeBadge = isCloze ? '<span class="badge badge-cloze">🧩 镂空</span>' : '<span class="badge badge-qa">📝 问答</span>';
+                
+                let errorBadge = '';
+                const lapses = c.stats?.lapses || 0;
+                if (lapses > 0) {
+                    errorBadge = `<span class="badge badge-error">⚠️ 错 ${lapses} 次</span>`;
+                }
+
+                const state = c.stats?.state || 'new';
+                let stateBadge = '<span class="badge badge-state-new">新卡</span>';
+                if (state === 'learning') stateBadge = '<span class="badge badge-state-learning">学习中</span>';
+                if (state === 'mastered') stateBadge = '<span class="badge badge-state-mastered">已掌握</span>';
+
+                const chTitle = getChapterTitle(c.chapter_id);
+                const frontDisplay = isCloze ? renderClozeText(c.front) : renderMarkdownContent(c.front);
+
+                const tagsHtml = (c.tags || []).map(t => `<span class="tag-chip">#${escapeHtml(t)}</span>`).join('');
+
+                const actionsHtml = isOfflineMode ? `
+                    <div class="card-actions">
+                        <button class="icon-btn" onclick="openViewCardModal('${c.id}')" title="查看闪卡详情">👁️</button>
+                    </div>
+                ` : `
+                    <div class="card-actions">
+                        <button class="icon-btn" onclick="openEditCardModal('${c.id}')" title="编辑闪卡">✏️</button>
+                        <button class="icon-btn" onclick="deleteCard('${c.id}')" title="删除闪卡" style="color: var(--danger-color);">🗑️</button>
+                    </div>
+                `;
+
+                return `
+                    <div class="card-item" id="card-${c.id}">
+                        <div class="card-item-header">
+                            <div class="card-badges">
+                                ${typeBadge}
+                                ${stateBadge}
+                                ${errorBadge}
+                                <span class="badge badge-chapter" title="${escapeHtml(chTitle)}">${escapeHtml(chTitle)}</span>
+                            </div>
+                            ${actionsHtml}
+                        </div>
+                        <div class="card-item-body">
+                            <div class="card-front-text">${frontDisplay}</div>
+                            <div class="card-back-text">${renderMarkdownContent(c.back || '无反面解析')}</div>
+                            ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
+                        </div>
+                        <div class="card-item-footer">
+                            <span class="card-time">${c.stats?.last_reviewed ? '复习于: ' + c.stats.last_reviewed.slice(5, 16) : '创建于: ' + (c.created_at || '').slice(5, 16)}</span>
+                            <button class="btn btn-secondary" style="padding: 3px 10px; font-size: 12px;" onclick="startSingleCardStudy('${c.id}')">🎯 单卡速练</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getChapterTitle(chapterId) {
+            if (!chapterId) return '全篇通用';
+            const found = chaptersList.find(c => c.chapter_id === chapterId);
+            return found ? (found.title || chapterId) : chapterId;
+        }
+
+        // Render Cloze Syntax {{word}} into interactive blanks with markdown support
+        function renderClozeText(text) {
+            if (!text) return '';
+            const withCloze = text.replace(/\{\{(.*?)\}\}/g, (match, p1) => {
+                const clean = p1.replace(/['"\\]/g, '');
+                return `<span class="cloze-blank" onclick="revealSingleCloze(this, '${escapeHtml(clean)}')">[ ··· ]</span>`;
+            });
+            return renderMarkdownContent(withCloze);
+        }
+
+        // Render Cloze Syntax with answers highlighted for the back of card
+        function renderClozeRevealed(text) {
+            if (!text) return '';
+            const withRevealed = text.replace(/\{\{(.*?)\}\}/g, '<span style="background: rgba(16, 185, 129, 0.25); color: var(--success-color); padding: 2px 8px; border-radius: 6px; font-weight: 700;">$1</span>');
+            return renderMarkdownContent(withRevealed);
+        }
+
+        function revealSingleCloze(el, answer) {
+            el.textContent = answer;
+            el.classList.add('revealed');
+        }
+
+        // ==========================================================
+        // Card Modal (Create & Edit & View)
+        // ==========================================================
+        function openCreateCardModal(prefill = {}) {
+            activeCardForEdit = null;
+            document.getElementById('modal-card-title').textContent = '新建闪卡';
+            selectCardType(prefill.type || 'qa');
+            const frontInput = document.getElementById('input-card-front');
+            const backInput = document.getElementById('input-card-back');
+            const chapterSelect = document.getElementById('input-card-chapter');
+            const tagsInput = document.getElementById('input-card-tags');
+            if (frontInput) { frontInput.readOnly = false; frontInput.value = prefill.front || ''; }
+            if (backInput) { backInput.readOnly = false; backInput.value = prefill.back || ''; }
+            if (chapterSelect) { chapterSelect.disabled = false; chapterSelect.value = prefill.chapter_id || ''; }
+            if (tagsInput) { tagsInput.readOnly = false; tagsInput.value = (prefill.tags || []).join(', '); }
+            const saveBtn = document.getElementById('btn-modal-save');
+            if (saveBtn) saveBtn.style.display = '';
+            const cancelBtn = document.getElementById('btn-modal-cancel');
+            if (cancelBtn) cancelBtn.textContent = '取消';
+            document.getElementById('card-modal').classList.add('open');
+            if (frontInput) frontInput.focus();
+        }
+
+        function openEditCardModal(cardId) {
+            const card = allCards.find(c => c.id === cardId);
+            if (!card) return;
+            activeCardForEdit = card;
+            document.getElementById('modal-card-title').textContent = '编辑闪卡';
+            selectCardType(card.type || 'qa');
+            const frontInput = document.getElementById('input-card-front');
+            const backInput = document.getElementById('input-card-back');
+            const chapterSelect = document.getElementById('input-card-chapter');
+            const tagsInput = document.getElementById('input-card-tags');
+            if (frontInput) { frontInput.readOnly = false; frontInput.value = card.front || ''; }
+            if (backInput) { backInput.readOnly = false; backInput.value = card.back || ''; }
+            if (chapterSelect) { chapterSelect.disabled = false; chapterSelect.value = card.chapter_id || ''; }
+            if (tagsInput) { tagsInput.readOnly = false; tagsInput.value = (card.tags || []).join(', '); }
+            const saveBtn = document.getElementById('btn-modal-save');
+            if (saveBtn) saveBtn.style.display = '';
+            const cancelBtn = document.getElementById('btn-modal-cancel');
+            if (cancelBtn) cancelBtn.textContent = '取消';
+            document.getElementById('card-modal').classList.add('open');
+        }
+
+        function openViewCardModal(cardId) {
+            const card = allCards.find(c => c.id === cardId);
+            if (!card) return;
+            activeCardForEdit = null;
+            document.getElementById('modal-card-title').textContent = '查看闪卡';
+            selectCardType(card.type || 'qa');
+            const frontInput = document.getElementById('input-card-front');
+            const backInput = document.getElementById('input-card-back');
+            const chapterSelect = document.getElementById('input-card-chapter');
+            const tagsInput = document.getElementById('input-card-tags');
+            if (frontInput) { frontInput.readOnly = true; frontInput.value = card.front || ''; }
+            if (backInput) { backInput.readOnly = true; backInput.value = card.back || ''; }
+            if (chapterSelect) { chapterSelect.disabled = true; chapterSelect.value = card.chapter_id || ''; }
+            if (tagsInput) { tagsInput.readOnly = true; tagsInput.value = (card.tags || []).join(', '); }
+            const clozeHelper = document.getElementById('cloze-helper-box');
+            if (clozeHelper) clozeHelper.style.display = 'none';
+            const saveBtn = document.getElementById('btn-modal-save');
+            if (saveBtn) saveBtn.style.display = 'none';
+            const cancelBtn = document.getElementById('btn-modal-cancel');
+            if (cancelBtn) cancelBtn.textContent = '关闭';
+            document.getElementById('card-modal').classList.add('open');
+        }
+
+        function closeCardModal() {
+            document.getElementById('card-modal').classList.remove('open');
+            activeCardForEdit = null;
+            const frontInput = document.getElementById('input-card-front');
+            const backInput = document.getElementById('input-card-back');
+            const chapterSelect = document.getElementById('input-card-chapter');
+            const tagsInput = document.getElementById('input-card-tags');
+            if (frontInput) frontInput.readOnly = false;
+            if (backInput) backInput.readOnly = false;
+            if (chapterSelect) chapterSelect.disabled = false;
+            if (tagsInput) tagsInput.readOnly = false;
+            const saveBtn = document.getElementById('btn-modal-save');
+            if (saveBtn) saveBtn.style.display = '';
+            const cancelBtn = document.getElementById('btn-modal-cancel');
+            if (cancelBtn) cancelBtn.textContent = '取消';
+        }
+
+        function selectCardType(type) {
+            activeCardType = type;
+            const btnQa = document.getElementById('type-btn-qa');
+            const btnCloze = document.getElementById('type-btn-cloze');
+            const helper = document.getElementById('cloze-helper-box');
+            const labelFront = document.getElementById('label-front-content');
+
+            if (type === 'cloze') {
+                btnCloze.classList.add('active');
+                btnQa.classList.remove('active');
+                helper.style.display = 'flex';
+                labelFront.textContent = '正面挖空语句 (使用 {{挖空词}} 标记填空)';
+                document.getElementById('input-card-front').placeholder = '例如：在访问控制中，{{隐含拒绝}} 是最小特权原则的基石。';
+            } else {
+                btnQa.classList.add('active');
+                btnCloze.classList.remove('active');
+                helper.style.display = 'none';
+                labelFront.textContent = '正面内容 (问题 / 考点情境)';
+                document.getElementById('input-card-front').placeholder = '例如：什么是隐含拒绝（Implicit Deny）？';
+            }
+        }
+
+        function wrapSelectedTextWithCloze() {
+            const textarea = document.getElementById('input-card-front');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            if (start === end) {
+                alert("请先在上方输入框中用鼠标选中想要挖空的词句！");
+                return;
+            }
+            const selected = text.substring(start, end);
+            const wrapped = `{{${selected}}}`;
+            textarea.value = text.substring(0, start) + wrapped + text.substring(end);
+            textarea.focus();
+            textarea.setSelectionRange(start, start + wrapped.length);
+        }
+
+        async function saveCardForm() {
+            const front = document.getElementById('input-card-front').value.trim();
+            const back = document.getElementById('input-card-back').value.trim();
+            const chapterId = document.getElementById('input-card-chapter').value;
+            const tags = document.getElementById('input-card-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+            if (!front) {
+                alert("闪卡正面内容不能为空！");
+                return;
+            }
+
+            const payload = {
+                type: activeCardType,
+                front: front,
+                back: back,
+                chapter_id: chapterId,
+                tags: tags
+            };
+
+            if (isOfflineMode) {
+                const cards = getOfflineCards();
+                if (activeCardForEdit) {
+                    const idx = cards.findIndex(c => c.id === activeCardForEdit.id);
+                    if (idx !== -1) {
+                        cards[idx] = {
+                            ...cards[idx],
+                            ...payload,
+                            updated_at: new Date().toISOString()
+                        };
+                    }
+                    showToast("闪卡更新成功");
+                } else {
+                    const newCard = {
+                        id: 'card_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+                        doc_id: docId,
+                        ...payload,
+                        stats: { review_count: 0, lapses: 0, state: 'new' },
+                        created_at: new Date().toISOString()
+                    };
+                    cards.unshift(newCard);
+                    showToast("闪卡创建成功");
+                }
+                saveOfflineCards(cards);
+                closeCardModal();
+                await loadCardsList();
+                return;
+            }
+
+            try {
+                let url, method;
+                if (activeCardForEdit) {
+                    url = `/api/study/documents/${docId}/flashcards/${activeCardForEdit.id}`;
+                    method = 'PUT';
+                } else {
+                    url = `/api/study/documents/${docId}/flashcards`;
+                    method = 'POST';
+                }
+
+                const resp = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (resp.ok) {
+                    showToast(activeCardForEdit ? "闪卡更新成功" : "闪卡创建成功");
+                    closeCardModal();
+                    await loadCardsList();
+                } else {
+                    const err = await resp.json();
+                    alert(`保存失败: ${err.detail || '未知错误'}`);
+                }
+            } catch (err) {
+                console.error("保存闪卡异常", err);
+                alert("网络或服务异常");
+            }
+        }
+
+        async function deleteCard(cardId) {
+            if (!confirm("确定要删除这张闪卡吗？删除后不可恢复。")) return;
+
+            if (isOfflineMode) {
+                let cards = getOfflineCards();
+                cards = cards.filter(c => c.id !== cardId);
+                saveOfflineCards(cards);
+                showToast("闪卡已删除");
+                await loadCardsList();
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/api/study/documents/${docId}/flashcards/${cardId}`, {
+                    method: 'DELETE'
+                });
+                if (resp.ok) {
+                    showToast("闪卡已删除");
+                    await loadCardsList();
+                } else {
+                    alert("删除失败");
+                }
+            } catch (err) {
+                console.error("删除异常", err);
+            }
+        }
+
+        // Export & Import
+        function exportCardsJson() {
+            const cardsToExport = isOfflineMode ? getOfflineCards() : allCards;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cardsToExport, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `flashcards_${docId}_export.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("闪卡 JSON 已成功导出");
+        }
+
+        async function handleImportJson(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const json = JSON.parse(text);
+                const cardsArray = Array.isArray(json) ? json : (json.cards || []);
+                if (!cardsArray || cardsArray.length === 0) {
+                    alert("导入的文件中未找到有效的闪卡数据！");
+                    return;
+                }
+
+                if (isOfflineMode) {
+                    const cards = getOfflineCards();
+                    const existingIds = new Set(cards.map(c => c.id));
+                    cardsArray.forEach(c => {
+                        if (!c.id) c.id = 'card_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+                        if (!existingIds.has(c.id)) {
+                            cards.push(c);
+                            existingIds.add(c.id);
+                        }
+                    });
+                    saveOfflineCards(cards);
+                    showToast(`成功导入 ${cardsArray.length} 张闪卡`);
+                    await loadCardsList();
+                    event.target.value = '';
+                    return;
+                }
+
+                const resp = await fetch(`/api/study/documents/${docId}/flashcards`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cards: cardsArray })
+                });
+                if (resp.ok) {
+                    showToast(`成功导入 ${cardsArray.length} 张闪卡`);
+                    await loadCardsList();
+                } else {
+                    alert("导入失败");
+                }
+            } catch (e) {
+                alert("解析 JSON 失败: " + e.message);
+            }
+            event.target.value = '';
+        }
+
+        // ==========================================================
+        // Interactive 3D Flip Study Session
+        // ==========================================================
+        let isOnlyErrorsMode = false;
+
+        function getActiveMistakeCards() {
+            return allCards.filter(c => c.stats?.is_mistake ?? ((c.stats?.lapses || 0) > 0));
+        }
+
+        function startStudySession(onlyErrors = false) {
+            isOnlyErrorsMode = onlyErrors;
+            if (onlyErrors) {
+                studyQueue = getActiveMistakeCards();
+            } else {
+                studyQueue = [...allCards];
+            }
+            // Reset in-session retry counters
+            studyQueue.forEach(c => { c._sessionRetries = 0; });
+
+            const activeView = document.getElementById('study-active-view');
+            const completeView = document.getElementById('study-complete-view');
+            const emptyView = document.getElementById('study-empty-view');
+
+            if (studyQueue.length === 0) {
+                if (activeView) activeView.style.display = 'none';
+                if (completeView) completeView.style.display = 'none';
+                if (emptyView) {
+                    emptyView.style.display = 'block';
+                    const titleEl = document.getElementById('study-empty-title');
+                    if (titleEl) {
+                        titleEl.textContent = onlyErrors ? '太棒了！当前没有任何待攻坚错题' : '当前文档暂无可自测的闪卡';
+                    }
+                }
+                return;
+            }
+
+            if (emptyView) emptyView.style.display = 'none';
+            if (completeView) completeView.style.display = 'none';
+            if (activeView) activeView.style.display = 'block';
+
+            currentStudyIndex = 0;
+            renderCurrentStudyCard();
+        }
+
+        function restartStudySession() {
+            startStudySession(isOnlyErrorsMode);
+        }
+
+        function startSingleCardStudy(cardId) {
+            const c = allCards.find(item => item.id === cardId);
+            if (!c) return;
+            isOnlyErrorsMode = false;
+            c._sessionRetries = 0;
+            studyQueue = [c];
+            currentStudyIndex = 0;
+            switchTab('study', true);
+
+            const activeView = document.getElementById('study-active-view');
+            const completeView = document.getElementById('study-complete-view');
+            const emptyView = document.getElementById('study-empty-view');
+            if (emptyView) emptyView.style.display = 'none';
+            if (completeView) completeView.style.display = 'none';
+            if (activeView) activeView.style.display = 'block';
+
+            renderCurrentStudyCard();
+        }
+
+        function renderCurrentStudyCard() {
+            isCardFlipped = false;
+            const flipCard = document.getElementById('active-flip-card');
+            if (flipCard) flipCard.classList.remove('is-flipped');
+
+            if (currentStudyIndex >= studyQueue.length) {
+                renderStudyCompleteScreen();
+                return;
+            }
+
+            const activeView = document.getElementById('study-active-view');
+            const completeView = document.getElementById('study-complete-view');
+            const emptyView = document.getElementById('study-empty-view');
+            if (activeView) activeView.style.display = 'block';
+            if (completeView) completeView.style.display = 'none';
+            if (emptyView) emptyView.style.display = 'none';
+
+            const card = studyQueue[currentStudyIndex];
+            const isCloze = card.type === 'cloze';
+
+            // Progress Bar
+            const total = studyQueue.length;
+            const pct = Math.round(((currentStudyIndex) / total) * 100);
+            const indexLabel = document.getElementById('study-index-label');
+            const progressBar = document.getElementById('study-progress-bar');
+            if (indexLabel) indexLabel.textContent = `卡片 ${currentStudyIndex + 1} / ${total}`;
+            if (progressBar) progressBar.style.width = `${pct}%`;
+
+            // Front
+            const typeBadge = document.getElementById('study-front-type');
+            const chapterBadge = document.getElementById('study-front-chapter');
+            const frontText = document.getElementById('study-front-text');
+            const statsPreview = document.getElementById('study-card-stats-preview');
+
+            if (typeBadge) typeBadge.textContent = isCloze ? '🧩 镂空填空' : '📝 问答卡';
+            if (chapterBadge) chapterBadge.textContent = getChapterTitle(card.chapter_id);
+            if (frontText) frontText.innerHTML = isCloze ? renderClozeText(card.front) : renderMarkdownContent(card.front);
+
+            let statsText = `已复习 ${card.stats?.reps || 0} 次 · 错 ${card.stats?.lapses || 0} 次`;
+            const isMistake = card.stats?.is_mistake ?? ((card.stats?.lapses || 0) > 0);
+            if (isMistake) {
+                statsText += ` · 🎯 攻坚连对 ${card.stats?.mistake_streak || 0}/2`;
+            }
+            if (statsPreview) statsPreview.textContent = statsText;
+
+            // Back
+            let revealedBack = renderMarkdownContent(card.back || '');
+            if (isCloze) {
+                const fullSentence = renderClozeRevealed(card.front);
+                revealedBack = `
+                    <div style="font-size: 17px; font-weight: 600; margin-bottom: 12px; line-height: 1.6; color: var(--text-main);">
+                        ${fullSentence}
+                    </div>
+                    <div style="font-size: 14px; color: var(--text-muted); line-height: 1.6;">
+                        ${revealedBack || '（无附加备考要点）'}
+                    </div>
+                `;
+            }
+            const backText = document.getElementById('study-back-text');
+            if (backText) backText.innerHTML = revealedBack;
+
+            // Sync chat drawer context with current card
+            if (card) {
+                switchCardChatContext(card);
+            }
+        }
+
+        function handleCardFlipClick(event) {
+            // Don't flip if user clicked directly on an interactive cloze blank or button
+            if (event.target.classList.contains('cloze-blank') || event.target.closest('button')) return;
+            toggleCardFlip();
+        }
+
+        function toggleCardFlip() {
+            const flipCard = document.getElementById('active-flip-card');
+            if (!flipCard) return;
+            isCardFlipped = !isCardFlipped;
+            if (isCardFlipped) {
+                flipCard.classList.add('is-flipped');
+            } else {
+                flipCard.classList.remove('is-flipped');
+            }
+            updateCardChatPrompts();
+        }
+
+        // ==========================================================
+        // Flashcard AI Chat Assistant (Card-Isolated Session with Local Storage)
+        // ==========================================================
+        let isCardChatOpen = false;
+        let cardChatHistoryMap = {};
+        let isCardChatStreaming = false;
+        let cardChatAbortController = null;
+        let currentCardChatCardId = null;
+
+        function getCardChatStorageKey(cardId) {
+            return `flashcard_chat_${docId || 'default'}_${cardId}`;
+        }
+
+        function loadCardChatHistory(cardId) {
+            if (!cardId) return [];
+            if (cardChatHistoryMap[cardId]) {
+                return cardChatHistoryMap[cardId];
+            }
+            try {
+                const stored = localStorage.getItem(getCardChatStorageKey(cardId));
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) {
+                        cardChatHistoryMap[cardId] = parsed;
+                        return parsed;
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to parse card chat history from localStorage:', e);
+            }
+            cardChatHistoryMap[cardId] = [];
+            return [];
+        }
+
+        function saveCardChatHistory(cardId, history) {
+            if (!cardId) return;
+            cardChatHistoryMap[cardId] = history;
+            try {
+                localStorage.setItem(getCardChatStorageKey(cardId), JSON.stringify(history));
+            } catch (e) {
+                console.warn('Failed to save card chat history to localStorage:', e);
+            }
+        }
+
+        function renderCardChatSession(card) {
+            const msgBox = document.getElementById('card-chat-messages');
+            if (!msgBox) return;
+
+            if (!card) {
+                msgBox.innerHTML = `
+                    <div class="card-chat-welcome">
+                        <div style="font-size: 28px; margin-bottom: 8px;">🎓</div>
+                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text-main);">闪卡研学助教已就绪</div>
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                            当前暂未载入闪卡，请先选择卡片开始学习。<br>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const history = loadCardChatHistory(card.id);
+            if (!history || history.length === 0) {
+                msgBox.innerHTML = `
+                    <div class="card-chat-welcome">
+                        <div style="font-size: 28px; margin-bottom: 8px;">🎓</div>
+                        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; color: var(--text-main);">闪卡研学助教已就绪</div>
+                        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                            卡片正面想不起？点击【💡 启发线索】获取引导；<br>
+                            翻看答案有疑惑？点击【📖 深度解析】或【🧠 巧记秘籍】深入研学。<br>
+                            <span style="opacity: 0.7; font-size: 11px;">（💡 对话按卡片独立本地缓存）</span>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            msgBox.innerHTML = '';
+            for (const item of history) {
+                if (item.role === 'user') {
+                    const userBubble = document.createElement('div');
+                    userBubble.className = 'card-bubble user';
+                    userBubble.textContent = item.content;
+                    msgBox.appendChild(userBubble);
+                } else if (item.role === 'assistant') {
+                    const assistantBubble = document.createElement('div');
+                    assistantBubble.className = 'card-bubble assistant';
+                    assistantBubble.innerHTML = renderMarkdownContent(item.content);
+                    msgBox.appendChild(assistantBubble);
+                }
+            }
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+
+        function switchCardChatContext(card) {
+            if (!card) return;
+            if (currentCardChatCardId === card.id) {
+                updateCardChatPrompts();
+                return;
+            }
+            if (isCardChatStreaming) {
+                stopCardChatStreaming();
+            }
+            currentCardChatCardId = card.id;
+            const badge = document.getElementById('card-chat-target-badge');
+            if (badge) {
+                const preview = (card.front || '').trim().replace(/\n+/g, ' ').slice(0, 22);
+                badge.textContent = `聚焦：${preview ? preview + '...' : '当前卡片'}`;
+            }
+            renderCardChatSession(card);
+            updateCardChatPrompts();
+        }
+
+        function toggleCardChatDrawer() {
+            if (isCardChatOpen) {
+                closeCardChatDrawer();
+            } else {
+                openCardChatDrawer();
+            }
+        }
+
+        let cardChatProvidersLoaded = false;
+        let cardChatProvidersList = [];
+
+        function toggleCardChatModelPopover(forceClose = false) {
+            const popover = document.getElementById('card-chat-model-popover');
+            if (!popover) return;
+            if (forceClose) {
+                popover.classList.remove('show');
+            } else {
+                popover.classList.toggle('show');
+            }
+        }
+
+        // Close popover when clicking outside
+        document.addEventListener('click', (e) => {
+            const popover = document.getElementById('card-chat-model-popover');
+            const pillBtn = document.getElementById('card-chat-model-pill-btn');
+            if (popover && popover.classList.contains('show')) {
+                if (!popover.contains(e.target) && !pillBtn?.contains(e.target)) {
+                    popover.classList.remove('show');
+                }
+            }
+        });
+
+        async function initCardChatProviders() {
+            if (cardChatProvidersLoaded || isOfflineMode) return;
+            try {
+                const [providersRes, settingsRes] = await Promise.allSettled([
+                    fetch('/api/study/providers').then(r => r.json()),
+                    fetch(`/api/study/settings?doc_id=${encodeURIComponent(docId || '')}`).then(r => r.json())
+                ]);
+
+                const providerSelect = document.getElementById('card-chat-provider-select');
+                if (!providerSelect) return;
+
+                let providers = [];
+                if (providersRes.status === 'fulfilled') {
+                    const val = providersRes.value;
+                    providers = Array.isArray(val?.data) ? val.data : (Array.isArray(val) ? val : []);
+                }
+                cardChatProvidersList = providers;
+
+                let currentProvider = '';
+                let currentModel = '';
+                if (settingsRes.status === 'fulfilled' && settingsRes.value?.data) {
+                    const d = settingsRes.value.data;
+                    // Inherit from translation settings as requested
+                    currentProvider = d.translation_provider || d.default_translation_provider || d.chat_provider || d.default_chat_provider || d.llm_source || '';
+                    currentModel = d.translation_model || d.default_translation_model || d.chat_model || d.default_chat_model || d.text_model || '';
+                }
+
+                providerSelect.innerHTML = providers.map(p => 
+                    `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`
+                ).join('');
+
+                if (currentProvider && providers.some(p => p.id === currentProvider)) {
+                    providerSelect.value = currentProvider;
+                } else if (providers.length > 0) {
+                    providerSelect.value = providers[0].id;
+                }
+
+                // Render provider pills in popover
+                renderCardChatProviderPills(providers, providerSelect.value);
+
+                cardChatProvidersLoaded = true;
+                await handleCardChatProviderChange(currentModel);
+            } catch (e) {
+                console.warn('Failed to load card chat providers:', e);
+            }
+        }
+
+        function renderCardChatProviderPills(providers, selectedProviderId) {
+            const pillsContainer = document.getElementById('card-chat-provider-pills');
+            const providerNameSpan = document.getElementById('card-chat-current-provider-name');
+            if (!pillsContainer) return;
+
+            const selectedP = providers.find(p => p.id === selectedProviderId);
+            if (providerNameSpan) {
+                providerNameSpan.textContent = selectedP ? selectedP.name : (selectedProviderId || '服务商');
+            }
+
+            pillsContainer.innerHTML = providers.map(p => {
+                const active = p.id === selectedProviderId ? 'active' : '';
+                return `<button type="button" class="popover-provider-btn ${active}" onclick="selectCardChatProvider('${escapeHtml(p.id)}')">${escapeHtml(p.name)}</button>`;
+            }).join('');
+        }
+
+        async function selectCardChatProvider(providerId) {
+            const providerSelect = document.getElementById('card-chat-provider-select');
+            if (providerSelect) providerSelect.value = providerId;
+            renderCardChatProviderPills(cardChatProvidersList, providerId);
+            await handleCardChatProviderChange();
+        }
+
+        async function handleCardChatProviderChange(preferredModel) {
+            const providerSelect = document.getElementById('card-chat-provider-select');
+            const modelSelect = document.getElementById('card-chat-model-select');
+            const modelNameSpan = document.getElementById('card-chat-current-model-name');
+            const popoverModels = document.getElementById('card-chat-popover-models');
+            if (!providerSelect || !modelSelect) return;
+
+            const providerId = providerSelect.value;
+            if (!providerId) {
+                modelSelect.innerHTML = '<option value="">默认模型</option>';
+                if (modelNameSpan) modelNameSpan.textContent = '默认模型';
+                if (popoverModels) popoverModels.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); padding: 6px;">无可用模型</div>';
+                return;
+            }
+
+            try {
+                if (popoverModels) popoverModels.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); padding: 6px;">正在加载模型列表...</div>';
+                
+                const res = await fetch('/api/study/providers/models', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider: providerId })
+                });
+                const resJson = await res.json();
+                const models = resJson.data || resJson.models || [];
+
+                if (!Array.isArray(models) || models.length === 0) {
+                    modelSelect.innerHTML = '<option value="">默认模型</option>';
+                    if (modelNameSpan) modelNameSpan.textContent = '默认模型';
+                    if (popoverModels) popoverModels.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); padding: 6px;">无模型或使用默认</div>';
+                    return;
+                }
+
+                modelSelect.innerHTML = models.map(m => 
+                    `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`
+                ).join('');
+
+                let chosenModel = models[0];
+                if (preferredModel && models.includes(preferredModel)) {
+                    chosenModel = preferredModel;
+                }
+                modelSelect.value = chosenModel;
+                if (modelNameSpan) modelNameSpan.textContent = chosenModel;
+
+                // Render model list in popover
+                if (popoverModels) {
+                    popoverModels.innerHTML = models.map(m => {
+                        const isCurrent = m === chosenModel;
+                        return `
+                            <div class="popover-model-item ${isCurrent ? 'active' : ''}" onclick="selectCardChatModel('${escapeHtml(m)}')">
+                                <span style="font-mono; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(m)}</span>
+                                ${isCurrent ? '<span style="font-size: 10px;">✓</span>' : ''}
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.warn('Failed to fetch models for provider:', providerId, e);
+                modelSelect.innerHTML = '<option value="">默认模型</option>';
+                if (modelNameSpan) modelNameSpan.textContent = '默认模型';
+            }
+        }
+
+        function selectCardChatModel(modelName) {
+            const modelSelect = document.getElementById('card-chat-model-select');
+            const modelNameSpan = document.getElementById('card-chat-current-model-name');
+            if (modelSelect) modelSelect.value = modelName;
+            if (modelNameSpan) modelNameSpan.textContent = modelName;
+            
+            // Re-render model items in popover
+            const popoverModels = document.getElementById('card-chat-popover-models');
+            if (popoverModels) {
+                const items = popoverModels.querySelectorAll('.popover-model-item');
+                items.forEach(el => {
+                    const isCurrent = el.innerText.includes(modelName);
+                    el.className = `popover-model-item ${isCurrent ? 'active' : ''}`;
+                    if (isCurrent && !el.innerHTML.includes('✓')) {
+                        el.innerHTML = `<span style="font-mono; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(modelName)}</span><span style="font-size: 10px;">✓</span>`;
+                    }
+                });
+            }
+            toggleCardChatModelPopover(true);
+        }
+
+        function openCardChatDrawer() {
+            isCardChatOpen = true;
+            const drawer = document.getElementById('card-chat-drawer');
+            const studyPane = document.getElementById('pane-study');
+            const toggleBtn = document.getElementById('btn-toggle-card-chat');
+            document.body.classList.add('card-chat-open');
+            if (drawer) drawer.classList.add('open');
+            if (studyPane) studyPane.classList.add('drawer-open');
+            if (toggleBtn) toggleBtn.classList.add('active');
+
+            const currentCard = (studyQueue && currentStudyIndex < studyQueue.length) ? studyQueue[currentStudyIndex] : null;
+            if (currentCard && currentCardChatCardId !== currentCard.id) {
+                switchCardChatContext(currentCard);
+            }
+
+            initCardChatProviders();
+            updateCardChatPrompts();
+            const input = document.getElementById('card-chat-input');
+            if (input) setTimeout(() => input.focus(), 150);
+        }
+
+        function closeCardChatDrawer() {
+            isCardChatOpen = false;
+            const drawer = document.getElementById('card-chat-drawer');
+            const studyPane = document.getElementById('pane-study');
+            const toggleBtn = document.getElementById('btn-toggle-card-chat');
+            document.body.classList.remove('card-chat-open');
+            if (drawer) drawer.classList.remove('open');
+            if (studyPane) studyPane.classList.remove('drawer-open');
+            if (toggleBtn) toggleBtn.classList.remove('active');
+        }
+
+        function clearCardChatMessages() {
+            if (isCardChatStreaming) {
+                stopCardChatStreaming();
+            }
+            if (currentCardChatCardId) {
+                delete cardChatHistoryMap[currentCardChatCardId];
+                try {
+                    localStorage.removeItem(getCardChatStorageKey(currentCardChatCardId));
+                } catch (e) {}
+            }
+            const currentCard = (studyQueue && currentStudyIndex < studyQueue.length) ? studyQueue[currentStudyIndex] : null;
+            renderCardChatSession(currentCard);
+            showToast("当前卡片的助教会话已清空");
+        }
+
+        function updateCardChatPrompts() {
+            const container = document.getElementById('card-chat-quick-prompts');
+            if (!container) return;
+
+            // Check if card is flipped
+            if (!isCardFlipped) {
+                container.innerHTML = `
+                    <button class="prompt-chip-btn" onclick="triggerCardChatPrompt('hint')">💡 启发线索 (不剧透)</button>
+                    <button class="prompt-chip-btn" onclick="triggerCardChatPrompt('keypoint')">🎯 核心考点定位</button>
+                    <button class="prompt-chip-btn" onclick="triggerCardChatPrompt('background')">🗺️ 知识体系背景</button>
+                `;
+            } else {
+                container.innerHTML = `
+                    <button class="prompt-chip-btn" onclick="triggerCardChatPrompt('explain')">📖 深度解析考点原理</button>
+                    <button class="prompt-chip-btn" onclick="triggerCardChatPrompt('mnemonic')">🧠 巧记秘籍与联想口诀</button>
+                    <button class="prompt-chip-btn" onclick="triggerCardChatPrompt('confuse')">🔍 易混淆概念与陷阱</button>
+                    <button class="prompt-chip-btn" onclick="triggerCardChatPrompt('example')">📝 典型应用与例句</button>
+                `;
+            }
+        }
+
+        function triggerCardChatPrompt(type) {
+            openCardChatDrawer();
+            let msg = '';
+            if (type === 'hint') {
+                msg = '请给出本题的思考方向、启发式线索或知识背景引导，【切勿直接剧透答案】，帮助我通过主动回忆来解答。';
+            } else if (type === 'keypoint') {
+                msg = '请指出这道闪卡所考查的核心学术知识域与关键考点是什么？';
+            } else if (type === 'background') {
+                msg = '请简要说明这道闪卡在所属学科或章节知识体系中的位置与上下文联系。';
+            } else if (type === 'explain') {
+                msg = '请为我深入剖析本题考点的核心理论机理、为什么参考答案是这样，并补充背景原理。';
+            } else if (type === 'mnemonic') {
+                msg = '请为本题的核心记忆点提供巧妙的记忆法（如词根词缀、逻辑推演、图像联想或好记的口诀）。';
+            } else if (type === 'confuse') {
+                msg = '与本考点最容易混淆的近义概念或常见做题陷阱有哪些？请用简明清晰的方式对比说明。';
+            } else if (type === 'example') {
+                msg = '请提供 2 个针对本卡知识点的学术实际应用情景或生动例句。';
+            }
+            if (msg) {
+                sendCardChatMessage(msg);
+            }
+        }
+
+        function updateCardChatSendBtnState(streaming) {
+            const sendBtn = document.getElementById('card-chat-send-btn');
+            if (!sendBtn) return;
+            if (streaming) {
+                sendBtn.classList.add('stopping');
+                sendBtn.innerHTML = '<span>🛑 停止</span>';
+                sendBtn.title = '点击中断解答';
+                sendBtn.disabled = false;
+            } else {
+                sendBtn.classList.remove('stopping');
+                sendBtn.innerHTML = '<span>发送</span>';
+                sendBtn.title = '发送消息 (Enter)';
+                sendBtn.disabled = false;
+            }
+        }
+
+        function stopCardChatStreaming() {
+            if (cardChatAbortController) {
+                try {
+                    cardChatAbortController.abort();
+                } catch (e) {}
+                cardChatAbortController = null;
+            }
+            isCardChatStreaming = false;
+            updateCardChatSendBtnState(false);
+            showToast("已中断解答");
+        }
+
+        function handleCardChatKeydown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitCardChatMessage();
+            }
+        }
+
+        function submitCardChatMessage() {
+            if (isCardChatStreaming) {
+                stopCardChatStreaming();
+                return;
+            }
+            const input = document.getElementById('card-chat-input');
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            sendCardChatMessage(text);
+        }
+
+        function wrapMarkdownTables(html) {
+            if (!html) return '';
+            return html
+                .replace(/<table(\s*[^>]*)>/gi, '<div class="md-table-wrapper"><table class="md-table"$1>')
+                .replace(/<\/table>/gi, '</table></div>');
+        }
+
+        function parseMarkdownTablesFallback(text) {
+            const tableRegex = /((?:^[ \t]*\|.+?\|[ \t]*(?:\r?\n|$))+)/gm;
+            return text.replace(tableRegex, (block) => {
+                const lines = block.trim().split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                if (lines.length < 2) return block;
+                const sepLine = lines[1];
+                if (!/^[|:\-\s]+$/.test(sepLine) || !sepLine.includes('-')) {
+                    return block;
+                }
+                const parseRow = (line) => {
+                    let cells = line.split('|');
+                    if (cells.length > 0 && cells[0].trim() === '') cells.shift();
+                    if (cells.length > 0 && cells[cells.length - 1].trim() === '') cells.pop();
+                    return cells.map(c => c.trim());
+                };
+                const headers = parseRow(lines[0]);
+                let html = '<div class="md-table-wrapper"><table class="md-table"><thead><tr>';
+                headers.forEach(h => {
+                    html += `<th>${escapeHtml(h)}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                for (let i = 2; i < lines.length; i++) {
+                    const rowCells = parseRow(lines[i]);
+                    html += '<tr>';
+                    for (let j = 0; j < headers.length; j++) {
+                        html += `<td>${escapeHtml(rowCells[j] !== undefined ? rowCells[j] : '')}</td>`;
+                    }
+                    html += '</tr>';
+                }
+                html += '</tbody></table></div>\n';
+                return html;
+            });
+        }
+
+        function renderMarkdownContent(text) {
+            if (!text) return '';
+
+            if (typeof marked !== 'undefined' && marked.parse) {
+                try {
+                    if (marked.setOptions) {
+                        marked.setOptions({ gfm: true, breaks: true });
+                    }
+                    let parsed = marked.parse(text);
+                    return wrapMarkdownTables(parsed);
+                } catch (e) {
+                    console.warn('marked.parse error in flashcards:', e);
+                }
+            }
+
+            return parseMarkdownTablesFallback(text);
+        }
+
+        async function sendCardChatMessage(userMsg) {
+            if (!userMsg) return;
+            if (isCardChatStreaming) {
+                stopCardChatStreaming();
+                return;
+            }
+            const currentCard = (studyQueue && currentStudyIndex < studyQueue.length) ? studyQueue[currentStudyIndex] : null;
+            if (!currentCard) {
+                showToast("当前暂无进行中的闪卡");
+                return;
+            }
+
+            const msgContainer = document.getElementById('card-chat-messages');
+            if (!msgContainer) return;
+
+            // Remove welcome screen if it's currently displayed
+            const welcome = msgContainer.querySelector('.card-chat-welcome');
+            if (welcome) {
+                welcome.remove();
+            }
+
+            const history = loadCardChatHistory(currentCard.id);
+
+            // Append user bubble
+            const userBubble = document.createElement('div');
+            userBubble.className = 'card-bubble user';
+            userBubble.textContent = userMsg;
+            msgContainer.appendChild(userBubble);
+            history.push({ role: 'user', content: userMsg });
+            saveCardChatHistory(currentCard.id, history);
+
+            // Create assistant bubble placeholder
+            const assistantBubble = document.createElement('div');
+            assistantBubble.className = 'card-bubble assistant';
+            assistantBubble.innerHTML = '<span style="opacity: 0.6;">🤖 正在思考解答...</span>';
+            msgContainer.appendChild(assistantBubble);
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+
+            isCardChatStreaming = true;
+            updateCardChatSendBtnState(true);
+            cardChatAbortController = new AbortController();
+
+            if (isOfflineMode) {
+                assistantBubble.innerHTML = marked.parse(
+                    "💡 **离线学习模式提示**：\n当前闪卡系统正运行于纯静态环境（Nginx / Cloudflare Pages），AI 研学助教未连接后端大模型。\n\n您可以使用 **3D 自测翻转**、**镂空挖词**、**错题强化**、**闪卡编辑**、**导入导出进度** 等全部离线学习功能！如需大模型智能解析段落生成卡片，请在具备 Python 服务的研学中心操作。"
+                );
+                history.push({ role: "assistant", content: assistantBubble.innerText });
+                saveCardChatHistory(currentCard.id, history);
+                isCardChatStreaming = false;
+                cardChatAbortController = null;
+                updateCardChatSendBtnState(false);
+                return;
+            }
+
+            let fullAnswer = '';
+            try {
+                const providerSelect = document.getElementById('card-chat-provider-select');
+                const modelSelect = document.getElementById('card-chat-model-select');
+                const selectedProvider = providerSelect?.value;
+                const selectedModel = modelSelect?.value;
+
+                const payload = {
+                    card_data: {
+                        id: currentCard.id || '',
+                        type: currentCard.type || 'qa',
+                        front: currentCard.front || '',
+                        back: currentCard.back || '',
+                        chapter_title: getChapterTitle(currentCard.chapter_id),
+                        tags: currentCard.tags || []
+                    },
+                    message: userMsg.trim(),
+                    history: history.slice(0, -1),
+                    provider: selectedProvider || undefined,
+                    model: selectedModel || undefined
+                };
+
+                const response = await fetch(`/api/study/documents/${docId}/flashcards/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    signal: cardChatAbortController.signal
+                });
+
+                if (!response.ok) {
+                    let errDetail = `HTTP ${response.status}`;
+                    try {
+                        const errJson = await response.json();
+                        if (errJson.detail) errDetail = errJson.detail;
+                    } catch(e) {}
+                    assistantBubble.innerHTML = `<span style="color: var(--danger-color);">[请求异常: ${escapeHtml(errDetail)}]</span>`;
+                    return;
+                }
+
+                assistantBubble.innerHTML = '';
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            const raw = line.slice(5).trim();
+                            if (raw === '[DONE]') continue;
+                            try {
+                                const parsed = JSON.parse(raw);
+                                if (parsed.error) {
+                                    fullAnswer += `\n\n> ⚠️ **助教提示**: ${parsed.error}`;
+                                    assistantBubble.innerHTML = renderMarkdownContent(fullAnswer);
+                                    continue;
+                                }
+                                const delta = parsed.choices?.[0]?.delta?.content ?? parsed.choices?.[0]?.text ?? '';
+                                if (delta) {
+                                    fullAnswer += delta;
+                                    assistantBubble.innerHTML = renderMarkdownContent(fullAnswer);
+                                    msgContainer.scrollTop = msgContainer.scrollHeight;
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                }
+
+                if (!fullAnswer.trim()) {
+                    assistantBubble.innerHTML = `<span style="color: var(--danger-color);">[未能从大模型获取到有效回复，请在设置中检查模型服务]</span>`;
+                } else {
+                    assistantBubble.innerHTML = renderMarkdownContent(fullAnswer);
+                    history.push({ role: "assistant", content: fullAnswer });
+                    saveCardChatHistory(currentCard.id, history);
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    if (fullAnswer && fullAnswer.trim()) {
+                        fullAnswer += '\n\n*(已手动停止)*';
+                        assistantBubble.innerHTML = renderMarkdownContent(fullAnswer);
+                        history.push({ role: "assistant", content: fullAnswer });
+                        saveCardChatHistory(currentCard.id, history);
+                    } else {
+                        assistantBubble.innerHTML = '<span style="color: var(--text-muted);">[已停止解答]</span>';
+                    }
+                } else {
+                    console.error("闪卡助教异常", err);
+                    assistantBubble.innerHTML = `<span style="color: var(--danger-color);">[网络请求失败: ${escapeHtml(err.message || String(err))}]</span>`;
+                }
+            } finally {
+                isCardChatStreaming = false;
+                cardChatAbortController = null;
+                updateCardChatSendBtnState(false);
+            }
+        }
+
+        async function rateCurrentCard(rating) {
+            if (currentStudyIndex >= studyQueue.length) return;
+            const card = studyQueue[currentStudyIndex];
+
+            if (isOfflineMode) {
+                const cards = getOfflineCards();
+                const cardInStore = cards.find(c => c.id === card.id);
+                let graduated = false;
+                if (cardInStore) {
+                    if (!cardInStore.stats) cardInStore.stats = { review_count: 0, lapses: 0, state: 'new' };
+                    cardInStore.stats.review_count = (cardInStore.stats.review_count || 0) + 1;
+                    cardInStore.stats.last_reviewed = new Date().toISOString();
+
+                    if (rating === 1) {
+                        cardInStore.stats.lapses = (cardInStore.stats.lapses || 0) + 1;
+                        cardInStore.stats.state = 'lapsed';
+                    } else if (rating === 4) {
+                        if (cardInStore.stats.lapses > 0) graduated = true;
+                        cardInStore.stats.state = 'mastered';
+                        cardInStore.stats.lapses = 0;
+                    } else {
+                        cardInStore.stats.state = 'review';
+                        if (cardInStore.stats.lapses > 0) {
+                            cardInStore.stats.lapses--;
+                            if (cardInStore.stats.lapses === 0) graduated = true;
+                        }
+                    }
+                    saveOfflineCards(cards);
+                    card.stats = cardInStore.stats;
+                    const match = allCards.find(c => c.id === card.id);
+                    if (match) match.stats = cardInStore.stats;
+                }
+
+                if (rating === 1) {
+                    const retries = (card._sessionRetries || 0) + 1;
+                    card._sessionRetries = retries;
+                    if (retries <= 3) {
+                        const remaining = studyQueue.length - (currentStudyIndex + 1);
+                        if (remaining >= 3) {
+                            studyQueue.splice(currentStudyIndex + 3, 0, card);
+                        } else {
+                            studyQueue.push(card);
+                        }
+                        showToast(`已加入本轮强化 (第${retries}/3次)，稍后再次自测`);
+                    } else {
+                        showToast("本轮已达 3 次强化上限，已收录进【错题攻坚】池");
+                    }
+                } else {
+                    if (graduated) {
+                        showToast("🎉 太棒了！该卡片已成功攻克，移出错题攻坚池！");
+                    } else {
+                        showToast(rating === 4 ? "已熟练掌握！" : "复习进度已更新");
+                    }
+                }
+
+                currentStudyIndex++;
+                renderCurrentStudyCard();
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/api/study/documents/${docId}/flashcards/${card.id}/review`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating: rating })
+                });
+
+                let reviewData = null;
+                if (resp.ok) {
+                    const json = await resp.json();
+                    reviewData = json.data;
+                    if (reviewData && reviewData.stats) {
+                        card.stats = reviewData.stats;
+                        const match = allCards.find(c => c.id === card.id);
+                        if (match) match.stats = reviewData.stats;
+                    }
+                }
+
+                // If rated 1 (Again), enforce retry rules (max 3 times per session)
+                if (rating === 1) {
+                    const retries = (card._sessionRetries || 0) + 1;
+                    card._sessionRetries = retries;
+                    if (retries <= 3) {
+                        const remaining = studyQueue.length - (currentStudyIndex + 1);
+                        if (remaining >= 3) {
+                            studyQueue.splice(currentStudyIndex + 3, 0, card);
+                        } else {
+                            studyQueue.push(card);
+                        }
+                        showToast(`已加入本轮强化 (第${retries}/3次)，稍后再次自测`);
+                    } else {
+                        showToast("本轮已达 3 次强化上限，已收录进【错题攻坚】池");
+                    }
+                } else {
+                    if (reviewData && reviewData.graduated_from_mistakes) {
+                        showToast("🎉 太棒了！该卡片已成功攻克，移出错题攻坚池！");
+                    } else {
+                        showToast(rating === 4 ? "已熟练掌握！" : "复习进度已更新");
+                    }
+                }
+
+                currentStudyIndex++;
+                renderCurrentStudyCard();
+            } catch (err) {
+                console.error("提交复习评分失败", err);
+            }
+        }
+
+        function renderStudyCompleteScreen() {
+            const progressBar = document.getElementById('study-progress-bar');
+            const indexLabel = document.getElementById('study-index-label');
+            if (progressBar) progressBar.style.width = '100%';
+            if (indexLabel) indexLabel.textContent = `学习达成！`;
+
+            const activeView = document.getElementById('study-active-view');
+            const completeView = document.getElementById('study-complete-view');
+            const emptyView = document.getElementById('study-empty-view');
+            if (activeView) activeView.style.display = 'none';
+            if (emptyView) emptyView.style.display = 'none';
+            if (completeView) completeView.style.display = 'block';
+        }
+
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // If user is typing in card chat textarea or any input
+                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+                    if (e.code === 'Escape') {
+                        if (isCardChatOpen) closeCardChatDrawer();
+                        const modal = document.getElementById('card-modal');
+                        if (modal && modal.classList.contains('open')) closeCardModal();
+                    }
+                    return;
+                }
+                const modal = document.getElementById('card-modal');
+                if (modal && modal.classList.contains('open')) {
+                    if (e.code === 'Escape') closeCardModal();
+                    return;
+                }
+
+                const studyPane = document.getElementById('pane-study');
+                if (!studyPane || !studyPane.classList.contains('active')) return;
+
+                if (e.code === 'KeyC') {
+                    e.preventDefault();
+                    toggleCardChatDrawer();
+                    return;
+                }
+
+                if (e.code === 'Escape' && isCardChatOpen) {
+                    e.preventDefault();
+                    closeCardChatDrawer();
+                    return;
+                }
+
+                if (e.code === 'Space' || e.code === 'Enter') {
+                    e.preventDefault();
+                    toggleCardFlip();
+                } else if (['Digit1', 'Numpad1'].includes(e.code)) {
+                    rateCurrentCard(1);
+                } else if (['Digit2', 'Numpad2'].includes(e.code)) {
+                    rateCurrentCard(2);
+                } else if (['Digit3', 'Numpad3'].includes(e.code)) {
+                    rateCurrentCard(3);
+                } else if (['Digit4', 'Numpad4'].includes(e.code)) {
+                    rateCurrentCard(4);
+                }
+            });
+        }
+
+        // ==========================================================
+        // Mistake Drill (Errors)
+        // ==========================================================
+        function renderErrorCards() {
+            const errorCards = getActiveMistakeCards();
+            const summaryEl = document.getElementById('errors-count-summary');
+            if (summaryEl) {
+                summaryEl.textContent = `🎯 待攻坚错题：${errorCards.length} 张`;
+            }
+
+            renderCardsGrid(errorCards, 'error-cards-grid-container');
+        }
+
+        function startErrorDrillSession() {
+            const errorCards = getActiveMistakeCards();
+            if (errorCards.length === 0) {
+                alert("太棒了！当前没有任何待攻坚错题！");
+                return;
+            }
+            switchTab('study', true);
+            startStudySession(true);
+        }
+
+        async function clearAllErrors() {
+            if (!confirm("确定要重置所有卡片的错题遗忘记录吗？")) return;
+
+            if (isOfflineMode) {
+                const cards = getOfflineCards();
+                cards.forEach(c => {
+                    if (c.stats) {
+                        c.stats.lapses = 0;
+                        if (c.stats.state === 'lapsed') c.stats.state = 'review';
+                    }
+                });
+                saveOfflineCards(cards);
+                showToast("所有错题标记已重置");
+                await loadCardsList();
+                renderErrorCards();
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/api/study/documents/${docId}/flashcards/clear_errors`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                if (resp.ok) {
+                    showToast("所有错题标记已重置");
+                    await loadCardsList();
+                    renderErrorCards();
+                }
+            } catch (err) {
+                console.error("重置错题异常", err);
+            }
+        }
+
+        // ==========================================================
+        // Statistics Dashboard
+        // ==========================================================
+        async function renderStatsDashboard() {
+            if (isOfflineMode) {
+                const cards = getOfflineCards();
+                const total = cards.length;
+                const mastered = cards.filter(c => c.stats?.state === 'mastered').length;
+                const errors = cards.filter(c => (c.stats?.lapses || 0) > 0 || c.stats?.state === 'lapsed').length;
+                const due = cards.filter(c => c.stats?.state !== 'mastered').length;
+                const rate = total > 0 ? Math.round((mastered / total) * 100) : 0;
+
+                document.getElementById('stat-total').textContent = total;
+                document.getElementById('stat-due').textContent = due;
+                document.getElementById('stat-mastered').textContent = mastered;
+                document.getElementById('stat-error').textContent = errors;
+                document.getElementById('stat-rate').textContent = `${rate}%`;
+
+                const dist = {};
+                cards.forEach(c => {
+                    const ch = c.chapter_id || 'unassigned';
+                    if (!dist[ch]) dist[ch] = { total: 0, mastered: 0, errors: 0 };
+                    dist[ch].total++;
+                    if (c.stats?.state === 'mastered') dist[ch].mastered++;
+                    if ((c.stats?.lapses || 0) > 0 || c.stats?.state === 'lapsed') dist[ch].errors++;
+                });
+
+                const tbody = document.getElementById('chapter-stats-tbody');
+                const keys = Object.keys(dist);
+                if (keys.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">暂无各章节闪卡数据</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = keys.map(k => {
+                    const row = dist[k];
+                    const chName = getChapterTitle(k);
+                    const chRate = row.total > 0 ? Math.round((row.mastered / row.total) * 100) : 0;
+                    return `
+                        <tr>
+                            <td style="font-weight: 600;">${escapeHtml(chName)}</td>
+                            <td>${row.total} 张</td>
+                            <td style="color: var(--success-color); font-weight: 600;">${row.mastered} 张</td>
+                            <td style="color: var(--danger-color);">${row.errors} 张</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="flex: 1; height: 6px; background: var(--input-bg); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: ${chRate}%; height: 100%; background: var(--accent-primary);"></div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 600;">${chRate}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/api/study/documents/${docId}/flashcards/stats`);
+                if (!resp.ok) return;
+                const stats = (await resp.json()).data;
+
+                document.getElementById('stat-total').textContent = stats.total_cards || 0;
+                document.getElementById('stat-due').textContent = stats.due_count || 0;
+                document.getElementById('stat-mastered').textContent = stats.mastered_count || 0;
+                document.getElementById('stat-error').textContent = stats.error_count || 0;
+                document.getElementById('stat-rate').textContent = `${stats.mastery_rate || 0}%`;
+
+                // Chapter Breakdown Table
+                const tbody = document.getElementById('chapter-stats-tbody');
+                const dist = stats.chapter_distribution || {};
+                const keys = Object.keys(dist);
+
+                if (keys.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">暂无各章节闪卡数据</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = keys.map(k => {
+                    const row = dist[k];
+                    const chName = getChapterTitle(k);
+                    const rate = row.total > 0 ? Math.round((row.mastered / row.total) * 100) : 0;
+                    return `
+                        <tr>
+                            <td style="font-weight: 600;">${escapeHtml(chName)}</td>
+                            <td>${row.total} 张</td>
+                            <td style="color: var(--success-color); font-weight: 600;">${row.mastered} 张</td>
+                            <td style="color: var(--danger-color);">${row.errors} 张</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="flex: 1; height: 6px; background: var(--input-bg); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: ${rate}%; height: 100%; background: var(--accent-primary);"></div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 600;">${rate}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error("加载统计异常", err);
+            }
+        }
+
+        // ==========================================================
+        // Preferences & Styling
+        // ==========================================================
+        async function savePreferences() {
+            const fontSize = document.getElementById('pref-font-size').value;
+            const clozeStyle = document.getElementById('pref-cloze-style').value;
+            const flipAnim = document.getElementById('pref-flip-anim').value;
+
+            // Apply immediately to current view
+            applyStylePreferences({ fontSize, clozeStyle, flipAnim });
+
+            if (isOfflineMode) {
+                localStorage.setItem('study_flashcard_settings_' + docId, JSON.stringify({
+                    fontSize, clozeStyle, flipAnimation: flipAnim
+                }));
+                showToast("偏好设置已保存");
+                return;
+            }
+
+            try {
+                await fetch(`/api/study/documents/${docId}/flashcards/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fontSize: fontSize,
+                        clozeStyle: clozeStyle,
+                        flipAnimation: flipAnim
+                    })
+                });
+                showToast("偏好设置已保存");
+            } catch (err) {
+                console.error("保存偏好失败", err);
+            }
+        }
+
+        function applyStylePreferences(prefs) {
+            const frontText = document.getElementById('study-front-text');
+            if (frontText && prefs.fontSize) {
+                if (prefs.fontSize === 'small') frontText.style.fontSize = '18px';
+                if (prefs.fontSize === 'medium') frontText.style.fontSize = '22px';
+                if (prefs.fontSize === 'large') frontText.style.fontSize = '26px';
+            }
+
+            const flipCard = document.getElementById('active-flip-card');
+            if (flipCard && prefs.flipAnim) {
+                if (prefs.flipAnim === 'instant') {
+                    flipCard.style.transition = 'none';
+                } else {
+                    flipCard.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                }
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

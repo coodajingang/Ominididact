@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Omnididact · 全材料系统化自我教育与研学引擎</title>
+    <link href="/static/css/fonts.css" rel="stylesheet">
+    <script>
+      (function() {
+        if (!Object.hasOwn) {
+          Object.hasOwn = function(obj, prop) {
+            return Object.prototype.hasOwnProperty.call(obj, prop);
+          };
+        }
+        if (!Array.prototype.at) {
+          Array.prototype.at = function(n) {
+            n = Math.trunc(n) || 0;
+            if (n < 0) n += this.length;
+            if (n < 0 || n >= this.length) return undefined;
+            return this[n];
+          };
+        }
+        if (!String.prototype.at) {
+          String.prototype.at = function(n) {
+            n = Math.trunc(n) || 0;
+            if (n < 0) n += this.length;
+            if (n < 0 || n >= this.length) return undefined;
+            return this[n];
+          };
+        }
+        var t = localStorage.getItem('study_theme') || 'sepia';
+        document.documentElement.className = 'theme-' + t;
+        document.documentElement.setAttribute('data-theme', t);
+        var f = localStorage.getItem('study_font') || 'sans';
+        document.documentElement.setAttribute('data-font', f);
+        var fontMap = {
+          sans: "'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif",
+          wenkai: "'Lora', 'LXGW WenKai Screen', 'LXGW WenKai', 'STKaiti', 'KaiTi', Georgia, serif",
+          serif: "'Lora', 'Songti SC', 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', Georgia, serif",
+          system: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+        };
+        document.documentElement.style.setProperty('--reading-font-family', fontMap[f] || fontMap.sans);
+        var cfs = localStorage.getItem('study_chat_font_size') || '14';
+        document.documentElement.style.setProperty('--chat-font-size', cfs + 'px');
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

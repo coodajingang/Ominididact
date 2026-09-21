@@ -1,0 +1,587 @@
+/* Font Source Packages (Local Static Assets) */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/lora/400.css';
+@import '@fontsource/lora/500.css';
+@import '@fontsource/lora/600.css';
+@import '@fontsource/noto-sans-sc/chinese-simplified-400.css';
+@import '@fontsource/noto-sans-sc/chinese-simplified-500.css';
+@import 'lxgw-wenkai-screen-webfont/lxgwwenkaigbscreen.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================================
+   Reading Font Family Definitions & Presets
+   ========================================================================= */
+:root {
+  --font-reading-sans: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-reading-wenkai: 'Lora', 'LXGW WenKai Screen', 'LXGW WenKai', 'STKaiti', 'KaiTi', Georgia, serif;
+  --font-reading-serif: 'Lora', 'Songti SC', 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', Georgia, serif;
+  --font-reading-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+  --reading-font-family: var(--font-reading-sans);
+}
+
+html[data-font="sans"], body[data-font="sans"] {
+  --reading-font-family: var(--font-reading-sans);
+}
+html[data-font="wenkai"], body[data-font="wenkai"] {
+  --reading-font-family: var(--font-reading-wenkai);
+}
+html[data-font="serif"], body[data-font="serif"] {
+  --reading-font-family: var(--font-reading-serif);
+}
+html[data-font="system"], body[data-font="system"] {
+  --reading-font-family: var(--font-reading-system);
+}
+
+body {
+  font-family: var(--reading-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* =========================================================================
+   Chat Dialogue Typography Scaling
+   ========================================================================= */
+:root {
+  --chat-font-size: 14px;
+}
+
+.chat-dialogue-content {
+  font-size: var(--chat-font-size, 14px) !important;
+  line-height: 1.68;
+}
+
+.chat-dialogue-content p,
+.chat-dialogue-content li,
+.chat-dialogue-content blockquote,
+.chat-dialogue-content td,
+.chat-dialogue-content th {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+.chat-dialogue-content.prose,
+.chat-dialogue-content .prose,
+.chat-dialogue-bubble .prose {
+  font-size: var(--chat-font-size, 14px) !important;
+}
+
+.chat-dialogue-content h1 {
+  font-size: 1.35em !important;
+  line-height: 1.3 !important;
+}
+.chat-dialogue-content h2 {
+  font-size: 1.22em !important;
+  line-height: 1.35 !important;
+}
+.chat-dialogue-content h3 {
+  font-size: 1.1em !important;
+  line-height: 1.4 !important;
+}
+.chat-dialogue-content h4,
+.chat-dialogue-content h5,
+.chat-dialogue-content h6 {
+  font-size: 1em !important;
+  line-height: 1.4 !important;
+}
+
+.chat-dialogue-content code:not(pre code) {
+  font-size: 0.88em !important;
+}
+
+.chat-dialogue-content pre {
+  font-size: 0.88em !important;
+  line-height: 1.5 !important;
+}
+
+/* =========================================================================
+   Theme CSS Variables (Outside @layer base so Tailwind doesn't tree-shake them)
+   ========================================================================= */
+
+/* Default: Sepia Theme (墨玉羊皮) */
+:root,
+html.theme-sepia,
+body.theme-sepia,
+[data-theme="sepia"],
+.theme-sepia {
+  --background: 42 54% 91%; /* #f5eedc */
+  --foreground: 24 9% 16%; /* #292524 */
+  --card: 42 62% 95%; /* #faf4e6 */
+  --card-foreground: 24 9% 16%;
+  --popover: 42 62% 95%;
+  --popover-foreground: 24 9% 16%;
+  --primary: 32 95% 44%; /* #b45309 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 40% 86%;
+  --secondary-foreground: 24 9% 16%;
+  --muted: 40 40% 86%;
+  --muted-foreground: 25 5% 45%;
+  --accent: 40 40% 86%;
+  --accent-foreground: 24 9% 16%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 41 37% 80%;
+  --input: 41 37% 80%;
+  --ring: 32 95% 44%;
+  --radius: 0.625rem;
+
+  --quote-bg: #efe5cd;
+  --quote-border: #b45309;
+  --quote-text: #292524;
+  --sidebar-bg: #ece2cb;
+}
+
+/* Dark Theme (深邃夜色) */
+html.theme-dark,
+body.theme-dark,
+[data-theme="dark"],
+.theme-dark {
+  --background: 222 47% 7%; /* #0a0e17 */
+  --foreground: 210 40% 98%; /* #f8fafc */
+  --card: 222 47% 11%; /* #0f172a */
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 10%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 239 84% 67%; /* Indigo #6366f1 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217 33% 20%;
+  --input: 217 33% 15%;
+  --ring: 239 84% 67%;
+  --radius: 0.625rem;
+
+  --quote-bg: rgba(99, 102, 241, 0.09);
+  --quote-border: #818cf8;
+  --quote-text: #e2e8f0;
+  --sidebar-bg: #0d1322;
+}
+
+/* White Theme (纯净雅白) */
+html.theme-white,
+body.theme-white,
+[data-theme="white"],
+.theme-white {
+  --background: 210 40% 98%; /* #f8fafc */
+  --foreground: 222 47% 11%; /* #0f172a */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 239 84% 60%; /* #4f46e5 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 93%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 94%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 40% 93%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 239 84% 60%;
+
+  --quote-bg: #f0f4ff;
+  --quote-border: #4f46e5;
+  --quote-text: #1e293b;
+  --sidebar-bg: #f8fafc;
+}
+
+/* Forest Theme (雅致墨绿) */
+html.theme-forest,
+body.theme-forest,
+[data-theme="forest"],
+.theme-forest {
+  --background: 160 44% 7%; /* #091712 */
+  --foreground: 152 76% 96%; /* #ecfdf5 */
+  --card: 163 36% 12%; /* #132a22 */
+  --card-foreground: 152 76% 96%;
+  --popover: 163 36% 12%;
+  --popover-foreground: 152 76% 96%;
+  --primary: 160 84% 39%; /* #10b981 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 165 33% 18%;
+  --secondary-foreground: 152 76% 96%;
+  --muted: 165 33% 18%;
+  --muted-foreground: 158 64% 70%;
+  --accent: 165 33% 18%;
+  --accent-foreground: 152 76% 96%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 165 33% 25%;
+  --input: 165 33% 20%;
+  --ring: 160 84% 39%;
+
+  --quote-bg: rgba(16, 185, 129, 0.12);
+  --quote-border: #10b981;
+  --quote-text: #ecfdf5;
+  --sidebar-bg: #0c1b16;
+}
+
+/* =========================================================================
+   Brand Logo & Flashcard Icon Theme Adaptive Filters (Zero Asset Modification)
+   ========================================================================= */
+.brand-logo,
+.flashcard-icon,
+img[src*="flashcard_icon"],
+img[src*="favicon.svg"] {
+  transition: filter 0.25s ease;
+}
+
+/* Default / Sepia Theme: Antique Florentine Bronze / Walnut Ink */
+:root .brand-logo,
+html.theme-sepia .brand-logo,
+body.theme-sepia .brand-logo,
+[data-theme="sepia"] .brand-logo,
+.theme-sepia .brand-logo {
+  filter: sepia(0.9) hue-rotate(-25deg) brightness(0.38) contrast(1.35) drop-shadow(0 2px 5px rgba(41, 37, 36, 0.15));
+}
+
+:root .flashcard-icon,
+:root img[src*="flashcard_icon"],
+html.theme-sepia .flashcard-icon,
+html.theme-sepia img[src*="flashcard_icon"],
+body.theme-sepia .flashcard-icon,
+body.theme-sepia img[src*="flashcard_icon"],
+[data-theme="sepia"] .flashcard-icon,
+[data-theme="sepia"] img[src*="flashcard_icon"],
+.theme-sepia .flashcard-icon,
+.theme-sepia img[src*="flashcard_icon"] {
+  filter: sepia(0.9) hue-rotate(-25deg) brightness(0.38) contrast(1.35);
+}
+
+/* Dark Theme: Crisp Titanium Silver */
+html.theme-dark .brand-logo,
+body.theme-dark .brand-logo,
+[data-theme="dark"] .brand-logo,
+.theme-dark .brand-logo {
+  filter: brightness(1.05) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
+/* White Theme: Deep Antique Gunmetal / Dark Cast Iron (high contrast on white) */
+html.theme-white .brand-logo,
+body.theme-white .brand-logo,
+[data-theme="white"] .brand-logo,
+.theme-white .brand-logo {
+  filter: contrast(1.7) brightness(0.24) drop-shadow(0 2px 5px rgba(15, 23, 42, 0.15));
+}
+
+html.theme-white .flashcard-icon,
+html.theme-white img[src*="flashcard_icon"],
+body.theme-white .flashcard-icon,
+body.theme-white img[src*="flashcard_icon"],
+[data-theme="white"] .flashcard-icon,
+[data-theme="white"] img[src*="flashcard_icon"],
+.theme-white .flashcard-icon,
+.theme-white img[src*="flashcard_icon"] {
+  filter: contrast(1.7) brightness(0.22);
+}
+
+/* Forest Theme: Jadeite Moon-Silver (gentle emerald tint) */
+html.theme-forest .brand-logo,
+body.theme-forest .brand-logo,
+[data-theme="forest"] .brand-logo,
+.theme-forest .brand-logo {
+  filter: hue-rotate(85deg) brightness(0.95) saturate(0.7) drop-shadow(0 2px 8px rgba(16, 185, 129, 0.25));
+}
+
+html.theme-forest .flashcard-icon,
+html.theme-forest img[src*="flashcard_icon"],
+body.theme-forest .flashcard-icon,
+body.theme-forest img[src*="flashcard_icon"],
+[data-theme="forest"] .flashcard-icon,
+[data-theme="forest"] img[src*="flashcard_icon"],
+.theme-forest .flashcard-icon,
+.theme-forest img[src*="flashcard_icon"] {
+  filter: hue-rotate(85deg) brightness(0.95) saturate(0.7);
+}
+
+/* Markdown typography and quote block utilities */
+.bilingual-quote {
+  background-color: var(--quote-bg);
+  border-left: 3px solid var(--quote-border);
+  color: var(--quote-text);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 0.65rem 0.9rem;
+}
+
+.para-markdown {
+  font-size: inherit;
+  line-height: 1.7;
+}
+
+/* Reading Text Typography Enforcement */
+.reading-content-area,
+.reading-content-area p,
+.reading-content-area span:not(.font-mono),
+.reading-content-area h1,
+.reading-content-area h2,
+.reading-content-area h3,
+.reading-content-area h4,
+.reading-content-area h5,
+.reading-content-area h6,
+.reading-content-area li,
+.reading-content-area blockquote,
+.para-markdown,
+.para-markdown p,
+.para-markdown span:not(.font-mono),
+.para-markdown h1,
+.para-markdown h2,
+.para-markdown h3,
+.para-markdown h4,
+.para-markdown h5,
+.para-markdown h6,
+.para-markdown li,
+.para-markdown blockquote,
+.bilingual-quote,
+.bilingual-quote p,
+.bilingual-quote span:not(.font-mono) {
+  font-family: var(--reading-font-family) !important;
+}
+
+/* Monospace code blocks must keep monospace */
+.reading-content-area code,
+.reading-content-area pre,
+.reading-content-area kbd,
+.para-markdown code,
+.para-markdown pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+.para-markdown p {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.para-markdown p:first-child {
+  margin-top: 0;
+}
+
+.para-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.para-markdown strong {
+  font-weight: 700;
+  color: inherit;
+}
+
+.para-markdown em {
+  font-style: italic;
+}
+
+.para-markdown code {
+  background: hsl(var(--muted));
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+  font-family: ui-monospace, monospace;
+}
+
+.para-markdown pre {
+  background: hsl(var(--muted));
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-size: 0.9em;
+  margin: 0.5rem 0;
+}
+
+.para-markdown ul, .para-markdown ol,
+.note-markdown ul, .note-markdown ol,
+.prose ul, .prose ol {
+  margin: 0.4rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.para-markdown ul, .note-markdown ul, .prose ul {
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+}
+
+.para-markdown ol, .note-markdown ol, .prose ol {
+  list-style-type: decimal !important;
+  list-style-position: outside !important;
+}
+
+.para-markdown li, .note-markdown li, .prose li {
+  display: list-item !important;
+  margin-bottom: 0.2rem !important;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+/* Floating Quick-Scroll Navigator */
+.quick-scroll-navigator {
+  position: absolute;
+  right: 18px;
+  top: 76px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px;
+  background: hsl(var(--card) / 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.8);
+  border-radius: 9999px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+  user-select: none;
+  opacity: 0.35;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.quick-scroll-navigator:hover,
+.quick-scroll-navigator.dragging,
+.quick-scroll-navigator.scrolling {
+  opacity: 1;
+}
+
+.quick-scroll-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  border: 1px solid hsl(var(--border) / 0.8);
+  background: hsl(var(--muted) / 0.6);
+  color: hsl(var(--foreground));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.quick-scroll-btn:hover {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+  transform: scale(1.08);
+}
+
+.quick-scroll-track {
+  width: 6px;
+  height: 110px;
+  background: hsl(var(--muted) / 0.8);
+  border-radius: 9999px;
+  position: relative;
+  cursor: pointer;
+  margin: 4px 0;
+  transition: width 0.15s ease;
+}
+
+.quick-scroll-track:hover {
+  width: 8px;
+}
+
+.quick-scroll-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(180deg, hsl(var(--primary)) 0%, #06b6d4 100%);
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.quick-scroll-thumb {
+  position: absolute;
+  top: 0%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: #38bdf8;
+  border: 2px solid #ffffff;
+  border-radius: 9999px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+  cursor: grab;
+  transition: transform 0.1s ease;
+}
+
+.quick-scroll-thumb:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.25);
+}
+
+.quick-scroll-bubble {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: hsl(var(--card) / 0.95);
+  border: 1px solid hsl(var(--border));
+  color: #38bdf8;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.quick-scroll-navigator:hover .quick-scroll-bubble {
+  opacity: 1;
+}
+
+/* Ensure nested dropdowns and scrollable lists can scroll via wheel when modal dialog is open */
+body[data-scroll-locked] {
+  overflow: visible !important;
+  margin-right: 0px !important;
+}
+
+[data-radix-select-viewport],
+[cmdk-list] {
+  overscroll-behavior: contain;
+}
+

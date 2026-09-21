@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omnididact · 模型与网关控制台</title>
+    <link href="/static/css/fonts.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --glass-bg: rgba(30, 41, 59, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-primary: #6366f1;
+            --accent-secondary: #a855f7;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --card-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glow Blobs */
+        .ambient-glow-1 {
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .ambient-glow-2 {
+            position: absolute;
+            bottom: 10%;
+            right: 10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .logo-text h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(to right, #fff, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 6px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            width: fit-content;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-primary);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Main Content Glass Panels */
+        .panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 12px;
+        }
+
+        /* Forms & Inputs */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #b91c1c);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        /* Cookie Paste Box specifically */
+        .cookie-paste-area {
+            background: rgba(99, 102, 241, 0.03);
+            border: 1px dashed rgba(99, 102, 241, 0.3);
+        }
+
+        .cookie-paste-area:focus {
+            border-color: var(--accent-primary);
+            border-style: solid;
+        }
+
+        /* Cookie grid visualization */
+        .cookies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .cookie-card {
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .cookie-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            background: rgba(15, 23, 42, 0.55);
+        }
+
+        .cookie-key {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            word-break: break-all;
+            margin-bottom: 4px;
+        }
+
+        .cookie-val {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: monospace;
+            word-break: break-all;
+            background: rgba(0,0,0,0.15);
+            padding: 6px;
+            border-radius: 4px;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+
+        /* Models layout */
+        .models-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .model-item {
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .model-item:hover {
+            border-color: rgba(168, 85, 247, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .model-item.default {
+            border-left: 4px solid var(--accent-secondary);
+        }
+
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .model-title-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .model-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .badge {
+            background: var(--accent-secondary);
+            color: #fff;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .model-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .model-params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            background: rgba(0,0,0,0.15);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .param-badge {
+            display: flex;
+            flex-direction: column;
+            font-size: 12px;
+        }
+
+        .param-label {
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .param-value {
+            color: var(--text-main);
+            font-weight: 500;
+            font-family: monospace;
+        }
+
+        /* Notifications */
+        .notification-toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--success);
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .notification-toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification-toast.error {
+            background: var(--danger);
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.7);
+            z-index: 99;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+
+        .modal.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            width: 90%;
+            max-width: 600px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transform: translateY(-20px);
+            transition: all 0.3s;
+        }
+
+        .modal.open .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header-block {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 12px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">AG</div>
+                <div class="logo-text">
+                    <h1>LLM Proxy 控制中心</h1>
+                    <p>管理模型、参数及鉴权配置</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="status-badge" id="proxy-status">
+                    <div class="status-dot"></div>
+                    <span>代理运行中</span>
+                </div>
+                <a href="/study" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2)); border: 1px solid rgba(99, 102, 241, 0.4); color: #e0e7ff; text-decoration: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                    📚 材料翻译研学
+                </a>
+                <a href="/" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: #cbd5e1; text-decoration: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                    💬 聊天终端
+                </a>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('cookies-tab')">Cookie 鉴权管理</button>
+            <button class="tab-btn" onclick="switchTab('models-tab')">多模型与参数</button>
+            <button class="tab-btn" onclick="switchTab('system-tab')">系统参数设置</button>
+            <button class="tab-btn" onclick="switchTab('debug-tab')">调试日志 (Debug Logs)</button>
+        </div>
+
+        <!-- Cookies Tab Panel -->
+        <div class="panel active" id="cookies-tab">
+            <h2>Cookie 鉴权管理</h2>
+            <div class="form-group">
+                <label for="raw-cookie-input">从浏览器网络控制台请求中复制的原始 Cookie 字符串</label>
+                <textarea id="raw-cookie-input" class="cookie-paste-area" placeholder="例如: zc_did=...; JSESSIONID=...; ai_userid=6508"></textarea>
+                <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px; color: var(--text-muted);">
+                        💡 粘贴整段 Cookie 即可，系统将自动拆分并自动设置 AI_USERID (来自 ai_userid)。
+                    </span>
+                    <button class="btn btn-sm" onclick="parseAndSaveCookies()">解析并保存 Cookies</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h3 style="font-size: 16px; margin-bottom: 12px;">当前解析的 Cookies 列表</h3>
+                <div class="cookies-grid" id="cookies-display">
+                    <!-- Dynamic cookie cards will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Models Tab Panel -->
+        <div class="panel" id="models-tab">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+                <h2 style="border:none; margin: 0; padding: 0;">多模型与参数设置</h2>
+                <button class="btn btn-sm" onclick="openModelModal()">+ 添加新模型</button>
+            </div>
+            
+            <div class="models-list" id="models-display">
+                <!-- Dynamic model list will be populated here -->
+            </div>
+        </div>
+
+        <!-- System Tab Panel -->
+        <div class="panel" id="system-tab">
+            <h2>系统参数设置</h2>
+            <div class="form-group">
+                <label for="upstream-url-input">后端接口 URL (UPSTREAM_URL)</label>
+                <input type="text" id="upstream-url-input" placeholder="https://api.openai.com/v1/chat/completions">
+            </div>
+            <button class="btn" onclick="saveSystemConfig()">保存系统设置</button>
+        </div>
+
+        <!-- Debug Logs Tab Panel -->
+        <div class="panel" id="debug-tab">
+            <style>
+                .debug-log-card {
+                    background: rgba(15, 23, 42, 0.45);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border-radius: 10px;
+                    margin-bottom: 15px;
+                    overflow: hidden;
+                    transition: all 0.3s;
+                }
+                .debug-log-header {
+                    padding: 15px 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    cursor: pointer;
+                    background: rgba(15, 23, 42, 0.6);
+                }
+                .debug-log-header:hover {
+                    background: rgba(15, 23, 42, 0.85);
+                }
+                .debug-log-details {
+                    padding: 20px;
+                    display: none;
+                    border-top: 1px solid rgba(255, 255, 255, 0.05);
+                    animation: fadeIn 0.3s ease-out;
+                }
+                .debug-log-details.active {
+                    display: block;
+                }
+                .debug-badge {
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    font-size: 11px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                }
+                .debug-badge.processing { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+                .debug-badge.completed { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+                .debug-badge.error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+                .pre-block {
+                    background: rgba(0, 0, 0, 0.3);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    padding: 12px;
+                    border-radius: 6px;
+                    overflow-x: auto;
+                    font-family: monospace;
+                    font-size: 12px;
+                    max-height: 250px;
+                    white-space: pre-wrap;
+                    word-break: break-all;
+                    margin-top: 8px;
+                    color: #e2e8f0;
+                }
+            </style>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+                <h2 style="border:none; margin: 0; padding: 0;">调试日志与请求拦截器</h2>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label for="debug-toggle-chk" style="margin:0; font-size:14px; color:#fff;">开启 Debug 记录</label>
+                        <input type="checkbox" id="debug-toggle-chk" onchange="toggleDebugMode()" style="width:18px; height:18px; cursor:pointer;">
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="loadDebugLogs()">刷新</button>
+                </div>
+            </div>
+            
+            <div id="debug-logs-empty" style="color: var(--text-muted); text-align: center; padding: 40px 0;">
+                开启上方 Debug 记录并使用客户端发送请求，最新的调试信息将展示在这里。
+            </div>
+            
+            <div class="debug-logs-list" id="debug-logs-display">
+                <!-- Dynamically populated debug log cards -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="notification-toast" id="toast">
+        <span id="toast-message">配置保存成功！</span>
+    </div>
+
+    <!-- Add/Edit Model Modal -->
+    <div class="modal" id="model-modal">
+        <div class="modal-content">
+            <div class="modal-header-block">
+                <h3 id="modal-title" style="color: #fff; font-size: 18px; font-weight: 600;">添加新模型</h3>
+                <button class="modal-close" onclick="closeModelModal()">&times;</button>
+            </div>
+            <form id="model-form" onsubmit="saveModel(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="model-name">模型标识 (Name)</label>
+                        <input type="text" id="model-name" required placeholder="如: DEEPSEEK-V4-284B-FLASH-V20260509">
+                    </div>
+                    <div class="form-group">
+                        <label for="model-type">模型类型 (Model Type)</label>
+                        <select id="model-type" onchange="toggleModelTypeFields()" required>
+                            <option value="text">文本模型 (Text)</option>
+                            <option value="vlm">多模态模型 (VLM)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Text-only parameters -->
+                <div id="text-fields-container">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="model-url">模型 URL</label>
+                            <input type="text" id="model-url" placeholder="model_url">
+                        </div>
+                        <div class="form-group">
+                            <label for="model-cluster-type">集群类型 (Cluster Type)</label>
+                            <input type="text" id="model-cluster-type" placeholder="operation">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="model-max-tokens">最大 Token 数 (Max Tokens)</label>
+                            <input type="number" id="model-max-tokens" value="512000">
+                        </div>
+                        <div class="form-group">
+                            <label for="model-top-k">Top K</label>
+                            <input type="number" id="model-top-k" value="20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VLM-only parameters -->
+                <div id="vlm-fields-container" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="model-max-output-tokens">最大输出 Token 数 (Max Output Tokens)</label>
+                            <input type="number" id="model-max-output-tokens" value="128000">
+                        </div>
+                        <div class="form-group">
+                            <label for="model-max-input-tiles">最大输入切片数 (Max Input Tiles)</label>
+                            <input type="number" id="model-max-input-tiles" value="12">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="model-temperature">温度 (Temperature)</label>
+                        <input type="number" id="model-temperature" step="0.01" min="0" max="2" required value="0.95">
+                    </div>
+                    <div class="form-group">
+                        <label for="model-top-p">Top P</label>
+                        <input type="number" id="model-top-p" step="0.01" min="0" max="1" required value="0.9">
+                    </div>
+                    <div class="form-group">
+                        <label for="model-penalty">重复惩罚 (Repetition Penalty)</label>
+                        <input type="number" id="model-penalty" step="0.01" required value="1.05">
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px; cursor: pointer;">
+                    <input type="checkbox" id="model-is-thinking" style="width: 18px; height: 18px; cursor: pointer; margin: 0;">
+                    <label for="model-is-thinking" style="margin: 0; cursor: pointer; font-size: 13px; color: var(--text-color); display: inline-block;">开启思考 (Is Thinking)</label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModelModal()">取消</button>
+                    <button type="submit" class="btn">保存模型</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = '/api';
+
+        // Load configuration on boot
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfigData();
+            checkProxyStatus();
+        });
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+            
+            // Set current tab active
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            } else {
+                // Find and set tab active manually if called without event
+                const buttons = document.querySelectorAll('.tab-btn');
+                buttons.forEach(btn => {
+                    if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            document.getElementById(tabId).classList.add('active');
+
+            if (tabId === 'debug-tab') {
+                loadDebugLogs();
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        async function toggleDebugMode() {
+            const chk = document.getElementById('debug-toggle-chk');
+            try {
+                const response = await fetch(`${API_BASE}/debug/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ debug_mode: chk.checked })
+                });
+                if (!response.ok) throw new Error('设置 Debug 模式失败');
+                showToast(`已${chk.checked ? '开启' : '关闭'} Debug 记录模式`);
+                loadConfigData();
+            } catch (e) {
+                showToast(e.message, true);
+                chk.checked = !chk.checked;
+            }
+        }
+
+        async function loadDebugLogs() {
+            try {
+                const response = await fetch(`${API_BASE}/debug`);
+                if (!response.ok) throw new Error('获取调试日志失败');
+                const logs = await response.json();
+                
+                const display = document.getElementById('debug-logs-display');
+                const empty = document.getElementById('debug-logs-empty');
+                
+                if (logs.length === 0) {
+                    display.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                
+                empty.style.display = 'none';
+                
+                // Remember expanded logs by dataset id
+                const openLogs = {};
+                document.querySelectorAll('.debug-log-details.active').forEach(detail => {
+                    openLogs[detail.dataset.logid] = true;
+                });
+                
+                display.innerHTML = '';
+                logs.forEach(log => {
+                    const card = document.createElement('div');
+                    card.className = 'debug-log-card';
+                    
+                    const isStreamStr = log.stream ? 'SSE 流式' : '非流式';
+                    const statusClass = log.status;
+                    const statusText = log.status === 'completed' ? '成功' : (log.status === 'error' ? '错误' : '进行中');
+                    
+                    const clientReqHeaders = JSON.stringify(log.client_request.headers, null, 2);
+                    const clientReqBody = JSON.stringify(log.client_request.body, null, 2);
+                    const upstreamUrl = log.upstream_request.url || '正在分析中...';
+                    const upstreamReqHeaders = JSON.stringify(log.upstream_request.headers || {}, null, 2);
+                    const upstreamReqBody = JSON.stringify(log.upstream_request.body || {}, null, 2);
+                    
+                    const responseText = log.response_chunks.join("") || (log.error ? `Error: ${log.error}` : '暂无流式响应内容...');
+                    
+                    const isExpanded = openLogs[log.id] ? 'active' : '';
+                    
+                    card.innerHTML = `
+                        <div class="debug-log-header" onclick="toggleLogDetails('${log.id}')">
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <span style="font-weight:600; color:#fff;">[${log.timestamp}]</span>
+                                <span style="font-size:12px; color:var(--text-muted);">${log.model} (${isStreamStr})</span>
+                            </div>
+                            <span class="debug-badge ${statusClass}">${statusText}</span>
+                        </div>
+                        <div class="debug-log-details ${isExpanded}" id="details-${log.id}" data-logid="${log.id}">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:15px;">
+                                <div>
+                                    <h4 style="font-size:13px; color:#fff; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px; margin-bottom:8px;">1. 客户端请求 (OpenCode -> Proxy)</h4>
+                                    <label style="color:var(--text-muted); font-size:12px;">Headers:</label>
+                                    <pre class="pre-block">${escapeHtml(clientReqHeaders)}</pre>
+                                    <label style="color:var(--text-muted); font-size:12px; margin-top:8px; display:block;">Request Body:</label>
+                                    <pre class="pre-block">${escapeHtml(clientReqBody)}</pre>
+                                </div>
+                                <div>
+                                    <h4 style="font-size:13px; color:#fff; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px; margin-bottom:8px;">2. 代理转发请求 (Proxy -> 内网)</h4>
+                                    <div style="margin-bottom:8px; font-size:12px;">URL: <span style="font-family:monospace; color:var(--accent-primary);">${upstreamUrl}</span></div>
+                                    <label style="color:var(--text-muted); font-size:12px;">Headers:</label>
+                                    <pre class="pre-block">${escapeHtml(upstreamReqHeaders)}</pre>
+                                    <label style="color:var(--text-muted); font-size:12px; margin-top:8px; display:block;">Request Body:</label>
+                                    <pre class="pre-block">${escapeHtml(upstreamReqBody)}</pre>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="font-size:13px; color:#fff; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px; margin-top:20px; margin-bottom:8px;">3. 返回响应内容流 (Response SSE chunks)</h4>
+                                <pre class="pre-block" style="max-height:300px; background:rgba(0,0,0,0.55);">${escapeHtml(responseText)}</pre>
+                            </div>
+                        </div>
+                    `;
+                    display.appendChild(card);
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function toggleLogDetails(logId) {
+            const detailPanel = document.getElementById(`details-${logId}`);
+            if (detailPanel) {
+                detailPanel.classList.toggle('active');
+            }
+        }
+
+        // Show Toast Notification
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            
+            msgEl.textContent = message;
+            if (isError) {
+                toast.classList.add('error');
+            } else {
+                toast.classList.remove('error');
+            }
+            
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Fetch proxy server state
+        async function checkProxyStatus() {
+            try {
+                const response = await fetch('/v1/models');
+                const statusBadge = document.getElementById('proxy-status');
+                if (response.ok) {
+                    statusBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+                    statusBadge.style.color = 'var(--success)';
+                    statusBadge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                    statusBadge.querySelector('.status-dot').style.background = 'var(--success)';
+                    statusBadge.querySelector('span').textContent = '代理服务运行中 (' + window.location.host + ')';
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
+                const statusBadge = document.getElementById('proxy-status');
+                statusBadge.style.background = 'rgba(239, 68, 68, 0.1)';
+                statusBadge.style.color = 'var(--danger)';
+                statusBadge.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+                statusBadge.querySelector('.status-dot').style.background = 'var(--danger)';
+                statusBadge.querySelector('span').textContent = '代理服务未响应，当前地址: ' + window.location.host;
+            }
+        }
+
+        // Load data from Backend API
+        async function loadConfigData() {
+            try {
+                const response = await fetch(`${API_BASE}/config`);
+                if (!response.ok) throw new Error('加载配置失败');
+                const config = await response.json();
+
+                // 1. Upstream URL
+                document.getElementById('upstream-url-input').value = config.upstream_url || '';
+
+                // 2. Render cookies
+                renderCookies(config.cookies || {});
+
+                // 3. Render models
+                renderModels(config.models || []);
+
+                // 4. Set Debug toggle checked state
+                document.getElementById('debug-toggle-chk').checked = config.debug_mode || false;
+            } catch (e) {
+                showToast(e.message, true);
+            }
+        }
+
+        // Render Cookies list
+        function renderCookies(cookies) {
+            const container = document.getElementById('cookies-display');
+            container.innerHTML = '';
+            
+            if (Object.keys(cookies).length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; color: var(--text-muted); text-align: center; padding: 20px;">暂无 Cookie 鉴权配置。请在上方输入框复制粘贴原始 Cookie。</div>';
+                return;
+            }
+
+            for (const [key, value] of Object.entries(cookies)) {
+                const card = document.createElement('div');
+                card.className = 'cookie-card';
+                
+                // If it's userid highlight it slightly as it is critical
+                const isUserid = key === 'ai_userid';
+                const styleMod = isUserid ? 'border-color: rgba(99, 102, 241, 0.4);' : '';
+                if (styleMod) card.setAttribute('style', styleMod);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="cookie-key">${key} ${isUserid ? '<span style="color: var(--accent-primary); font-size:11px; font-weight:normal;">[用于 Tag 生成]</span>' : ''}</div>
+                        <div class="cookie-val">${value}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        // Parse cookies text box and send to API
+        async function parseAndSaveCookies() {
+            const rawCookie = document.getElementById('raw-cookie-input').value.strip ? 
+                              document.getElementById('raw-cookie-input').value.strip() : 
+                              document.getElementById('raw-cookie-input').value.trim();
+            if (!rawCookie) {
+                showToast('Cookie 内容为空', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/cookies`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ raw_cookie: rawCookie })
+                });
+
+                if (!response.ok) throw new Error('Cookie 解析失败');
+                showToast('Cookies 解析并保存成功！');
+                document.getElementById('raw-cookie-input').value = '';
+                loadConfigData();
+            } catch (e) {
+                showToast(e.message, true);
+            }
+        }
+
+        // Render models list
+        function renderModels(models) {
+            const container = document.getElementById('models-display');
+            container.innerHTML = '';
+
+            if (models.length === 0) {
+                container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 40px 0;">当前没有配置模型。请点击右上角按钮添加模型。</div>';
+                return;
+            }
+
+            models.forEach(model => {
+                const item = document.createElement('div');
+                item.className = `model-item ${model.is_default ? 'default' : ''}`;
+                
+                const isVlm = model.type === 'vlm';
+                const typeLabel = isVlm ? '多模态 (VLM)' : '文本 (Text)';
+                const typeColor = isVlm ? 'var(--accent-secondary)' : 'var(--accent-primary)';
+                
+                let paramsHtml = '';
+                if (isVlm) {
+                    paramsHtml = `
+                        <div class="param-badge">
+                            <span class="param-label">Max Output Tokens</span>
+                            <span class="param-value">${model.max_output_tokens}</span>
+                        </div>
+                        <div class="param-badge">
+                            <span class="param-label">Max Input Tiles</span>
+                            <span class="param-value">${model.max_input_tiles}</span>
+                        </div>
+                    `;
+                } else {
+                    paramsHtml = `
+                        <div class="param-badge">
+                            <span class="param-label">Model URL</span>
+                            <span class="param-value">${model.model_url || 'model_url'}</span>
+                        </div>
+                        <div class="param-badge">
+                            <span class="param-label">Cluster Type</span>
+                            <span class="param-value">${model.cluster_type || 'operation'}</span>
+                        </div>
+                        <div class="param-badge">
+                            <span class="param-label">Max Tokens</span>
+                            <span class="param-value">${model.max_tokens}</span>
+                        </div>
+                        <div class="param-badge">
+                            <span class="param-label">Top K</span>
+                            <span class="param-value">${model.top_k}</span>
+                        </div>
+                    `;
+                }
+                
+                item.innerHTML = `
+                    <div class="model-header">
+                        <div class="model-title-block">
+                            <span class="model-name">${model.name}</span>
+                            <span class="badge" style="background: ${typeColor};">${typeLabel}</span>
+                            ${model.is_default ? '<span class="badge">默认启用</span>' : ''}
+                        </div>
+                        <div class="model-actions">
+                            ${!model.is_default ? `<button class="btn btn-secondary btn-sm" onclick="setDefaultModel('${model.name}')">设为默认</button>` : ''}
+                            <button class="btn btn-secondary btn-sm" onclick="openModelModal(${JSON.stringify(model).replace(/"/g, '&quot;')})">编辑</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteModel('${model.name}')">删除</button>
+                        </div>
+                    </div>
+                    <div class="model-params-grid">
+                        ${paramsHtml}
+                        <div class="param-badge">
+                            <span class="param-label">Temperature</span>
+                            <span class="param-value">${model.temperature}</span>
+                        </div>
+                        <div class="param-badge">
+                            <span class="param-label">Top P</span>
+                            <span class="param-value">${model.top_p}</span>
+                        </div>
+                        <div class="param-badge">
+                            <span class="param-label">Penalty</span>
+                            <span class="param-value">${model.repetition_penalty}</span>
+                        </div>
+                        <div class="param-badge">
+                            <span class="param-label">Is Thinking</span>
+                            <span class="param-value">${model.is_thinking ? 'Yes' : 'No'}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Set default model
+        async function setDefaultModel(modelName) {
+            try {
+                const response = await fetch(`${API_BASE}/models/default`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: modelName })
+                });
+
+                if (!response.ok) throw new Error('设置默认模型失败');
+                showToast(`已成功将 ${modelName} 设为默认模型`);
+                loadConfigData();
+            } catch (e) {
+                showToast(e.message, true);
+            }
+        }
+
+        // Delete model
+        async function deleteModel(modelName) {
+            if (!confirm(`确认删除模型 ${modelName} 吗？`)) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/models/${encodeURIComponent(modelName)}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('删除模型失败');
+                showToast('模型删除成功');
+                loadConfigData();
+            } catch (e) {
+                showToast(e.message, true);
+            }
+        }
+
+        // Save System configuration settings
+        async function saveSystemConfig() {
+            const upstreamUrl = document.getElementById('upstream-url-input').value.trim();
+            if (!upstreamUrl) {
+                showToast('后端 URL 不能为空', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ upstream_url: upstreamUrl })
+                });
+
+                if (!response.ok) throw new Error('保存配置失败');
+                showToast('系统设置保存成功！');
+                loadConfigData();
+            } catch (e) {
+                showToast(e.message, true);
+            }
+        }
+
+        // Modal Controls
+        let editMode = false;
+        
+        function toggleModelTypeFields() {
+            const type = document.getElementById('model-type').value;
+            const textFields = document.getElementById('text-fields-container');
+            const vlmFields = document.getElementById('vlm-fields-container');
+            
+            if (type === 'vlm') {
+                textFields.style.display = 'none';
+                vlmFields.style.display = 'block';
+            } else {
+                textFields.style.display = 'block';
+                vlmFields.style.display = 'none';
+            }
+        }
+        
+        function openModelModal(modelData = null) {
+            const modal = document.getElementById('model-modal');
+            const title = document.getElementById('modal-title');
+            const nameInput = document.getElementById('model-name');
+            const typeSelect = document.getElementById('model-type');
+            
+            if (modelData) {
+                editMode = true;
+                title.textContent = '编辑模型参数';
+                nameInput.value = modelData.name;
+                nameInput.disabled = true; // Key parameter cannot be renamed
+                
+                const type = modelData.type || 'text';
+                typeSelect.value = type;
+                typeSelect.disabled = true; // Cannot change type on edit
+                
+                if (type === 'vlm') {
+                    document.getElementById('model-max-output-tokens').value = modelData.max_output_tokens || 128000;
+                    document.getElementById('model-max-input-tiles').value = modelData.max_input_tiles || 12;
+                } else {
+                    document.getElementById('model-url').value = modelData.model_url || 'model_url';
+                    document.getElementById('model-cluster-type').value = modelData.cluster_type || 'operation';
+                    document.getElementById('model-max-tokens').value = modelData.max_tokens || 512000;
+                    document.getElementById('model-top-k').value = modelData.top_k || 20;
+                }
+                
+                document.getElementById('model-temperature').value = modelData.temperature;
+                document.getElementById('model-top-p').value = modelData.top_p;
+                document.getElementById('model-penalty').value = modelData.repetition_penalty;
+                document.getElementById('model-is-thinking').checked = !!modelData.is_thinking;
+            } else {
+                editMode = false;
+                title.textContent = '添加新模型';
+                nameInput.value = '';
+                nameInput.disabled = false;
+                
+                typeSelect.value = 'text';
+                typeSelect.disabled = false;
+                
+                document.getElementById('model-url').value = 'model_url';
+                document.getElementById('model-cluster-type').value = 'operation';
+                document.getElementById('model-max-tokens').value = 512000;
+                document.getElementById('model-top-k').value = 20;
+                
+                document.getElementById('model-max-output-tokens').value = 128000;
+                document.getElementById('model-max-input-tiles').value = 12;
+                
+                document.getElementById('model-temperature').value = 0.95;
+                document.getElementById('model-top-p').value = 0.9;
+                document.getElementById('model-penalty').value = 1.05;
+                document.getElementById('model-is-thinking').checked = false;
+            }
+            
+            toggleModelTypeFields();
+            modal.classList.add('open');
+        }
+
+        function closeModelModal() {
+            document.getElementById('model-modal').classList.remove('open');
+        }
+
+        // Save model (Submit form)
+        async function saveModel(event) {
+            event.preventDefault();
+            
+            const type = document.getElementById('model-type').value;
+            const modelPayload = {
+                name: document.getElementById('model-name').value.trim(),
+                type: type,
+                temperature: parseFloat(document.getElementById('model-temperature').value),
+                top_p: parseFloat(document.getElementById('model-top-p').value),
+                repetition_penalty: parseFloat(document.getElementById('model-penalty').value),
+                is_thinking: document.getElementById('model-is-thinking').checked
+            };
+            
+            if (type === 'vlm') {
+                modelPayload.max_output_tokens = parseInt(document.getElementById('model-max-output-tokens').value);
+                modelPayload.max_input_tiles = parseInt(document.getElementById('model-max-input-tiles').value);
+            } else {
+                modelPayload.model_url = document.getElementById('model-url').value.trim();
+                modelPayload.cluster_type = document.getElementById('model-cluster-type').value.trim();
+                modelPayload.max_tokens = parseInt(document.getElementById('model-max-tokens').value);
+                modelPayload.top_k = parseInt(document.getElementById('model-top-k').value);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/models`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(modelPayload)
+                });
+
+                if (!response.ok) throw new Error('保存模型参数失败');
+                showToast(editMode ? '模型参数修改成功！' : '模型添加成功！');
+                closeModelModal();
+                loadConfigData();
+            } catch (e) {
+                showToast(e.message, true);
+            }
+        }
+    </script>
+</body>
+</html>
