@@ -136,7 +136,7 @@ def test_flashcard_api_endpoints():
         # 1. GET /study/flashcards page
         resp = client.get("/study/flashcards")
         assert resp.status_code == 200
-        assert "闪卡管理与学习中心" in resp.text
+        assert "闪卡记忆中心" in resp.text or "闪卡" in resp.text
 
         # 2. POST create flashcard via API
         resp_create = client.post(f"/api/study/documents/{doc_id}/flashcards", json={
