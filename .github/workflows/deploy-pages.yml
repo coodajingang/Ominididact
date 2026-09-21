@@ -1,0 +1,39 @@
+name: Deploy Static Demo to GitHub Pages
+
+on:
+  workflow_dispatch: # Allows manual trigger from Actions tab
+  push:
+    branches:
+      - gh-pages-deploy # Or trigger whenever you push to this branch
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy-demo:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Points to the exported static library directory (or demo folder)
+          path: 'demo_site/'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>index.html</loc>
+    <lastmod>2026-09-21</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>docs/doc_20260921_153904_f59eb2/index.html</loc>
+    <lastmod>2026-09-21 15:39:04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>docs/doc_20260921_153904_f59eb2/flashcards.html</loc>
+    <lastmod>2026-09-21 15:39:04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>docs/doc_20260917_154617_792a69/index.html</loc>
+    <lastmod>2026-09-17 15:46:17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>docs/doc_20260917_154617_792a69/flashcards.html</loc>
+    <lastmod>2026-09-17 15:46:17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+</urlset>

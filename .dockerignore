@@ -1,0 +1,51 @@
+# Git & System
+.git/
+.gitignore
+.DS_Store
+.DS_Store?
+._*
+
+# Maintainer & Scratch Notes
+maintainer_notes/
+_internal/
+scratch/
+tmp/
+temp/
+
+# Agent & IDE state
+agents/
+.agents/
+.gemini/
+.antigravity/
+.system_generated/
+.idea/
+.vscode/
+
+# Node & Frontend local files
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Python caches & virtualenvs
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local archives & large packages
+*.zip
+*.tar.gz
+packages/
+dist_packages/
+
+# Local runtime data
+data/
+config.json

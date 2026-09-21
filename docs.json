@@ -1,0 +1,32 @@
+[
+  {
+    "id": "doc_20260921_153904_f59eb2",
+    "title": "Attention Is All You Need.pdf",
+    "path": "docs/doc_20260921_153904_f59eb2/index.html",
+    "flashcards_path": "docs/doc_20260921_153904_f59eb2/flashcards.html",
+    "updated_at": "2026-09-21 15:39:04",
+    "paragraph_count": 168,
+    "flashcard_count": 9,
+    "type": "pdf",
+    "tags": [
+      "PDF",
+      "Training",
+      "Results"
+    ],
+    "description": "共包含 168 个研学段落，配套 9 个考点记忆闪卡。"
+  },
+  {
+    "id": "doc_20260917_154617_792a69",
+    "title": "Chapter 6-Cryptography and Symmetric Key Algorithms.pdf",
+    "path": "docs/doc_20260917_154617_792a69/index.html",
+    "flashcards_path": "docs/doc_20260917_154617_792a69/flashcards.html",
+    "updated_at": "2026-09-17 15:46:17",
+    "paragraph_count": 372,
+    "flashcard_count": 84,
+    "type": "pdf",
+    "tags": [
+      "PDF"
+    ],
+    "description": "共包含 372 个研学段落，配套 84 个考点记忆闪卡。"
+  }
+]

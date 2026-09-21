@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研学知识库</title>
+    <meta name="description" content="Omnididact 个人研习大厅与深度自学空间。面向长篇专业文献与复杂材料，提供中英句级对齐精读与间隔重复考点强化，专注深度理解与长效吸收。">
+    <meta name="keywords" content="Omnididact,研学,个人研习大厅,自学空间,自我教育,双语对照,深度阅读,考点闪卡,间隔重复,SM-2,AI助读">
+    <meta name="author" content="Omnididact (https://github.com/coodajingang/Ominididact)">
+    <meta name="generator" content="Omnididact (https://github.com/coodajingang/Ominididact)">
+    
+    <!-- Open Graph / GEO / Social Metadata -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Omnididact">
+    <meta property="og:title" content="研学知识库">
+    <meta property="og:description" content="面向长篇专业文献与复杂材料，提供中英句级对齐精读与间隔重复考点强化，专注深度理解与长效吸收。">
+    <meta property="og:image" content="static/favicon.svg">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="研学知识库">
+    <meta name="twitter:description" content="面向长篇专业文献与复杂材料，提供中英句级对齐精读与间隔重复考点强化，专注深度理解与长效吸收。">
+
+    <!-- Schema.org JSON-LD for Search Engines & Generative AI (GEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "./#website",
+          "name": "Omnididact 个人研习大厅",
+          "headline": "全材料系统化自我教育与研学引擎",
+          "description": "面向长篇专业文献与复杂材料，提供中英句级对齐精读与间隔重复考点强化，专注深度理解与长效吸收。",
+          "url": "./",
+          "sameAs": [
+            "https://github.com/coodajingang/Ominididact"
+          ],
+          "creator": {
+            "@type": "Organization",
+            "name": "Omnididact",
+            "url": "https://github.com/coodajingang/Ominididact"
+          }
+        },
+        {
+          "@type": "CollectionPage",
+          "@id": "./#collection",
+          "name": "深度研读与考点记忆空间",
+          "description": "系统化自学与研学导航大厅"
+        }
+      ]
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0a0e17;
+            --bg-gradient: linear-gradient(135deg, #0a0e17 0%, #101626 100%);
+            --header-bg: rgba(15, 23, 42, 0.85);
+            --card-bg: rgba(30, 41, 59, 0.65);
+            --card-hover-bg: rgba(30, 41, 59, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-border-active: rgba(99, 102, 241, 0.6);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #6366f1;
+            --accent-primary-hover: #4f46e5;
+            --accent-secondary: #a855f7;
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --modal-bg: #1e293b;
+            --input-bg: rgba(0, 0, 0, 0.35);
+            --badge-bg: rgba(99, 102, 241, 0.15);
+            --badge-text: #a5b4fc;
+            --badge-border: rgba(99, 102, 241, 0.3);
+            --progress-bg: rgba(255, 255, 255, 0.08);
+            --progress-bar: linear-gradient(90deg, #6366f1, #a855f7);
+            --shadow-subtle: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        body.theme-white {
+            --bg-base: #f8fafc;
+            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            --header-bg: rgba(255, 255, 255, 0.92);
+            --card-bg: #ffffff;
+            --card-hover-bg: #fdfdfd;
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --glass-border-active: rgba(79, 70, 229, 0.5);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-primary: #4f46e5;
+            --accent-primary-hover: #4338ca;
+            --accent-secondary: #7c3aed;
+            --accent-glow: rgba(79, 70, 229, 0.15);
+            --modal-bg: #ffffff;
+            --input-bg: #f1f5f9;
+            --badge-bg: rgba(79, 70, 229, 0.08);
+            --badge-text: #4f46e5;
+            --badge-border: rgba(79, 70, 229, 0.2);
+            --progress-bg: rgba(0, 0, 0, 0.06);
+            --progress-bar: linear-gradient(90deg, #4f46e5, #7c3aed);
+            --shadow-subtle: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-base);
+            background-image: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Top Bar */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--header-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+            flex-shrink: 0;
+        }
+
+        .brand-icon img {
+            transition: filter 0.25s ease;
+            filter: brightness(1.05) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+        }
+        body.theme-white .brand-icon img {
+            filter: contrast(1.7) brightness(0.24) drop-shadow(0 2px 5px rgba(15, 23, 42, 0.15));
+        }
+        body.theme-sepia .brand-icon img {
+            filter: sepia(0.9) hue-rotate(-25deg) brightness(0.38) contrast(1.35) drop-shadow(0 2px 5px rgba(41, 37, 36, 0.15));
+        }
+        body.theme-forest .brand-icon img {
+            filter: hue-rotate(85deg) brightness(0.95) saturate(0.7) drop-shadow(0 2px 8px rgba(16, 185, 129, 0.25));
+        }
+
+        .brand-text h1 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .brand-tag {
+            font-size: 0.7rem;
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            border: 1px solid var(--badge-border);
+            font-weight: 600;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 0.45rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--glass-border);
+            border-color: var(--glass-border-active);
+        }
+
+        .action-btn.github-btn {
+            text-decoration: none;
+            background: rgba(99, 102, 241, 0.12);
+            border-color: rgba(99, 102, 241, 0.35);
+            color: var(--text-main);
+        }
+
+        .action-btn.github-btn:hover {
+            background: rgba(99, 102, 241, 0.22);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 12px var(--accent-glow);
+            transform: translateY(-1px);
+        }
+
+        .portal-footer {
+            border-top: 1px solid var(--glass-border);
+            padding: 2.5rem 1.5rem 3.5rem;
+            text-align: center;
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.15);
+            margin-top: auto;
+        }
+
+        .portal-footer a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .portal-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .portal-footer .footer-sub {
+            margin-top: 0.5rem;
+            font-size: 0.78rem;
+            opacity: 0.85;
+        }
+
+        /* Container */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            margin-bottom: 2.5rem;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.6rem;
+            background: linear-gradient(135deg, var(--text-main) 30%, var(--accent-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            max-width: 680px;
+            margin: 0 auto 1.8rem;
+        }
+
+        /* Stats Bar */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            padding: 1.1rem 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--glass-border-active);
+            transform: translateY(-2px);
+        }
+
+        .stat-icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--badge-bg);
+            border: 1px solid var(--badge-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: var(--accent-primary);
+            flex-shrink: 0;
+        }
+
+        .stat-meta .stat-val {
+            font-size: 1.35rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.2;
+        }
+
+        .stat-meta .stat-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* Search & Filter Toolbar */
+        .filter-toolbar {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .search-box-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 0.65rem 1rem 0.65rem 2.4rem;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .clear-search-btn {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .tags-filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-pill {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-pill:hover, .filter-pill.active {
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            border-color: var(--badge-border);
+        }
+
+        /* Documents Grid */
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .doc-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1.2rem;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow-subtle);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .doc-card:hover {
+            background: var(--card-hover-bg);
+            border-color: var(--glass-border-active);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--glass-border-active);
+        }
+
+        .card-top {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .card-header-line {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .doc-type-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .doc-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            line-height: 1.35;
+            color: var(--text-main);
+            text-decoration: none;
+            word-break: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .doc-title:hover {
+            color: var(--accent-primary);
+        }
+
+        .doc-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .doc-tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .doc-tag {
+            font-size: 0.7rem;
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--badge-border);
+            font-weight: 500;
+        }
+
+        /* Card Meta Details */
+        .card-meta-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--glass-border);
+            padding-top: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .meta-group {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .meta-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Reading Progress */
+        .progress-container {
+            margin-top: -0.4rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-track {
+            height: 5px;
+            background: var(--progress-bg);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--progress-bar);
+            border-radius: 999px;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* Action Buttons */
+        .card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            margin-top: 0.25rem;
+        }
+
+        .btn-study-read {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #ffffff;
+            border: none;
+            padding: 0.6rem 0.8rem;
+            border-radius: 9px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .btn-study-read:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .btn-flashcard {
+            background: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+            padding: 0.6rem 0.8rem;
+            border-radius: 9px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            text-decoration: none;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+        }
+
+        .btn-flashcard:hover {
+            background: var(--glass-border);
+            border-color: var(--glass-border-active);
+        }
+
+        /* Empty / Alert State */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 1.5rem;
+            background: var(--card-bg);
+            border: 1px dashed var(--glass-border);
+            border-radius: 20px;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+
+        .alert-banner {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            line-height: 1.5;
+        }
+
+        body.theme-white .alert-banner {
+            background: rgba(245, 158, 11, 0.1);
+            color: #b45309;
+        }
+
+        /* Modal Dialog */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .modal-box {
+            background: var(--modal-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            max-width: 650px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .code-block {
+            background: var(--input-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            color: #38bdf8;
+            overflow-x: auto;
+            margin: 0.75rem 0;
+            white-space: pre;
+        }
+
+        .step-item {
+            margin-bottom: 1.25rem;
+        }
+
+        .step-num {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 22px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-right: 0.4rem;
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--glass-border);
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: auto;
+        }
+
+        @media (max-width: 640px) {
+            .doc-grid {
+                grid-template-columns: 1fr;
+            }
+            .card-actions {
+                grid-template-columns: 1fr;
+            }
+            .filter-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Sticky Bar -->
+    <header class="topbar">
+        <a href="#" class="brand-container">
+            <div class="brand-icon" style="background: transparent; box-shadow: none;">
+                <img src="/static/favicon.svg" onerror="this.onerror=null; this.src='static/favicon.svg';" alt="Omnididact" style="width: 36px; height: 36px; border-radius: 10px; object-fit: contain;" />
+            </div>
+            <div class="brand-text">
+                <h1>
+                    <span>研学知识库</span>
+                    <span class="brand-tag">个人研习空间</span>
+                </h1>
+            </div>
+        </a>
+        <div class="topbar-actions">
+            <a href="https://github.com/coodajingang/Ominididact" target="_blank" rel="noopener noreferrer" class="action-btn github-btn" title="访问 GitHub 开源项目仓库">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block; vertical-align:-2px;"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <span>GitHub 开源</span>
+            </a>
+            <button class="action-btn" id="btn-open-guide">
+                <span>💡 增量发布指引</span>
+            </button>
+            <button class="action-btn" id="btn-theme-toggle" title="切换深色/浅色主题">
+                <span id="theme-icon">🌓</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h2 class="hero-title">深度研读与考点记忆空间</h2>
+            <p class="hero-subtitle">
+                提供经 AI 助读解析、中英句级对照的双语研读材料与 SM-2 考点复习闪卡。
+            </p>
+
+            <!-- Stats Bar -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon-wrap">📚</div>
+                    <div class="stat-meta">
+                        <div class="stat-val" id="stat-doc-count">-</div>
+                        <div class="stat-label">在研材料文献</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-wrap">📑</div>
+                    <div class="stat-meta">
+                        <div class="stat-val" id="stat-para-count">-</div>
+                        <div class="stat-label">研学段落总数</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-wrap">🗂️</div>
+                    <div class="stat-meta">
+                        <div class="stat-val" id="stat-card-count">-</div>
+                        <div class="stat-label">考点闪卡存量</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon-wrap">⚡</div>
+                    <div class="stat-meta">
+                        <div class="stat-val" id="stat-last-update">-</div>
+                        <div class="stat-label">最近更新时间</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Local File Protocol Warning Banner (Displayed when file:// is detected) -->
+        <div id="local-cors-warning" class="alert-banner" style="display: none;">
+            <div style="font-size: 1.3rem;">⚠️</div>
+            <div>
+                <strong>检测到当前以本地文件 (file://) 形式直接双击打开：</strong><br>
+                受浏览器同源安全策略限制，JavaScript 无法直接通过 fetch 读取同级 <code>docs.json</code>。<br>
+                建议部署到 <strong>Cloudflare Pages</strong>、<strong>Nginx</strong> 或在本地目录运行 <code>npx serve</code> / <code>python3 -m http.server</code>。<br>
+                也可以点击右侧按钮：<button class="action-btn" id="btn-manual-load-json" style="margin-left: 0.5rem; padding: 0.2rem 0.6rem; font-size: 0.75rem;">📂 手动选择 docs.json 预览</button>
+                <input type="file" id="input-docs-json" accept=".json" style="display: none;">
+            </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="filter-toolbar">
+            <div class="search-box-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" class="search-input" placeholder="按文档标题、关键词或标签搜索... (按 / 聚焦)">
+                <button type="button" id="clear-search" class="clear-search-btn">✕</button>
+            </div>
+            <div class="tags-filter-bar" id="tags-filter-container">
+                <button class="filter-pill active" data-tag="all">全部</button>
+            </div>
+        </div>
+
+        <!-- Document Grid -->
+        <div class="doc-grid" id="documents-grid">
+            <div class="empty-state">
+                <div class="empty-icon">⏳</div>
+                <h3>正在加载研习材料...</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+                    正在从 docs.json 同步研读材料索引
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Portal Footer -->
+    <footer class="portal-footer">
+        <div class="footer-content">
+            <p>基于开源项目 <a href="https://github.com/coodajingang/Ominididact" target="_blank" rel="noopener noreferrer">Omnididact</a> 构建 · 全材料系统化自我教育与研学引擎</p>
+            <p class="footer-sub">遵循 Apache 2.0 开源协议 · 专注深度阅读理解与长效记忆巩固，拒绝浮于表面的笔记收藏</p>
+        </div>
+    </footer>
+
+    <!-- Guide Modal -->
+    <div class="modal-overlay" id="guide-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">🧩 如何增量发布新材料到本站</h3>
+                <button class="close-btn" id="btn-close-guide">&times;</button>
+            </div>
+            <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+                <p>本研习空间采用完全无后端的静态架构设计。当你在研学管理系统中导出某个新材料的<strong>【增量更新包 (.zip)】</strong>后，只需两步即可完成全站更新：</p>
+                
+                <div class="step-item" style="margin-top: 1.2rem;">
+                    <div><span class="step-num">1</span><strong>解压并将新文档目录合并到 <code>docs/</code> 文件夹</strong></div>
+                    <p style="margin-top: 0.35rem; font-size: 0.83rem;">
+                        将 zip 包中的 <code>docs/doc_xxxx</code> 文件夹直接拷贝或上传至你 GitHub 仓库 / Cloudflare Pages / 服务器站点的 <code>docs/</code> 目录下。
+                    </p>
+                </div>
+
+                <div class="step-item">
+                    <div><span class="step-num">2</span><strong>复制 <code>patch_entry.json</code> 内容追加到根目录 <code>docs.json</code></strong></div>
+                    <p style="margin-top: 0.35rem; font-size: 0.83rem;">
+                        打开补丁包内提供的 <code>patch_entry.json</code>，复制其中的 JSON 块，将其追加粘贴到站点根目录的 <code>docs.json</code> 数组中：
+                    </p>
+                    <div class="code-block">// docs.json 示例
+[
+  {
+    "id": "doc_20260921_xxxx",
+    "title": "新材料标题",
+    "path": "docs/doc_20260921_xxxx/index.html",
+    "flashcards_path": "docs/doc_20260921_xxxx/flashcards.html",
+    "updated_at": "2026-09-21",
+    "paragraph_count": 86,
+    "flashcard_count": 32
+  },
+  // 👈 在这里追加新条目
+]</div>
+                </div>
+
+                <div class="step-item">
+                    <div><span class="step-num">3</span><strong>刷新本首页</strong></div>
+                    <p style="margin-top: 0.35rem; font-size: 0.83rem;">
+                        刷新本页面，新文档的研学阅读与考点闪卡即刻自动点亮并显示在导航大厅中，无需重装整站！
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core SPA Script -->
+    <script>
+        (function() {
+            let allDocs = [];
+            let currentTag = 'all';
+            let searchQuery = '';
+
+            // Theme Management
+            const THEME_KEY = 'study_portal_theme';
+            const savedTheme = localStorage.getItem(THEME_KEY);
+            if (savedTheme === 'white') {
+                document.body.classList.add('theme-white');
+                document.getElementById('theme-icon').textContent = '☀️';
+            }
+
+            document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+                const isWhite = document.body.classList.toggle('theme-white');
+                localStorage.setItem(THEME_KEY, isWhite ? 'white' : 'dark');
+                document.getElementById('theme-icon').textContent = isWhite ? '☀️' : '🌓';
+            });
+
+            // Guide Modal
+            const guideModal = document.getElementById('guide-modal');
+            document.getElementById('btn-open-guide').addEventListener('click', () => {
+                guideModal.style.display = 'flex';
+            });
+            document.getElementById('btn-close-guide').addEventListener('click', () => {
+                guideModal.style.display = 'none';
+            });
+            guideModal.addEventListener('click', (e) => {
+                if (e.target === guideModal) guideModal.style.display = 'none';
+            });
+
+            // Check if running on file:// protocol
+            if (window.location.protocol === 'file:') {
+                document.getElementById('local-cors-warning').style.display = 'flex';
+            }
+
+            // Manual Load docs.json for local preview
+            const btnManualLoad = document.getElementById('btn-manual-load-json');
+            const inputDocsJson = document.getElementById('input-docs-json');
+            btnManualLoad.addEventListener('click', () => inputDocsJson.click());
+            inputDocsJson.addEventListener('change', (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const parsed = JSON.parse(ev.target.result);
+                        initDocsData(parsed);
+                        document.getElementById('local-cors-warning').style.display = 'none';
+                    } catch (err) {
+                        alert('解析 docs.json 失败: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            // Fetch docs.json
+            async function loadDocs() {
+                try {
+                    const res = await fetch('./docs.json?t=' + Date.now());
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: 未能加载 docs.json 索引文件`);
+                    }
+                    const data = await res.json();
+                    initDocsData(data);
+                } catch (err) {
+                    console.warn('Failed to fetch docs.json:', err);
+                    if (window.location.protocol === 'file:') {
+                        document.getElementById('local-cors-warning').style.display = 'flex';
+                    }
+                    renderEmptyState('暂未发现文档清单 docs.json', '请确保根目录下存在 docs.json 文件，或者点击上方指引上传/合并。');
+                }
+            }
+
+            function initDocsData(docs) {
+                if (!Array.isArray(docs)) {
+                    renderEmptyState('docs.json 格式错误', 'docs.json 内容必须是一个包含文档对象的数组。');
+                    return;
+                }
+                allDocs = docs;
+                updateStats(allDocs);
+                buildTags(allDocs);
+                renderGrid();
+            }
+
+            function updateStats(docs) {
+                document.getElementById('stat-doc-count').textContent = docs.length;
+                let totalParas = 0;
+                let totalCards = 0;
+                let latestDate = '';
+
+                docs.forEach(d => {
+                    totalParas += (d.paragraph_count || 0);
+                    totalCards += (d.flashcard_count || 0);
+                    if (d.updated_at && d.updated_at > latestDate) {
+                        latestDate = d.updated_at;
+                    }
+                });
+
+                document.getElementById('stat-para-count').textContent = totalParas.toLocaleString();
+                document.getElementById('stat-card-count').textContent = totalCards.toLocaleString();
+                document.getElementById('stat-last-update').textContent = latestDate || '近期';
+            }
+
+            function buildTags(docs) {
+                const tagsSet = new Set();
+                docs.forEach(d => {
+                    if (Array.isArray(d.tags)) {
+                        d.tags.forEach(t => tagsSet.add(t));
+                    }
+                });
+
+                const container = document.getElementById('tags-filter-container');
+                container.innerHTML = '<button class="filter-pill active" data-tag="all">全部</button>';
+
+                tagsSet.forEach(tag => {
+                    const btn = document.createElement('button');
+                    btn.className = 'filter-pill';
+                    btn.dataset.tag = tag;
+                    btn.textContent = tag;
+                    btn.addEventListener('click', () => {
+                        container.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        currentTag = tag;
+                        renderGrid();
+                    });
+                    container.appendChild(btn);
+                });
+
+                container.querySelector('[data-tag="all"]').addEventListener('click', function() {
+                    container.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentTag = 'all';
+                    renderGrid();
+                });
+            }
+
+            // Search handling
+            const searchInput = document.getElementById('search-input');
+            const clearSearchBtn = document.getElementById('clear-search');
+
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value.trim().toLowerCase();
+                clearSearchBtn.style.display = searchQuery ? 'block' : 'none';
+                renderGrid();
+            });
+
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                searchQuery = '';
+                clearSearchBtn.style.display = 'none';
+                searchInput.focus();
+                renderGrid();
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement !== searchInput) {
+                    e.preventDefault();
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            });
+
+            function getProgressForDoc(docId) {
+                try {
+                    const raw = localStorage.getItem('study_reading_progress');
+                    if (!raw) return 0;
+                    const map = JSON.parse(raw);
+                    return map[docId] || 0;
+                } catch (e) {
+                    return 0;
+                }
+            }
+
+            function renderGrid() {
+                const container = document.getElementById('documents-grid');
+                const filtered = allDocs.filter(doc => {
+                    // Tag match
+                    if (currentTag !== 'all') {
+                        if (!doc.tags || !doc.tags.includes(currentTag)) return false;
+                    }
+                    // Search query match
+                    if (searchQuery) {
+                        const titleMatch = (doc.title || '').toLowerCase().includes(searchQuery);
+                        const descMatch = (doc.description || '').toLowerCase().includes(searchQuery);
+                        const tagMatch = (doc.tags || []).some(t => t.toLowerCase().includes(searchQuery));
+                        if (!titleMatch && !descMatch && !tagMatch) return false;
+                    }
+                    return true;
+                });
+
+                if (filtered.length === 0) {
+                    renderEmptyState('未匹配到符合条件的研学材料', '尝试更换搜索关键词或选择其他分类标签。');
+                    return;
+                }
+
+                container.innerHTML = '';
+                filtered.forEach(doc => {
+                    const card = document.createElement('div');
+                    card.className = 'doc-card';
+
+                    const readPath = doc.path || `docs/${doc.id}/index.html`;
+                    const flashPath = doc.flashcards_path || `docs/${doc.id}/flashcards.html`;
+                    const hasFlashcards = (doc.flashcard_count || 0) > 0;
+
+                    const extIcon = doc.type === 'pdf' ? '📕' : (doc.type === 'docx' ? '📝' : '📄');
+                    const tagsHtml = (doc.tags || []).map(t => `<span class="doc-tag">${escapeHtml(t)}</span>`).join('');
+                    
+                    const progressRatio = Math.min(100, Math.max(0, getProgressForDoc(doc.id)));
+                    const progressHtml = progressRatio > 0 ? `
+                        <div class="progress-container">
+                            <div class="progress-header">
+                                <span>阅读研习进度</span>
+                                <span>${Math.round(progressRatio)}%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: ${progressRatio}%;"></div>
+                            </div>
+                        </div>
+                    ` : '';
+
+                    card.innerHTML = `
+                        <div class="card-top">
+                            <div class="card-header-line">
+                                <span class="doc-type-icon">${extIcon}</span>
+                                <a href="${readPath}" class="doc-title" title="${escapeHtml(doc.title || '未命名材料')}">
+                                    ${escapeHtml(doc.title || '未命名材料')}
+                                </a>
+                            </div>
+                            ${doc.description ? `<p class="doc-desc">${escapeHtml(doc.description)}</p>` : ''}
+                            ${tagsHtml ? `<div class="doc-tags-list">${tagsHtml}</div>` : ''}
+                        </div>
+
+                        ${progressHtml}
+
+                        <div class="card-meta-bar">
+                            <div class="meta-group">
+                                <span class="meta-item" title="研学段落数">📑 ${doc.paragraph_count || 0} 段</span>
+                                <span class="meta-item" title="核心考点闪卡">🗂️ ${doc.flashcard_count || 0} 卡</span>
+                            </div>
+                            <span class="meta-item" title="更新时间">🕒 ${doc.updated_at || '近期'}</span>
+                        </div>
+
+                        <div class="card-actions">
+                            <a href="${readPath}" class="btn-study-read">
+                                <span>📖 研学阅读</span>
+                            </a>
+                            <a href="${flashPath}" class="btn-flashcard" ${hasFlashcards ? '' : 'style="opacity:0.5;pointer-events:none;" title="暂无考点闪卡"'}>
+                                <span>🗂️ 考点闪卡</span>
+                            </a>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                });
+            }
+
+            function renderEmptyState(title, subtitle) {
+                const container = document.getElementById('documents-grid');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h3>${escapeHtml(title)}</h3>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+                            ${escapeHtml(subtitle)}
+                        </p>
+                    </div>
+                `;
+            }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            // Start
+            loadDocs();
+        })();
+    </script>
+</body>
+</html>
