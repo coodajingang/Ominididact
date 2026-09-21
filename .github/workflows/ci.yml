@@ -34,7 +34,6 @@ jobs:
       - name: Run Test Suite
         run: |
           python -m unittest discover -s test
-          python test/test_study_service.py
           python test/test_study_api.py
           python test/test_flashcard_service.py
           python test/test_e2e_study.py
