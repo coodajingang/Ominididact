@@ -36,6 +36,7 @@ export function TopHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
     setDocSettingsModalOpen,
     isAssistantOpen,
     setAssistantOpen,
+    setAssistantScope,
     setSelectedParagraph,
     docFlashcardCount,
     refreshDocFlashcardCount,
@@ -179,6 +180,7 @@ export function TopHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
             onClick={() => {
               if (!isAssistantOpen) {
                 setSelectedParagraph(null)
+                setAssistantScope('document')
                 setAssistantOpen(true)
               } else {
                 setAssistantOpen(false)
@@ -566,7 +568,8 @@ export function TopHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
           </PopoverContent>
         </Popover>
 
-        {/* 6. Settings Button */}
+
+        {/* 7. Settings Button */}
         <Button
           variant="subtle"
           size="sm"

@@ -6,9 +6,30 @@ export type ReadingWidth = 'standard' | 'wide' | 'full'
 
 export type LayoutMode = 'stack' | 'side' | 'card'
 
+export interface WebChapterItem {
+  index: number
+  title: string
+  url: string
+  in_section?: boolean
+  is_current?: boolean
+  selected?: boolean
+}
+
+export interface WebInspectResult {
+  url: string
+  site_name: string
+  section_name?: string
+  suggested_title?: string
+  title: string
+  is_series: boolean
+  total_chapters: number
+  chapters: WebChapterItem[]
+}
+
 export interface DocumentMeta {
   doc_id: string
   title: string
+  filename?: string
   source_file: string
   file_type: string
   paragraph_count: number
@@ -17,7 +38,31 @@ export interface DocumentMeta {
   created_at: string
   status: string
   progress_percent?: number
+  progress?: {
+    current_page?: number
+    total_pages?: number
+    percent?: number
+    detail?: string
+  }
   chapters?: ChapterItem[]
+  source_url?: string
+  has_failed_chapters?: boolean
+  failed_chapter_count?: number
+  asset_inspection?: {
+    skipped?: boolean
+    has_ai?: boolean
+    total_referenced?: number
+    local_matched?: number
+    remotely_downloaded?: number
+    missing_count?: number
+    user_notice?: string
+    stats?: {
+      total_referenced?: number
+      local_matched?: number
+      remotely_downloaded?: number
+      missing_count?: number
+    }
+  }
 }
 
 export interface ChapterNoteItem {
@@ -31,6 +76,8 @@ export interface ChapterItem {
   chapter_id: string
   title: string
   index: number
+  url?: string
+  fetch_success?: boolean
   paragraph_count?: number
   start_paragraph_id?: string
   end_paragraph_id?: string

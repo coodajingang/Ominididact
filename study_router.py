@@ -53,6 +53,68 @@ async def upload_document(file: UploadFile = File(...)):
         logger.exception("Upload document failed")
         raise HTTPException(status_code=500, detail=f"上传处理失败: {str(e)}")
 
+@study_router.post("/api/study/documents/inspect-url")
+async def inspect_url_endpoint(req: Request):
+    try:
+        body = await req.json()
+        url = body.get("url", "").strip()
+        if not url:
+            raise HTTPException(status_code=400, detail="URL 不能为空")
+        res = await study_service.inspect_web_series(url)
+        return {"code": 200, "data": res}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Inspect URL failed")
+        raise HTTPException(status_code=500, detail=f"解析网页或系列目录失败: {str(e)}")
+
+@study_router.post("/api/study/documents/import-url")
+async def import_url_endpoint(req: Request):
+    try:
+        body = await req.json()
+        url = body.get("url", "").strip()
+        if not url:
+            raise HTTPException(status_code=400, detail="URL 不能为空")
+        title = body.get("title", "").strip()
+        selected_chapters = body.get("selected_chapters") or []
+        
+        meta = await study_service.initialize_web_document(url, title, selected_chapters)
+        doc_id = meta["doc_id"]
+        import asyncio
+        asyncio.create_task(study_service.process_document_pipeline(doc_id))
+        return {"code": 200, "data": meta, "message": "网页材料已创建，正在后台抓取与切分..."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Import URL failed")
+        raise HTTPException(status_code=500, detail=f"导入网页材料失败: {str(e)}")
+
+@study_router.post("/api/study/documents/import-folder")
+async def import_folder_endpoint(files: List[UploadFile] = File(...), folder_name: str = Form("Markdown Folder")):
+    try:
+        import zipfile
+        import io
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            for f in files:
+                file_bytes = await f.read()
+                # Use filename or webkitRelativePath if present
+                fname = f.filename or "doc.md"
+                zf.writestr(fname, file_bytes)
+
+        zip_bytes = zip_buffer.getvalue()
+        zip_filename = f"{folder_name.strip() or 'markdown_project'}.zip"
+        meta = await study_service.initialize_document(zip_bytes, zip_filename)
+        doc_id = meta["doc_id"]
+        import asyncio
+        asyncio.create_task(study_service.process_document_pipeline(doc_id))
+        return {"code": 200, "data": meta, "message": "文件夹资料包上传成功，已启动结构化解析"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Import folder failed")
+        raise HTTPException(status_code=500, detail=f"导入资料夹失败: {str(e)}")
+
 @study_router.get("/api/study/documents/{doc_id}")
 async def get_document_detail(doc_id: str):
     meta = study_service.load_doc_meta(doc_id)
@@ -66,6 +128,19 @@ async def delete_document_endpoint(doc_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="文档未找到或删除失败")
     return {"code": 200, "message": "文档删除成功"}
+
+@study_router.post("/api/study/documents/{doc_id}/refetch-failed-chapters")
+async def refetch_failed_chapters_endpoint(doc_id: str):
+    try:
+        res = await study_service.refetch_failed_chapters(doc_id)
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Refetch failed chapters for {doc_id} failed: {e}")
+        raise HTTPException(status_code=500, detail=f"重抓失败: {str(e)}")
 
 @study_router.post("/api/study/documents/{doc_id}/process")
 async def process_document_endpoint(doc_id: str):
@@ -386,6 +461,29 @@ async def get_document_image(doc_id: str, img_name: str):
         raise HTTPException(status_code=404, detail="图片不存在")
     return FileResponse(img_path)
 
+@study_router.get("/api/study/documents/{doc_id}/asset_inspection")
+async def get_document_asset_inspection(doc_id: str):
+    doc_dir = study_service.get_doc_dir(doc_id)
+    report_path = os.path.join(doc_dir, "asset_inspection.json")
+    if os.path.exists(report_path):
+        try:
+            with open(report_path, "r", encoding="utf-8") as f:
+                report = json.load(f)
+            return {"code": 200, "data": report}
+        except Exception as e:
+            logger.warning(f"Failed to read asset inspection report: {e}")
+
+    # Fallback to computing on the fly
+    from study.asset_inspector import AssetInspector
+    report = await AssetInspector.inspect_and_remediate(doc_id)
+    return {"code": 200, "data": report}
+
+@study_router.post("/api/study/documents/{doc_id}/re_inspect_assets")
+async def re_inspect_document_assets(doc_id: str):
+    from study.asset_inspector import AssetInspector
+    report = await AssetInspector.inspect_and_remediate(doc_id)
+    return {"code": 200, "data": report, "message": "静态资源重新检查与路径修复完成"}
+
 @study_router.get("/api/study/documents/{doc_id}/export")
 async def export_document(doc_id: str, format: str = "markdown"):
     meta = study_service.load_doc_meta(doc_id)
@@ -616,6 +714,70 @@ async def chapter_chat_endpoint(request: Request, doc_id: str):
         raise HTTPException(status_code=500, detail=f"全章对话服务异常: {str(e)}")
 
 # ==========================================================
+# Document Chat (Whole-document Global Macro Discussion)
+# ==========================================================
+
+@study_router.post("/api/study/documents/{doc_id}/document_chat")
+async def document_chat_endpoint(request: Request, doc_id: str):
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+        
+    user_message = body.get("message", "").strip()
+    history = body.get("history", [])
+    provider_override = body.get("provider")
+    model_override = body.get("model")
+    
+    if not user_message:
+        raise HTTPException(status_code=400, detail="message is required")
+        
+    try:
+        stream_gen = study_service.stream_document_chat(
+            doc_id=doc_id,
+            user_message=user_message,
+            history=history,
+            provider_override=provider_override,
+            model_override=model_override
+        )
+        doc_dir = study_service.get_doc_dir(doc_id)
+        persisted_stream = study_service.stream_and_persist(
+            doc_dir=doc_dir,
+            chat_type="document",
+            chapter_id="",
+            paragraph_id=None,
+            user_message=user_message,
+            stream_generator=stream_gen
+        )
+        return StreamingResponse(
+            persisted_stream,
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive"
+            }
+        )
+    except Exception as e:
+        logger.exception("Document global chat error")
+        raise HTTPException(status_code=500, detail=f"全书对话服务异常: {str(e)}")
+
+@study_router.get("/api/study/documents/{doc_id}/digests/status")
+async def get_digests_status_endpoint(doc_id: str):
+    try:
+        status = await study_service.get_document_digests_status(doc_id)
+        return {"code": 200, "data": status}
+    except Exception as e:
+        logger.exception("Get digests status error")
+        raise HTTPException(status_code=500, detail=f"获取章节精要状态失败: {str(e)}")
+
+@study_router.post("/api/study/documents/{doc_id}/digests/context")
+async def get_document_context_endpoint(doc_id: str):
+    try:
+        ctx = await study_service.assemble_document_global_context(doc_id)
+        return {"code": 200, "data": ctx}
+    except Exception as e:
+        logger.exception("Get document context error")
+        raise HTTPException(status_code=500, detail=f"组装全局上下文失败: {str(e)}")
 # Notes and Summaries Management
 # ==========================================================
 

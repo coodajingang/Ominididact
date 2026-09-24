@@ -1,0 +1,12 @@
+【待分析研学文档信息】：
+- 标题/文件名：{doc_title}
+- 文档格式类型：{file_type}
+- 源地址（若有）：{source_url}
+
+【正文中引用的静态资源路径样本（共采样前 {sample_count} 项）】：
+{referenced_samples}
+
+【当前本地磁盘 images/ 目录下已存在的物理文件样本（共 {local_count} 项）】：
+{local_assets_samples}
+
+请根据以上样本，直接输出严格符合要求的 JSON 修复规约，严禁输出任何 Markdown 标记以外的解释文字。

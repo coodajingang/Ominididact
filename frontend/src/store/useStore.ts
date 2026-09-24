@@ -71,6 +71,8 @@ interface AppState {
   setParaExtracting: (paraId: string, extracting: boolean) => void
 
   // AI Assistant Drawer
+  assistantScope: 'paragraph' | 'chapter' | 'document'
+  setAssistantScope: (scope: 'paragraph' | 'chapter' | 'document') => void
   isAssistantOpen: boolean
   setAssistantOpen: (open: boolean) => void
   toggleAssistant: () => void
@@ -102,6 +104,11 @@ interface AppState {
   setModelTestModalOpen: (open: boolean) => void
   isDocSettingsModalOpen: boolean
   setDocSettingsModalOpen: (open: boolean) => void
+  isAssetInspectionModalOpen: boolean
+  assetInspectionDocId: string | null
+  setAssetInspectionModalOpen: (open: boolean, docId?: string) => void
+  justUploadedDocId: string | null
+  setJustUploadedDocId: (docId: string | null) => void
   isNoteModalOpen: boolean
   setNoteModalOpen: (open: boolean) => void
   activeNoteParams: {
@@ -139,6 +146,9 @@ interface AppState {
   docFlashcardCount: number
   refreshDocFlashcardCount: (docId?: string) => Promise<void>
 
+  // Document Extraction Polling
+  pollDocumentExtraction: (docId: string) => Promise<void>
+
   // Batch Translation
   docBatchStatus: BatchTranslationStatus | null
   chapterBatchStatus: BatchTranslationStatus | null
@@ -157,6 +167,15 @@ function stopBatchPolling() {
   if (batchTranslatePollTimer) {
     clearInterval(batchTranslatePollTimer)
     batchTranslatePollTimer = null
+  }
+}
+
+let docExtractionPollTimer: any = null
+
+function stopDocExtractionPolling() {
+  if (docExtractionPollTimer) {
+    clearInterval(docExtractionPollTimer)
+    docExtractionPollTimer = null
   }
 }
 
@@ -322,6 +341,29 @@ export const useStore = create<AppState>((set, get) => ({
       }
       get().refreshDocFlashcardCount(docId)
       get().pollBatchTranslateStatus(docId, chapters.length > 0 ? get().activeChapterId || undefined : undefined)
+
+      if (get().justUploadedDocId === docId && docDetail.status === 'completed') {
+        const fileType = (docDetail.file_type || '').toLowerCase()
+        const isEligible = ['folder', 'zip', 'web'].includes(fileType)
+        const inspection = docDetail.asset_inspection
+        const totalRef = inspection?.stats?.total_referenced ?? inspection?.total_referenced ?? 0
+        const shouldShowModal = isEligible && Boolean(inspection && !inspection.skipped && (totalRef > 0 || inspection.user_notice))
+        if (shouldShowModal) {
+          set({
+            justUploadedDocId: null,
+            isAssetInspectionModalOpen: true,
+            assetInspectionDocId: docId,
+          })
+        } else {
+          set({ justUploadedDocId: null })
+        }
+      }
+
+      if (docDetail.status === 'extracting' || docDetail.status === 'processing') {
+        get().pollDocumentExtraction(docId)
+      } else {
+        stopDocExtractionPolling()
+      }
     } catch (e) {
       console.error('Failed to load document content:', e)
       set({ isLoadingContent: false })
@@ -564,6 +606,8 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   // AI Assistant
+  assistantScope: 'chapter',
+  setAssistantScope: (scope) => set({ assistantScope: scope }),
   isAssistantOpen: false,
   setAssistantOpen: (open) => set({ isAssistantOpen: open }),
   toggleAssistant: () => set((state) => ({ isAssistantOpen: !state.isAssistantOpen })),
@@ -631,6 +675,15 @@ export const useStore = create<AppState>((set, get) => ({
   setModelTestModalOpen: (open) => set({ isModelTestModalOpen: open }),
   isDocSettingsModalOpen: false,
   setDocSettingsModalOpen: (open) => set({ isDocSettingsModalOpen: open }),
+  isAssetInspectionModalOpen: false,
+  assetInspectionDocId: null,
+  setAssetInspectionModalOpen: (open, docId) =>
+    set({
+      isAssetInspectionModalOpen: open,
+      assetInspectionDocId: docId !== undefined ? docId : get().assetInspectionDocId,
+    }),
+  justUploadedDocId: null,
+  setJustUploadedDocId: (docId) => set({ justUploadedDocId: docId }),
   isNoteModalOpen: false,
   setNoteModalOpen: (open) => set({ isNoteModalOpen: open }),
   activeNoteParams: null,
@@ -701,6 +754,58 @@ export const useStore = create<AppState>((set, get) => ({
       }
     } catch (e) {
       console.warn('Failed to poll batch translation status:', e)
+    }
+  },
+
+  pollDocumentExtraction: async (docId: string) => {
+    if (!docId) return
+    try {
+      const docDetail = await api.getDocumentDetail(docId)
+      if (get().activeDocId === docId) {
+        set({ activeDoc: docDetail })
+      }
+
+      const status = docDetail.status || 'completed'
+      if (status === 'completed') {
+        stopDocExtractionPolling()
+        await get().loadDocuments()
+        if (get().activeDocId === docId) {
+          await get().selectDocument(docId)
+        }
+        if (get().justUploadedDocId === docId) {
+          const docDetail = get().activeDoc
+          const fileType = (docDetail?.file_type || '').toLowerCase()
+          const isEligible = ['folder', 'zip', 'web'].includes(fileType)
+          const inspection = docDetail?.asset_inspection
+          const totalRef = inspection?.stats?.total_referenced ?? inspection?.total_referenced ?? 0
+          const shouldShowModal = isEligible && Boolean(inspection && !inspection.skipped && (totalRef > 0 || inspection.user_notice))
+          if (shouldShowModal) {
+            set({
+              justUploadedDocId: null,
+              isAssetInspectionModalOpen: true,
+              assetInspectionDocId: docId,
+            })
+          } else {
+            set({ justUploadedDocId: null })
+          }
+        }
+      } else if (status === 'error') {
+        stopDocExtractionPolling()
+        await get().loadDocuments()
+      } else {
+        if (!docExtractionPollTimer) {
+          docExtractionPollTimer = setInterval(() => {
+            const currentDocId = get().activeDocId
+            if (currentDocId) {
+              get().pollDocumentExtraction(currentDocId)
+            } else {
+              stopDocExtractionPolling()
+            }
+          }, 1200)
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to poll document extraction status:', e)
     }
   },
 

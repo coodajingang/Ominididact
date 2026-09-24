@@ -36,6 +36,8 @@ export function AssistantDrawer() {
   const {
     isAssistantOpen,
     setAssistantOpen,
+    assistantScope,
+    setAssistantScope,
     activeAssistantProvider,
     setActiveAssistantProvider,
     activeAssistantModel,
@@ -156,15 +158,20 @@ export function AssistantDrawer() {
   const docId = activeDoc?.doc_id || ''
   const chapterId = currentChapter?.chapter_id || activeChapterId || ''
   const paragraphId = selectedParagraph?.id || ''
-  const isParagraphMode = Boolean(selectedParagraph)
+  const isDocumentMode = assistantScope === 'document'
+  const isParagraphMode = assistantScope === 'paragraph' && Boolean(selectedParagraph)
+  const isChapterMode = !isDocumentMode && !isParagraphMode
 
   const scopeKey = useMemo(() => {
     if (!docId) return 'global'
+    if (isDocumentMode) {
+      return `doc_${docId}_document_global`
+    }
     if (isParagraphMode && paragraphId) {
       return `doc_${docId}_ch_${chapterId}_para_${paragraphId}`
     }
     return `doc_${docId}_ch_${chapterId}_chapter`
-  }, [docId, chapterId, paragraphId, isParagraphMode])
+  }, [docId, chapterId, paragraphId, isDocumentMode, isParagraphMode])
 
   const paraKey = selectedParagraph ? `para_${docId}_${chapterId}_${selectedParagraph.id}` : ''
 
@@ -233,12 +240,20 @@ export function AssistantDrawer() {
   // Welcome message generator for active scope
   const getDefaultWelcomeMessage = useCallback(
     (
-      scope: 'paragraph' | 'chapter',
+      scope: 'paragraph' | 'chapter' | 'document',
       pIdx?: number,
       pCount?: number,
       chTitle?: string
     ): ChatMessage => {
-      if (scope === 'paragraph') {
+      if (scope === 'document') {
+        return {
+          id: `welcome-doc-${docId || 'global'}`,
+          role: 'assistant',
+          content: `您好！我是您的整篇文献全书研读导师。当前全书共包含 ${chapters.length} 个章节。系统已为您自动提取全书各章节的高浓缩知识图谱并建立自适应上下文，欢迎就跨章节对比、全局架构体系或全书核心考点向我提问！`,
+          created_at: new Date().toISOString(),
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        }
+      } else if (scope === 'paragraph') {
         return {
           id: `welcome-para-${pIdx ?? 0}`,
           role: 'assistant',
@@ -256,7 +271,7 @@ export function AssistantDrawer() {
         }
       }
     },
-    []
+    [docId, chapters.length]
   )
 
   // Current active messages in the active scope
@@ -291,7 +306,7 @@ export function AssistantDrawer() {
             ? prev[scopeKey]
             : [
                 getDefaultWelcomeMessage(
-                  isParagraphMode ? 'paragraph' : 'chapter',
+                  isDocumentMode ? 'document' : (isParagraphMode ? 'paragraph' : 'chapter'),
                   currentIdx,
                   paragraphs.length,
                   currentChapter?.title
@@ -303,6 +318,7 @@ export function AssistantDrawer() {
     },
     [
       scopeKey,
+      isDocumentMode,
       isParagraphMode,
       currentIdx,
       paragraphs.length,
@@ -313,7 +329,8 @@ export function AssistantDrawer() {
 
   // Fetch persistent history from backend whenever scope changes
   useEffect(() => {
-    if (!isAssistantOpen || !docId || !chapterId) return
+    if (!isAssistantOpen || !docId) return
+    if (!isDocumentMode && !chapterId) return
 
     // If already loaded in memory, keep memory state
     if (historyMap[scopeKey]) return
@@ -321,9 +338,12 @@ export function AssistantDrawer() {
     let isCancelled = false
     setIsLoadingHistory(true)
 
-    const chatType = isParagraphMode ? 'paragraph' : 'chapter'
+    const chatType = isDocumentMode ? 'document' : (isParagraphMode ? 'paragraph' : 'chapter')
+    const queryChapterId = isDocumentMode ? '' : chapterId
+    const queryParagraphId = isParagraphMode ? paragraphId : undefined
+
     api
-      .getChatHistory(docId, chatType, chapterId, isParagraphMode ? paragraphId : undefined)
+      .getChatHistory(docId, chatType, queryChapterId, queryParagraphId)
       .then((msgs) => {
         if (isCancelled) return
         if (Array.isArray(msgs) && msgs.length > 0) {
@@ -339,7 +359,7 @@ export function AssistantDrawer() {
           setHistoryMap((prev) => ({ ...prev, [scopeKey]: formatted }))
         } else {
           const welcome = getDefaultWelcomeMessage(
-            isParagraphMode ? 'paragraph' : 'chapter',
+            isDocumentMode ? 'document' : (isParagraphMode ? 'paragraph' : 'chapter'),
             currentIdx,
             paragraphs.length,
             currentChapter?.title
@@ -351,7 +371,7 @@ export function AssistantDrawer() {
         console.warn('Failed to load chat history:', err)
         if (!isCancelled) {
           const welcome = getDefaultWelcomeMessage(
-            isParagraphMode ? 'paragraph' : 'chapter',
+            isDocumentMode ? 'document' : (isParagraphMode ? 'paragraph' : 'chapter'),
             currentIdx,
             paragraphs.length,
             currentChapter?.title
@@ -539,8 +559,22 @@ export function AssistantDrawer() {
     { label: '💡 章首导读概述', prompt: '请用精炼有力的语言为本章撰写一段高水平的研读导读与背景概要。' },
   ]
 
-  const activeQuickPrompts = selectedParagraph
+  const defaultDocumentPrompts: QuickPromptItem[] = [
+    { label: '🗺️ 全书架构脑图', prompt: '请根据整本文档全部章节的高浓缩知识图谱，全面梳理全书的完整架构体系脑图、章节演进脉络与核心逻辑。' },
+    { label: '⚖️ 跨章机制对比', prompt: '请对比全书中各章节所探讨的核心机制与技术方案，深入分析它们在理论依据、底层实现与攻防/应用权衡上的异同。' },
+    { label: '📝 全书要点清单', prompt: '请针对整篇文档提炼出最核心的 5~8 条结论性要点与研学备考重点。' },
+    {
+      label: '🗂️ 全书核心闪卡',
+      prompt:
+        '请基于整本书的全局知识体系，提炼生成 5 张高含金量的综合性考点记忆闪卡（涵盖问答 QA 与 Cloze 镂空填空题型）。\n请严格使用如下格式输出每张闪卡：\n:::flashcard\ntype: qa 或 cloze\nfront: 正面问题或包含{{挖空词}}的语句\nback: 答案、详细解析与备考要点\ntags: 全书重点, 核心机制\n:::',
+    },
+    { label: '🔍 全局引申实战', prompt: '结合全书探讨的完整体系，有哪些前沿延伸方向或企业级工程实战落地建议？' },
+  ]
+
+  const activeQuickPrompts = isParagraphMode
     ? (customParagraphPrompts.length > 0 ? customParagraphPrompts : defaultParagraphPrompts)
+    : isDocumentMode
+    ? defaultDocumentPrompts
     : (customChapterPrompts.length > 0 ? customChapterPrompts : defaultChapterPrompts)
 
   const isVision = (modelName: string) => {
@@ -679,7 +713,7 @@ export function AssistantDrawer() {
   // Clear chat history for the active scope (both local state and backend file)
   const handleClearChatHistory = async () => {
     const welcome = getDefaultWelcomeMessage(
-      isParagraphMode ? 'paragraph' : 'chapter',
+      isDocumentMode ? 'document' : (isParagraphMode ? 'paragraph' : 'chapter'),
       currentIdx,
       paragraphs.length,
       currentChapter?.title
@@ -691,12 +725,12 @@ export function AssistantDrawer() {
     }
     setHistoryMap((prev) => ({ ...prev, [scopeKey]: [resetMsg] }))
 
-    if (docId && chapterId) {
+    if (docId && (isDocumentMode || chapterId)) {
       try {
         await api.clearChatHistory(
           docId,
-          isParagraphMode ? 'paragraph' : 'chapter',
-          chapterId,
+          isDocumentMode ? 'document' : (isParagraphMode ? 'paragraph' : 'chapter'),
+          isDocumentMode ? '' : chapterId,
           isParagraphMode ? paragraphId : undefined
         )
       } catch (err) {
@@ -732,7 +766,7 @@ export function AssistantDrawer() {
     const updated = currentMessages.filter((m) => !idsToRemove.has(m.id))
     if (updated.length === 0 || updated.every((m) => m.id.startsWith('welcome'))) {
       const welcome = getDefaultWelcomeMessage(
-        isParagraphMode ? 'paragraph' : 'chapter',
+        isDocumentMode ? 'document' : (isParagraphMode ? 'paragraph' : 'chapter'),
         currentIdx,
         paragraphs.length,
         currentChapter?.title
@@ -742,20 +776,20 @@ export function AssistantDrawer() {
       updateCurrentScopeMessages(updated)
     }
 
-    if (docId && chapterId) {
+    if (docId && (isDocumentMode || chapterId)) {
       const activeHistoryToSave = updated
         .filter((m) => !m.id.startsWith('welcome'))
         .map((m) => ({ role: m.role, content: m.content }))
       try {
         await api.saveChatHistory(
           docId,
-          isParagraphMode ? 'paragraph' : 'chapter',
-          chapterId,
+          isDocumentMode ? 'document' : (isParagraphMode ? 'paragraph' : 'chapter'),
+          isDocumentMode ? '' : chapterId,
           activeHistoryToSave,
           isParagraphMode ? paragraphId : undefined
         )
       } catch (err) {
-        console.warn('Failed to sync updated chat history to backend:', err)
+        console.error('Failed to save updated chat history:', err)
       }
     }
   }
@@ -896,17 +930,32 @@ export function AssistantDrawer() {
         { role: 'user', content: userMessageContent },
       ]
 
-      const resp = await fetch('/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: abortControllerRef.current.signal,
-        body: JSON.stringify({
-          provider: activeAssistantProvider || 'openai_compatible',
-          model: activeAssistantModel || 'default',
-          messages: payloadMessages,
-          stream: true,
-        }),
-      })
+      let resp: Response
+      if (isDocumentMode) {
+        resp = await fetch(`/api/study/documents/${docId}/document_chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: abortControllerRef.current.signal,
+          body: JSON.stringify({
+            message: query,
+            history: activeHistory.slice(-20).map((m) => ({ role: m.role, content: m.content })),
+            provider: activeAssistantProvider || undefined,
+            model: activeAssistantModel || undefined,
+          }),
+        })
+      } else {
+        resp = await fetch('/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: abortControllerRef.current.signal,
+          body: JSON.stringify({
+            provider: activeAssistantProvider || 'openai_compatible',
+            model: activeAssistantModel || 'default',
+            messages: payloadMessages,
+            stream: true,
+          }),
+        })
+      }
 
       if (!resp.ok) {
         let errDetail = `HTTP ${resp.status}`
@@ -1078,19 +1127,51 @@ export function AssistantDrawer() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-lg shrink-0">🤖</span>
-            <div className="flex flex-col min-w-0">
-              <span className="font-bold text-xs tracking-tight text-foreground flex items-center gap-1.5">
-                AI 研学助教
-                {selectedParagraph ? (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-primary/10 text-primary font-normal">
-                    按段研学
-                  </span>
-                ) : (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-500/10 text-purple-600 dark:text-purple-400 font-normal">
-                    全章研读
-                  </span>
-                )}
-              </span>
+            <div className="flex items-center gap-1 bg-muted/60 border border-border/50 rounded-lg p-0.5 text-[11px]">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedParagraph(null)
+                  setAssistantScope('document')
+                }}
+                className={`px-2 py-0.5 rounded-md font-medium transition-all ${
+                  isDocumentMode
+                    ? 'bg-primary text-primary-foreground shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="全篇研学：以整本文档所有章节结构化图谱为底座"
+              >
+                📖 全篇
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedParagraph(null)
+                  setAssistantScope('chapter')
+                }}
+                className={`px-2 py-0.5 rounded-md font-medium transition-all ${
+                  isChapterMode
+                    ? 'bg-primary text-primary-foreground shadow-2xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="本章研读：以当前章节全部原文段落为底座"
+              >
+                📑 本章
+              </button>
+              {selectedParagraph && (
+                <button
+                  type="button"
+                  onClick={() => setAssistantScope('paragraph')}
+                  className={`px-2 py-0.5 rounded-md font-medium transition-all ${
+                    isParagraphMode
+                      ? 'bg-primary text-primary-foreground shadow-2xs font-semibold'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                  title="按段精读：聚焦当前选中文段"
+                >
+                  📝 第 {currentIdx + 1} 段
+                </button>
+              )}
             </div>
           </div>
 
@@ -1322,7 +1403,20 @@ export function AssistantDrawer() {
       </div>
 
       {/* Dynamic Context Preview Area (Point 5 & Point 7) */}
-      {selectedParagraph ? (
+      {isDocumentMode ? (
+        <div className="bg-primary/5 border-b border-primary/15 text-xs text-muted-foreground flex flex-col p-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="font-semibold text-[11px] text-foreground shrink-0">
+                📚 全篇研学知识网
+              </span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-primary/10 text-primary font-mono truncate">
+                整合全部 {chapters.length} 章节 · 长章节自适应结构化抽取
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : selectedParagraph ? (
         <div className="bg-primary/5 border-b border-border/50 text-xs text-muted-foreground flex flex-col">
           <div className="p-2.5 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">

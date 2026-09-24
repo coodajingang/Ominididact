@@ -36,19 +36,20 @@ When tackling an 800-page CISSP certification guide, an arXiv deep learning pape
 ## 🔄 The Self-Education & Study Closed Loop
 
 ```
-   📥 Raw Materials          🔍 Structural Ingestion       📖 Bilingual Studio
- [PDF / Word / MD / TXT] ──▶  [TOC Tree & Hyphen Stitch] ──▶ [Side-by-Side Paragraphs]
-                                                                     │
-                                                                     ▼
-   🌐 Offline Review Portal    🗂️ Scientific Retention       🤖 In-Situ Study Copilot
- [Single-File / Self-Test] ◀── [SM-2 Spaced Repetition]   ◀── [Feynman Probing & Q&A]
+     📥 Omni-Material Hub                🔍 Structural Ingestion             📖 Bilingual Studio
+ [Web Series / Folder / EPUB] ──▶  [TOC Tree Sniff / Concurrent Sync] ──▶ [Side-by-Side Paragraphs]
+ [PDF / Word / MD / TXT]           [Hyphen Stitch / Asset Offline Cache]        │
+                                                                                ▼
+    🌐 Offline Review Portal             🗂️ Scientific Retention          🤖 In-Situ Study Copilot
+  [Single-File / Static SPA]  ◀──   [SM-2 Spaced Repetition]    ◀──   [Feynman Probing & Q&A]
 ```
 
-1. **Structural Ingestion**: Accurately extracts hierarchical headings, equations, and diagrams from PDFs and Word docs while stitching broken cross-page hyphenations.
-2. **Bilingual Studio**: Parallel paragraph alignment with 4 curated eye-care themes, making dense academic reading an enjoyable, focused experience.
-3. **In-Situ Copilot (Core)**: Sliding-window context-aware AI tutor at the paragraph level. Interrogate obscure phrasing, explore engineering tradeoffs, and deconstruct complex formulas on the fly.
-4. **Scientific Retention**: Distills key concepts into interactive 3D flashcards and cloze-deletion tests driven by the scientific **SuperMemo SM-2** spaced repetition algorithm for active recall.
-5. **Portable Offline Results**: All bilingual alignments, copilot explanations, and self-testing flashcards can be exported into standalone HTML or zero-dependency static portals for offline review anywhere, or deployed to Cloudflare Pages / GitHub Pages.
+1. **Omni-Material Ingestion**: Accurately extracts hierarchical headings, code blocks, equations, and diagrams from PDFs, Word docs, EPUBs, Markdown folders, and web series docs.
+2. **In-Order Concurrency & Self-Healing**: Crawls massive web documentation (e.g. 1000+ chapters) with 8 parallel controlled workers, 25s fault isolation, automatic retries, online image fallbacks, and selective chapter refetching.
+3. **Bilingual Studio**: Parallel paragraph alignment with default Sepia and 4 curated eye-care themes; auto-hiding topbar on scroll down for distraction-free focus.
+4. **In-Situ Copilot (Core)**: Sliding-window context-aware AI tutor at the paragraph level. Interrogate obscure phrasing, explore engineering tradeoffs, and deconstruct complex formulas on the fly.
+5. **Scientific Retention**: Distills key concepts into interactive 3D flashcards and cloze-deletion tests driven by the scientific **SuperMemo SM-2** spaced repetition algorithm for active recall.
+6. **Portable Offline Results**: All bilingual alignments, copilot explanations, and self-testing flashcards can be exported into standalone HTML or zero-dependency static portals for offline review anywhere, or deployed to Cloudflare Pages / GitHub Pages.
 
 ---
 
@@ -78,12 +79,25 @@ Inside the Study Center (`/study`), enjoy an all-in-one workbench for document r
   <img src="docs/assets/screenshots/03-main_chat.png" alt="02 Study Workbench & Copilot" width="88%" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
 </div>
 
-* **📁 Document Upload & Structural Parsing**:
-  * Click **【➕ Upload Material】** in the sidebar to upload **PDF (Text/Scanned), Word (DOCX), Markdown, or TXT** files;
-  * The parsing engine reconstructs the hierarchical table of contents, extracts inline figures, and repairs broken hyphenations across page margins.
+* **📥 Omni-Material Import Hub**:
+  Click **【Import Study Materials】** in the sidebar to ingest up to 4 major knowledge carriers:
+  * **🌐 Web Series / Technical Docs Site**:
+    * Automatically sniffs documentation sidebars (MkDocs, Docusaurus, GitBook, Sphinx, etc.);
+    * Detects active modules and sister sections (e.g. OWASP MASTG chapters) with multi-select tree picking;
+    * **8-Worker In-Order Concurrency**: Compresses 1000+ chapter crawl times from 1+ hour down to 5~8 minutes while strictly preserving original reading sequence;
+    * **25s Fault Isolation & Auto-Retry**: Prevents single-page timeouts from stalling the pipeline;
+    * **Dual-Track Image Fallback**: Preserves original remote absolute URLs if local download fails, preventing 404 broken images;
+    * **Selective Chapter Refetch**: Displays `Refetch Failed (X)` in the document options menu to rapidly heal missing or timed-out chapters on demand.
+  * **📁 Markdown Folders & Zip Bundles**:
+    * Pick native local folders in the browser or upload `.zip` archives;
+    * Detects `SUMMARY.md`, `mkdocs.yml`, `_sidebar.md`, or numeric ordering, and migrates `images/` attachments automatically.
+  * **📚 Native EPUB E-Books**:
+    * Pure native container unpacker that extracts title, author, NCX/NAV navigation, and chapters in linear reading spine order.
+  * **📄 Standard Academic Documents**:
+    * Native support for **PDF (Text/Scanned), Word (DOCX), Markdown, and TXT**.
 * **⚡ Batch Translation & Bilingual Alignment**:
   * Trigger **【⚡ Batch Translate】** in the top bar or **【⚡ Batch Translate Chapter】** to automatically translate paragraphs with the selected model;
-  * Enjoy parallel paragraph formatting with 4 eye-care themes (Sepia, Dark, Light, Forest) and adjustable reading container widths.
+  * Enjoy parallel paragraph formatting with default Sepia and 4 eye-care themes, plus auto-hiding topbar on downward scroll for deep focus.
 * **🤖 Paragraph-Level In-Situ Copilot**:
   * Click the **【🤖】** icon next to any paragraph to open the sidecar AI tutor;
   * **Sliding Context Window**: Automatically ingest previous and subsequent paragraphs ($N$ preceding and $M$ succeeding blocks) to preserve holistic context;
@@ -126,10 +140,15 @@ Click **【🗂️ Flashcards】** in the top navigation to enter the **SM-2 Mem
 - **4 Reading Themes**: Eye-friendly Antique Sepia (Default), Midnight Dark, Crisp Light, and Forest Calm.
 - **Dynamic Smart Navigation**: Auto-hiding header that smoothly reappears when scrolling up; instant chapter jump tree.
 
-### 2. Multi-Format Academic Ingestion Engine
-- **Broad Format Support**: Native processing of **PDF (text and scan-based), DOCX, Markdown, and TXT**.
-- **Embedded Visuals Preservation**: Architectural charts and figures are extracted and retained inline with high-fidelity Base64 encoding.
-- **Typography Auto-Repair**: Heuristic line-break stitcher reconciles mid-word hyphenations (`inter- / net` → `internet`) across page breaks.
+### 2. Omni-Material Ingestion Engine (Import Hub)
+- **Multi-Carrier Material Support**:
+  - **Web Series / Technical Docs Site**: Native MkDocs, Docusaurus, GitBook, and Sphinx sidebar sniffing with multi-select picking;
+  - **Project Bundles (Folder & Zip)**: Browser folder selection or `.zip` archives with automatic `SUMMARY.md` / `mkdocs.yml` resolution;
+  - **Native E-Books (EPUB)**: Zero-loss container parsing for OPF metadata, NCX navigation, and embedded graphics;
+  - **Academic Documents**: High-fidelity processing of **PDF (text and scan-based), DOCX, and TXT**.
+- **Embedded Visuals & Dual-Track Fallback**: Localized offline image caching with automatic online absolute URL fallback to eliminate 404 broken images;
+- **Typography Auto-Repair**: Heuristic line-break stitcher reconciles mid-word hyphenations across page breaks;
+- **8-Worker In-Order Concurrency & Self-Healing**: Controlled parallel web ingestion for 1000+ chapter books with 25s timeout isolation and on-demand selective chapter refetching.
 
 ### 3. Universal Multi-Model Engine (Local & Cloud Agnostic)
 Decoupled model abstraction layer with hot-swapping and live latency testing:

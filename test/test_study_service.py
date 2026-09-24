@@ -578,6 +578,10 @@ def test_export_markdown_and_html():
     assert "theme-select" in full_html, "Must contain theme selector"
     assert "adjustFontSize" in full_html, "Must contain font size adjust logic"
     assert "setReaderWidth" in full_html, "Must contain width adjust logic"
+    assert 'data-theme="sepia"' in full_html, "Default theme must be sepia (墨玉羊皮)"
+    assert 'body[data-theme="sepia"], :root' in full_html, "Sepia variables must be bound to :root by default"
+    assert 'topbar-hidden' in full_html, "Must contain topbar-hidden styles and logic"
+    assert 'lastScrollY' in full_html, "Must contain scroll direction tracking logic"
 
     # 6. Test assemble_offline_flashcards_html
     from study.flashcard_manager import create_flashcard

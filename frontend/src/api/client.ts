@@ -34,15 +34,21 @@ export async function getDocuments(): Promise<DocumentMeta[]> {
     title: d.filename || d.title || '未命名文档',
     source_file: d.filename || '',
     file_type: d.file_type || 'pdf',
+    source_url: d.source_url || '',
+    has_failed_chapters: Boolean(d.has_failed_chapters),
+    failed_chapter_count: d.failed_chapter_count || 0,
     paragraph_count: d.total_paragraphs || 0,
     translated_count: d.translated_paragraphs || 0,
     created_at: d.created_at || '',
     status: d.status || 'completed',
-    progress_percent: d.progress?.percent || 100,
+    progress_percent: d.progress?.percent ?? (d.status === 'completed' ? 100 : 0),
+    progress: d.progress || null,
     chapters: (d.chapters || []).map((ch: any, idx: number) => ({
       chapter_id: ch.chapter_id,
       title: ch.title || `第 ${idx + 1} 章`,
       index: idx,
+      url: ch.url || '',
+      fetch_success: ch.fetch_success !== undefined ? ch.fetch_success : true,
       paragraph_count: ch.paragraph_count || 0,
       header_notes: ch.header_notes || [],
       footer_notes: ch.footer_notes || [],
@@ -57,20 +63,38 @@ export async function getDocumentDetail(docId: string): Promise<DocumentMeta> {
     title: d.filename || d.title || '未命名文档',
     source_file: d.filename || '',
     file_type: d.file_type || 'pdf',
+    source_url: d.source_url || '',
+    has_failed_chapters: Boolean(d.has_failed_chapters),
+    failed_chapter_count: d.failed_chapter_count || 0,
     paragraph_count: d.total_paragraphs || 0,
     translated_count: d.translated_paragraphs || 0,
     created_at: d.created_at || '',
     status: d.status || 'completed',
-    progress_percent: d.progress?.percent || 100,
+    progress_percent: d.progress?.percent ?? (d.status === 'completed' ? 100 : 0),
+    progress: d.progress || null,
     chapters: (d.chapters || []).map((ch: any, idx: number) => ({
       chapter_id: ch.chapter_id,
       title: ch.title || `第 ${idx + 1} 章`,
       index: idx,
+      url: ch.url || '',
+      fetch_success: ch.fetch_success !== undefined ? ch.fetch_success : true,
       paragraph_count: ch.paragraph_count || 0,
       header_notes: ch.header_notes || [],
       footer_notes: ch.footer_notes || [],
     })),
   }
+}
+
+export async function refetchFailedChapters(docId: string): Promise<{
+  code: number
+  message: string
+  mode?: string
+  succeeded?: number
+  failed?: number
+}> {
+  return apiRequest(`/api/study/documents/${encodeURIComponent(docId)}/refetch-failed-chapters`, {
+    method: 'POST',
+  })
 }
 
 export async function uploadDocument(file: File): Promise<DocumentMeta> {
@@ -102,10 +126,86 @@ export async function uploadDocument(file: File): Promise<DocumentMeta> {
   }
 }
 
+export async function inspectWebUrl(url: string) {
+  return await apiRequest<import('@/types').WebInspectResult>('/api/study/documents/inspect-url', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  })
+}
+
+export async function importWebDocument(payload: {
+  url: string
+  title?: string
+  selected_chapters: any[]
+}): Promise<DocumentMeta> {
+  const d = await apiRequest<any>('/api/study/documents/import-url', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  return {
+    doc_id: d.doc_id,
+    title: d.filename || '网页研学材料',
+    source_file: d.filename || '',
+    file_type: 'web',
+    paragraph_count: 0,
+    translated_count: 0,
+    created_at: d.created_at || '',
+    status: d.status || 'processing',
+    chapters: [],
+  }
+}
+
+export async function importFolderFiles(files: File[], folderName: string = 'Markdown Folder'): Promise<DocumentMeta> {
+  const formData = new FormData()
+  for (const f of files) {
+    // preserve webkitRelativePath if present
+    const pathName = (f as any).webkitRelativePath || f.name
+    formData.append('files', f, pathName)
+  }
+  formData.append('folder_name', folderName)
+
+  const resp = await fetch('/api/study/documents/import-folder', {
+    method: 'POST',
+    body: formData,
+  })
+  if (!resp.ok) {
+    const err = await resp.text()
+    throw new Error(`Folder upload failed: ${err || resp.statusText}`)
+  }
+  const json = await resp.json()
+  const d = json.data
+  return {
+    doc_id: d.doc_id,
+    title: d.filename || folderName,
+    source_file: d.filename || '',
+    file_type: 'folder',
+    paragraph_count: 0,
+    translated_count: 0,
+    created_at: d.created_at || '',
+    status: d.status || 'processing',
+    chapters: [],
+  }
+}
+
 export async function deleteDocument(docId: string): Promise<void> {
   await apiRequest(`/api/study/documents/${encodeURIComponent(docId)}`, {
     method: 'DELETE',
   })
+}
+
+export async function getAssetInspection(docId: string): Promise<any> {
+  const res = await apiRequest<{ code: number; data: any }>(
+    `/api/study/documents/${encodeURIComponent(docId)}/asset_inspection`
+  )
+  return res.data
+}
+
+export async function reInspectAssets(docId: string): Promise<any> {
+  const res = await apiRequest<{ code: number; data: any; message: string }>(
+    `/api/study/documents/${encodeURIComponent(docId)}/re_inspect_assets`,
+    { method: 'POST' }
+  )
+  return res.data
 }
 
 export async function getChapterDetail(
@@ -621,8 +721,8 @@ export async function deleteParagraphNote(
 // Chat History Persistence
 export async function getChatHistory(
   docId: string,
-  chatType: 'paragraph' | 'chapter',
-  chapterId: string,
+  chatType: 'paragraph' | 'chapter' | 'document',
+  chapterId: string = '',
   paragraphId?: string
 ): Promise<any[]> {
   const params = new URLSearchParams({
@@ -640,8 +740,8 @@ export async function getChatHistory(
 
 export async function saveChatHistory(
   docId: string,
-  chatType: 'paragraph' | 'chapter',
-  chapterId: string,
+  chatType: 'paragraph' | 'chapter' | 'document',
+  chapterId: string = '',
   messages: any[],
   paragraphId?: string
 ): Promise<void> {
@@ -663,8 +763,8 @@ export async function saveChatHistory(
 
 export async function clearChatHistory(
   docId: string,
-  chatType: 'paragraph' | 'chapter',
-  chapterId: string,
+  chatType: 'paragraph' | 'chapter' | 'document',
+  chapterId: string = '',
   paragraphId?: string
 ): Promise<void> {
   const params = new URLSearchParams({

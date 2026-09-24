@@ -272,13 +272,62 @@ def save_doc_meta(doc_id: str, meta: Dict[str, Any]):
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
 
+def check_web_doc_has_missing_or_failed(meta: Dict[str, Any], doc_dir: Optional[str] = None) -> Tuple[bool, int, List[Dict[str, Any]]]:
+    """
+    Checks if a web document has missing, stalled or failed chapters.
+    Returns: (has_missing_or_failed, failed_count, failed_chapters_list)
+    """
+    if not meta or (meta.get("file_type") != "web" and not meta.get("source_url")):
+        return False, 0, []
+
+    status = meta.get("status", "")
+    chapters = meta.get("chapters", [])
+    web_config = meta.get("web_config", {})
+    selected_chapters = web_config.get("selected_chapters", [])
+
+    # 1. Pipeline stalled / error / extracting without chapters
+    if status in ("error", "extracting"):
+        missing_cnt = max(1, len(selected_chapters) - len(chapters)) if selected_chapters else 1
+        return True, missing_cnt, []
+
+    # 2. Check if selected_chapters count exceeds chapters count
+    if selected_chapters and len(selected_chapters) > len(chapters):
+        missing_cnt = len(selected_chapters) - len(chapters)
+        return True, missing_cnt, []
+
+    # 3. Check chapter items
+    failed_list = []
+    for ch in chapters:
+        if ch.get("fetch_success") is False:
+            failed_list.append(ch)
+            continue
+        # Fallback check if paragraph count is 1 and content starts with warning
+        if ch.get("paragraph_count", 0) <= 2 and doc_dir:
+            ch_md_path = os.path.join(doc_dir, "chapters", f"{ch['chapter_id']}.md")
+            if os.path.exists(ch_md_path):
+                try:
+                    with open(ch_md_path, "r", encoding="utf-8") as f:
+                        first_bytes = f.read(200)
+                        if "抓取此章节内容时超时" in first_bytes or "遇到网络错误" in first_bytes:
+                            ch["fetch_success"] = False
+                            failed_list.append(ch)
+                except Exception:
+                    pass
+
+    return len(failed_list) > 0, len(failed_list), failed_list
+
 def load_doc_meta(doc_id: str) -> Optional[Dict[str, Any]]:
     doc_dir = get_doc_dir(doc_id)
     meta_path = os.path.join(doc_dir, "meta.json")
     if not os.path.exists(meta_path):
         return None
     with open(meta_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        meta = json.load(f)
+    if meta.get("file_type") == "web" or meta.get("source_url"):
+        has_failed, failed_cnt, _ = check_web_doc_has_missing_or_failed(meta, doc_dir)
+        meta["has_failed_chapters"] = has_failed
+        meta["failed_chapter_count"] = failed_cnt
+    return meta
 
 def list_all_documents() -> List[Dict[str, Any]]:
     docs = []
@@ -1110,7 +1159,31 @@ def assemble_full_document_html(
             --content-font-size: 16px;
         }}
 
-        body[data-theme="dark"], :root {{
+        body[data-theme="sepia"], :root {{
+            --bg: #f5eedc;
+            --card-bg: #faf4e6;
+            --topbar-bg: rgba(245, 238, 220, 0.95);
+            --text-main: #292524;
+            --text-muted: #78716c;
+            --primary: #b45309;
+            --primary-bg: #fde68a;
+            --quote-bg: #f0e6ce;
+            --quote-border: #b45309;
+            --note-bg: #f5ebd3;
+            --note-border: #d7c29e;
+            --header-note-bg: #f5ebd3;
+            --header-note-border: #b45309;
+            --footer-note-bg: #eef3e2;
+            --footer-note-border: #4d7c0f;
+            --border: #e7dbc5;
+            --table-header-bg: #eddcc2;
+            --table-stripe-bg: #f3e9d8;
+            --btn-bg: #f0e6ce;
+            --btn-border: #d7c29e;
+            --shadow: 0 4px 18px rgba(90, 60, 20, 0.08);
+        }}
+
+        body[data-theme="dark"] {{
             --bg: #0a0e17;
             --card-bg: rgba(30, 41, 59, 0.55);
             --topbar-bg: rgba(15, 23, 42, 0.88);
@@ -1158,30 +1231,6 @@ def assemble_full_document_html(
             --shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
         }}
 
-        body[data-theme="sepia"] {{
-            --bg: #f5eedc;
-            --card-bg: #faf4e6;
-            --topbar-bg: rgba(245, 238, 220, 0.95);
-            --text-main: #292524;
-            --text-muted: #78716c;
-            --primary: #b45309;
-            --primary-bg: #fde68a;
-            --quote-bg: #f0e6ce;
-            --quote-border: #b45309;
-            --note-bg: #f5ebd3;
-            --note-border: #d7c29e;
-            --header-note-bg: #f5ebd3;
-            --header-note-border: #b45309;
-            --footer-note-bg: #eef3e2;
-            --footer-note-border: #4d7c0f;
-            --border: #e7dbc5;
-            --table-header-bg: #eddcc2;
-            --table-stripe-bg: #f3e9d8;
-            --btn-bg: #f0e6ce;
-            --btn-border: #d7c29e;
-            --shadow: 0 4px 18px rgba(90, 60, 20, 0.08);
-        }}
-
         body[data-theme="forest"] {{
             --bg: #091712;
             --card-bg: rgba(18, 38, 32, 0.75);
@@ -1217,7 +1266,7 @@ def assemble_full_document_html(
             transition: background 0.2s, color 0.2s;
         }}
 
-        /* Sticky Top Toolbar */
+        /* Sticky Top Toolbar with Auto-hide on Scroll */
         .reader-topbar {{
             position: sticky;
             top: 0;
@@ -1233,6 +1282,14 @@ def assemble_full_document_html(
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
             flex-wrap: wrap;
             gap: 12px;
+            transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+            will-change: transform;
+        }}
+        .reader-topbar.topbar-hidden {{
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: none;
         }}
         .topbar-left {{
             display: flex;
@@ -1815,7 +1872,7 @@ def assemble_full_document_html(
 </head>
 <body data-theme="sepia">
     <!-- Sticky Top Toolbar -->
-    <header class="reader-topbar">
+    <header class="reader-topbar" id="reader-topbar">
         <div class="topbar-left">
             <span class="doc-badge">双语研学</span>
             <span class="topbar-title">{_format_html_text(doc_title)}</span>
@@ -1825,9 +1882,9 @@ def assemble_full_document_html(
             <div class="control-group">
                 <label for="theme-select" class="ctrl-label">🎨</label>
                 <select id="theme-select" class="reader-select" onchange="setReaderTheme(this.value)">
+                    <option value="sepia" selected>📜 墨玉羊皮</option>
                     <option value="dark">🌙 深邃夜色</option>
                     <option value="white">☀️ 纯净雅白</option>
-                    <option value="sepia" selected>📜 墨玉羊皮</option>
                     <option value="forest">🍵 雅致墨绿</option>
                 </select>
             </div>
@@ -1925,6 +1982,8 @@ def assemble_full_document_html(
     }}
 
     function scrollToTop() {{
+        const topbar = document.getElementById('reader-topbar') || document.querySelector('.reader-topbar');
+        if (topbar) topbar.classList.remove('topbar-hidden');
         window.scrollTo({{ top: 0, behavior: 'smooth' }});
     }}
 
@@ -1960,15 +2019,20 @@ def assemble_full_document_html(
             }});
         }}
 
-        // 3. Quick scroll progress tracking
+        // 3. Quick scroll progress tracking & Auto-hide header on downscroll, show on upscroll
         const qsNav = document.getElementById('quick-scroll-nav');
         const progressText = document.getElementById('qs-progress-text');
+        const topbar = document.getElementById('reader-topbar') || document.querySelector('.reader-topbar');
         let scrollTimer = null;
+        let lastScrollY = window.scrollY || document.documentElement.scrollTop;
+        const scrollThreshold = 8; // Ignore micro-jitter
 
         window.addEventListener('scroll', () => {{
-            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+
+            // Reading Progress Indicator
             const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const pct = scrollHeight > 0 ? Math.min(100, Math.max(0, Math.round((scrollTop / scrollHeight) * 100))) : 0;
+            const pct = scrollHeight > 0 ? Math.min(100, Math.max(0, Math.round((currentScrollY / scrollHeight) * 100))) : 0;
             if (progressText) progressText.textContent = pct + '%';
 
             if (qsNav) {{
@@ -1978,6 +2042,20 @@ def assemble_full_document_html(
                     qsNav.classList.remove('scrolling');
                 }}, 1200);
             }}
+
+            // Auto-hide header on scroll down, show on scroll up
+            if (topbar) {{
+                if (currentScrollY <= 60) {{
+                    topbar.classList.remove('topbar-hidden');
+                }} else if (Math.abs(currentScrollY - lastScrollY) > scrollThreshold) {{
+                    if (currentScrollY > lastScrollY) {{
+                        topbar.classList.add('topbar-hidden');
+                    }} else {{
+                        topbar.classList.remove('topbar-hidden');
+                    }}
+                }}
+            }}
+            lastScrollY = Math.max(0, currentScrollY);
         }}, {{ passive: true }});
     }});
     </script>
@@ -2477,6 +2555,10 @@ async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any
         file_type = "txt"
     elif ext in (".md", ".markdown"):
         file_type = "md"
+    elif ext == ".epub":
+        file_type = "epub"
+    elif ext in (".zip", ".tar", ".tar.gz"):
+        file_type = "folder"
     else:
         file_type = "other"
 
@@ -2498,6 +2580,20 @@ async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any
         info = doc_converter.inspect_document(file_bytes, filename)
         total_pages = info.get("total_pages", 1)
         is_scanned = True
+    elif ext == ".epub":
+        try:
+            from study.epub_parser import inspect_epub
+            epub_info = inspect_epub(orig_path)
+            total_pages = max(1, epub_info.get("chapters_count", 1))
+            if epub_info.get("title") and epub_info["title"] != "Untitled E-Book":
+                filename = f"{epub_info['title']}.epub"
+        except Exception as e:
+            logger.warning(f"EPUB inspect warning: {e}")
+            total_pages = 1
+        is_scanned = False
+    elif ext in (".zip", ".tar", ".tar.gz"):
+        total_pages = 1
+        is_scanned = False
     elif ext in (".txt", ".md", ".markdown"):
         try:
             lines = len(file_bytes.splitlines())
@@ -2528,6 +2624,46 @@ async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any
     }
     save_doc_meta(doc_id, meta)
     # Initialize per-document settings by inheriting global defaults
+    get_study_settings(doc_id)
+    return meta
+
+async def initialize_web_document(url: str, title: str, selected_chapters: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Initializes a multi-chapter or single-page document from web URLs.
+    """
+    doc_id = f"doc_{time.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+    doc_dir = get_doc_dir(doc_id)
+    os.makedirs(doc_dir, exist_ok=True)
+    
+    total_chapters = max(1, len(selected_chapters))
+    clean_title = title.strip() or "网页研学教材"
+    
+    meta = {
+        "doc_id": doc_id,
+        "filename": clean_title,
+        "file_type": "web",
+        "is_scanned": False,
+        "language": "en",
+        "total_pages": total_chapters,
+        "total_paragraphs": 0,
+        "translated_paragraphs": 0,
+        "status": "uploaded",
+        "progress": {
+            "current_page": 0,
+            "total_pages": total_chapters,
+            "percent": 0
+        },
+        "source_url": url,
+        "web_config": {
+            "root_url": url,
+            "selected_chapters": selected_chapters
+        },
+        "error_message": "",
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "updated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "chapters": []
+    }
+    save_doc_meta(doc_id, meta)
     get_study_settings(doc_id)
     return meta
 
@@ -2644,20 +2780,38 @@ async def process_document_pipeline(doc_id: str):
         save_doc_meta(doc_id, meta)
         doc_dir = get_doc_dir(doc_id)
         
-        def on_progress(curr: int, total: int):
+        def on_progress(curr: int, total: int, detail: Optional[str] = None):
             m = load_doc_meta(doc_id)
             if m:
                 pct = int(curr / max(total, 1) * 100)
-                m["progress"] = {
+                prog = {
                     "current_page": curr,
                     "total_pages": total,
                     "percent": pct
                 }
+                if detail:
+                    prog["detail"] = detail
+                m["progress"] = prog
                 save_doc_meta(doc_id, m)
                 
         if meta.get("file_type") in ("txt", "md"):
             lang, chapters = extract_text_or_markdown_content(
                 doc_id, doc_dir, meta.get("filename", ""), progress_callback=on_progress
+            )
+        elif meta.get("file_type") == "epub":
+            from study.epub_parser import extract_epub_content
+            lang, chapters = extract_epub_content(
+                doc_id, doc_dir, meta.get("filename", ""), progress_callback=on_progress
+            )
+        elif meta.get("file_type") in ("folder", "zip"):
+            from study.folder_importer import extract_folder_content
+            lang, chapters = extract_folder_content(
+                doc_id, doc_dir, meta.get("filename", ""), progress_callback=on_progress
+            )
+        elif meta.get("file_type") == "web":
+            from study.web_importer import extract_web_series_content
+            lang, chapters = await extract_web_series_content(
+                doc_id, doc_dir, meta, progress_callback=on_progress
             )
         elif meta["file_type"] == "docx":
             lang, chapters = await extract_scanned_or_doc_content(doc_id, is_doc=True, progress_callback=on_progress)
@@ -2687,6 +2841,8 @@ async def process_document_pipeline(doc_id: str):
             chapter_metas.append({
                 "chapter_id": ch["chapter_id"],
                 "title": ch["title"],
+                "url": ch.get("url", ""),
+                "fetch_success": ch.get("fetch_success", True),
                 "paragraph_count": len(ch_paras),
                 "file": f"chapters/{ch['chapter_id']}.md"
             })
@@ -2694,14 +2850,34 @@ async def process_document_pipeline(doc_id: str):
         meta["total_paragraphs"] = total_paras
         meta["translated_paragraphs"] = completed_paras
         meta["chapters"] = chapter_metas
+        failed_cnt = sum(1 for c in chapter_metas if not c.get("fetch_success", True))
+        meta["has_failed_chapters"] = failed_cnt > 0
+        meta["failed_chapter_count"] = failed_cnt
         meta["progress"] = {
             "current_page": meta.get("total_pages", 1),
             "total_pages": meta.get("total_pages", 1),
             "percent": 100
         }
+        meta["status"] = "processing"
+        save_doc_meta(doc_id, meta)
+
+        # Trigger Asset Inspection & Remediation Pipeline (AI or Heuristic) only for eligible multi-chapter/external formats
+        # (e.g. web, folder/zip). Single MD files, single images, PDFs, Word docs, or when AI is unconfigured never trigger asset inspection.
+        try:
+            from study.asset_inspector import AssetInspector
+            if AssetInspector.should_inspect_document(meta, doc_id=doc_id):
+                await AssetInspector.inspect_and_remediate(doc_id)
+            else:
+                logger.info(f"Skipping asset inspection for doc {doc_id} (file_type={meta.get('file_type')}, has_ai={AssetInspector.is_ai_available(doc_id)}).")
+        except Exception as e_asset:
+            logger.warning(f"Asset inspection warning on doc {doc_id}: {e_asset}")
+
+        # Mark completed only AFTER asset inspection and remediation have finished
+        meta = load_doc_meta(doc_id) or meta
         meta["status"] = "completed"
         save_doc_meta(doc_id, meta)
         assemble_full_document_markdown(doc_id)
+
         logger.info(f"Document {doc_id} extraction completed and ready for study.")
     except Exception as e:
         logger.exception(f"Error in document pipeline for {doc_id}: {e}")
@@ -3382,5 +3558,199 @@ async def chat_with_paragraph(
         yield chunk
 
 chat_with_paragraph_wrapper = chat_with_paragraph
+
+
+async def refetch_failed_chapters(doc_id: str) -> Dict[str, Any]:
+    """
+    Refetches any missing, stalled, or failed chapters for a web-imported document.
+    1. If the pipeline was stalled, errored or incomplete, re-triggers the whole pipeline.
+    2. If specific chapters previously failed, selectively re-crawls only those chapters,
+       updates their content files, and refreshes the metadata.
+    """
+    meta = load_doc_meta(doc_id)
+    if not meta:
+        raise ValueError(f"文档 {doc_id} 未找到")
+    if meta.get("file_type") != "web" and not meta.get("source_url"):
+        raise ValueError("仅支持通过 Web URL 导入的文档重抓缺失章节")
+
+    doc_dir = get_doc_dir(doc_id)
+    status = meta.get("status", "")
+    chapters = meta.get("chapters", [])
+    web_config = meta.get("web_config", {})
+    selected_chapters = web_config.get("selected_chapters", [])
+
+    # Case A: If pipeline was stalled, errored or no chapters were generated
+    if status in ("error", "extracting") or len(chapters) == 0:
+        meta["status"] = "extracting"
+        meta["progress"] = {
+            "current_page": 0,
+            "total_pages": len(selected_chapters) if selected_chapters else 1,
+            "percent": 0,
+            "detail": "正在重新并发抓取与清洗..."
+        }
+        save_doc_meta(doc_id, meta)
+        import asyncio
+        asyncio.create_task(process_document_pipeline(doc_id))
+        return {
+            "code": 200,
+            "message": "已重新启动全量保序并发抓取任务，请在稍候刷新查阅",
+            "mode": "pipeline"
+        }
+
+    # Case B: Selective refetch of failed/missing chapters
+    has_failed, failed_cnt, failed_list = check_web_doc_has_missing_or_failed(meta, doc_dir)
+    if not has_failed or not failed_list:
+        return {
+            "code": 200,
+            "message": "当前文档所有章节均已完整抓取，无需重抓",
+            "mode": "noop"
+        }
+
+    # If selected_chapters has significantly more items than chapters, re-run full extraction
+    if selected_chapters and len(selected_chapters) > len(chapters):
+        meta["status"] = "extracting"
+        save_doc_meta(doc_id, meta)
+        import asyncio
+        asyncio.create_task(process_document_pipeline(doc_id))
+        return {
+            "code": 200,
+            "message": "检测到缺失未生成的章节，已启动自动补全抓取流水线",
+            "mode": "pipeline"
+        }
+
+    from study.web_importer import fetch_and_clean_page, parse_markdown_content
+    import asyncio
+
+    img_out_dir = os.path.join(doc_dir, "images")
+    os.makedirs(img_out_dir, exist_ok=True)
+    lang = meta.get("language", "en")
+
+    total_failed = len(failed_list)
+    logger.info(f"🔄 [失败重抓启动] 文档 {doc_id} 开始针对性补抓 {total_failed} 个缺失/超时章节")
+
+    chapters_to_refetch = []
+    for ch in failed_list:
+        ch_id = ch["chapter_id"]
+        ch_url = ch.get("url")
+        if not ch_url:
+            for sc in selected_chapters:
+                if sc.get("title") == ch.get("title"):
+                    ch_url = sc.get("url")
+                    break
+        if ch_url:
+            chapters_to_refetch.append((ch, ch_url))
+
+    if not chapters_to_refetch:
+        return {
+            "code": 400,
+            "message": "未找到失败章节对应的原始网页链接，无法重抓",
+            "mode": "error"
+        }
+
+    # 4-worker concurrency with graceful pacing
+    sem = asyncio.Semaphore(4)
+    done_cnt = 0
+    success_cnt = 0
+    fail_cnt = 0
+
+    async def refetch_single(item):
+        nonlocal done_cnt, success_cnt, fail_cnt
+        ch, ch_url = item
+        ch_id = ch["chapter_id"]
+        ch_title_hint = ch.get("title", ch_id)
+
+        async with sem:
+            await asyncio.sleep(0.05)
+            fetch_ok = False
+            last_err = ""
+            for attempt in range(2):
+                try:
+                    ch_title, md_content = await asyncio.wait_for(
+                        fetch_and_clean_page(ch_url, img_out_dir, doc_id=doc_id),
+                        timeout=25.0
+                    )
+                    _, parsed_chapters = parse_markdown_content(md_content, doc_id)
+                    ch_paras = []
+                    para_counter = 1
+                    for sub_ch in parsed_chapters:
+                        for p in sub_ch.get("paragraphs", []):
+                            p["id"] = f"p_{ch_id}_{para_counter:04d}"
+                            p["chapter_id"] = ch_id
+                            p["order"] = para_counter
+                            para_counter += 1
+                            ch_paras.append(p)
+
+                    ch_data = {
+                        "chapter_id": ch_id,
+                        "title": ch_title or ch_title_hint,
+                        "url": ch_url,
+                        "fetch_success": True,
+                        "paragraphs": ch_paras
+                    }
+                    write_chapter_files(doc_id, ch_data, lang)
+
+                    # Update in meta["chapters"]
+                    for m_ch in meta["chapters"]:
+                        if m_ch["chapter_id"] == ch_id:
+                            m_ch["title"] = ch_data["title"]
+                            m_ch["paragraph_count"] = len(ch_paras)
+                            m_ch["fetch_success"] = True
+                            m_ch["url"] = ch_url
+                            break
+                    fetch_ok = True
+                    break
+                except Exception as e:
+                    last_err = str(e)
+                    if attempt == 0:
+                        await asyncio.sleep(0.8)
+
+            done_cnt += 1
+            if fetch_ok:
+                success_cnt += 1
+                logger.info(f"✅ [重抓修复成功] ({done_cnt}/{total_failed}) {ch_id}: {ch_title_hint[:32]}")
+            else:
+                fail_cnt += 1
+                logger.warning(f"❌ [重抓仍失败] ({done_cnt}/{total_failed}) {ch_id}: {ch_title_hint[:32]} -> {last_err}")
+
+            # Update live progress in meta
+            meta["progress"] = {
+                "current_page": done_cnt,
+                "total_pages": total_failed,
+                "percent": int(done_cnt / total_failed * 100),
+                "detail": f"正在重抓缺失章节 ({done_cnt}/{total_failed}): {ch_title_hint[:24]}"
+            }
+            if done_cnt % 5 == 0 or done_cnt == total_failed:
+                save_doc_meta(doc_id, meta)
+
+    await asyncio.gather(*(refetch_single(item) for item in chapters_to_refetch))
+
+    # Recalculate totals
+    total_p = sum(c.get("paragraph_count", 0) for c in meta.get("chapters", []))
+    meta["total_paragraphs"] = total_p
+    assemble_full_document_markdown(doc_id)
+
+    # Re-check status
+    still_has_failed, remaining_cnt, _ = check_web_doc_has_missing_or_failed(meta, doc_dir)
+    meta["has_failed_chapters"] = still_has_failed
+    meta["failed_chapter_count"] = remaining_cnt
+    meta["status"] = "completed"
+    meta["progress"] = {
+        "current_page": total_failed,
+        "total_pages": total_failed,
+        "percent": 100,
+        "detail": f"重抓已完成：成功补齐 {success_cnt} 章，剩余失败 {fail_cnt} 章"
+    }
+    save_doc_meta(doc_id, meta)
+    logger.info(f"🎉 [失败重抓完成] 文档 {doc_id}: 成功补齐 {success_cnt} 章，剩余失败 {fail_cnt} 章")
+
+    return {
+        "code": 200,
+        "message": f"重抓已完成：成功补齐 {success_cnt} 章，剩余失败 {fail_cnt} 章",
+        "mode": "partial",
+        "succeeded": success_cnt,
+        "failed": fail_cnt,
+        "remaining_failed": remaining_cnt
+    }
+
 
 

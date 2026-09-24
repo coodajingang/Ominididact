@@ -23,8 +23,11 @@ from study.service import (
     get_image_base64_data_uri,
     transform_markdown_images,
     initialize_document,
+    initialize_web_document,
     process_document_pipeline,
     pause_document_pipeline,
+    refetch_failed_chapters,
+    check_web_doc_has_missing_or_failed,
     translate_single_paragraph,
     translate_chapter_paragraphs,
     edit_paragraph_content,
@@ -93,12 +96,32 @@ from study.notes_manager import (
 from study.chapter_chat import (
     stream_chapter_chat
 )
+from study.document_chat import (
+    stream_document_chat,
+    assemble_document_global_context,
+    get_document_digests_status,
+    get_or_build_chapter_digest,
+    CHAPTER_RAW_THRESHOLD,
+    MAX_GLOBAL_DOC_CHARS
+)
 from study.chat_manager import (
     load_chat_history,
     save_chat_history,
     clear_chat_history,
     append_chat_message,
     stream_and_persist
+)
+from study.web_importer import (
+    inspect_web_series,
+    fetch_and_clean_page,
+    extract_web_series_content
+)
+from study.epub_parser import (
+    inspect_epub,
+    extract_epub_content
+)
+from study.folder_importer import (
+    extract_folder_content
 )
 from study.text_parser import (
     decode_text_bytes,

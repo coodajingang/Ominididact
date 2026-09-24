@@ -8,6 +8,7 @@ import {
   MoreHorizontal,
   RotateCcw,
   FolderDown,
+  RefreshCw,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import * as api from '@/api/client'
+import { ImportMaterialModal } from './ImportMaterialModal'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void }) {
   const {
@@ -33,8 +43,25 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
     docReadingProgress,
   } = useStore()
 
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [docToDelete, setDocToDelete] = useState<{ id: string; title: string } | null>(null)
+  const [docToReset, setDocToReset] = useState<{ id: string; title: string } | null>(null)
+  const [refetchingDocIds, setRefetchingDocIds] = useState<Record<string, boolean>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleRefetchFailedChapters = async (docId: string) => {
+    try {
+      setRefetchingDocIds((prev) => ({ ...prev, [docId]: true }))
+      const res = await api.refetchFailedChapters(docId)
+      alert(res.message || '重抓已完成！')
+      await loadDocuments()
+    } catch (err) {
+      alert('重抓失败: ' + (err as Error).message)
+    } finally {
+      setRefetchingDocIds((prev) => ({ ...prev, [docId]: false }))
+    }
+  }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -80,6 +107,9 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
 
         <div className="w-6 h-px bg-border/60 my-0.5" />
 
+        <Button variant="ghost" size="icon-sm" onClick={() => setIsImportModalOpen(true)} title="导入材料 (URL/文件夹/EPUB/文档)">
+          <Upload className="h-4 w-4 text-primary" />
+        </Button>
         <Button variant="ghost" size="icon-sm" onClick={onToggle} title="展开侧边栏">
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -134,26 +164,18 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
         </div>
       </div>
 
-      {/* Upload Button */}
+      {/* Upload & Import Hub Button */}
       <div className="p-3 border-b border-border/40">
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept=".pdf,.docx,.doc,.txt,.md,.markdown,.png,.jpg,.jpeg,.webp,.bmp,.svg"
-          onChange={handleFileUpload}
-        />
         <Button
           variant="outline"
-          className="w-full text-xs h-8 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 text-primary"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
+          className="w-full text-xs h-9 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 text-primary flex items-center justify-center gap-1.5 font-medium transition-all"
+          onClick={() => setIsImportModalOpen(true)}
         >
-          <Upload className="h-3.5 w-3.5 mr-1.5" />
-          {isUploading ? '正在处理上传...' : '上传材料 (PDF / 图片 / DOC / TXT / MD)'}
+          <Upload className="h-3.5 w-3.5" />
+          <span>导入研学材料 (URL/文件夹/EPUB)</span>
         </Button>
         <div className="text-[10px] text-muted-foreground/75 mt-1.5 px-1 text-center leading-tight">
-          💡 支持学术图表/截图与文档；PPT 请另存为 PDF 上传
+          🌐 系列网页 · 📁 Markdown 资料包 · 📚 EPUB · 📄 PDF
         </div>
       </div>
 
@@ -176,6 +198,16 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
                   : doc.file_type === 'pdf'
                   ? '📕'
                   : '📄'
+
+              const isWebDoc = doc.file_type === 'web' || Boolean(doc.source_url)
+              const hasMissingOrFailed = Boolean(
+                doc.has_failed_chapters ||
+                (doc.failed_chapter_count && doc.failed_chapter_count > 0) ||
+                (doc.status === 'extracting' || doc.status === 'error') ||
+                (doc.chapters && doc.chapters.some((c) => c.fetch_success === false))
+              )
+              const canRefetch = isWebDoc && hasMissingOrFailed
+              const isRefetching = Boolean(refetchingDocIds[doc.doc_id])
 
               return (
                 <div
@@ -209,16 +241,35 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-36">
+                        {canRefetch && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRefetchFailedChapters(doc.doc_id)
+                              }}
+                              disabled={isRefetching}
+                              className="text-xs flex items-center gap-2 cursor-pointer text-amber-600 dark:text-amber-400 focus:text-amber-600 focus:bg-amber-500/10"
+                            >
+                              <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? 'animate-spin' : ''}`} />
+                              <span>
+                                {isRefetching
+                                  ? '正在重抓...'
+                                  : doc.failed_chapter_count
+                                  ? `重抓失败 (${doc.failed_chapter_count}章)`
+                                  : '失败重抓'}
+                              </span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (
-                              confirm(
-                                `确定将文档《${doc.title || doc.source_file}》的阅读进度重置为 0% 吗？`
-                              )
-                            ) {
-                              resetDocProgress(doc.doc_id)
-                            }
+                            setDocToReset({
+                              id: doc.doc_id,
+                              title: doc.title || doc.source_file || '该文档',
+                            })
                           }}
                           className="text-xs flex items-center gap-2 cursor-pointer"
                         >
@@ -229,13 +280,10 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (
-                              confirm(
-                                `确定删除文档《${doc.title || doc.source_file}》及其全部研读记录吗？`
-                              )
-                            ) {
-                              deleteDocument(doc.doc_id)
-                            }
+                            setDocToDelete({
+                              id: doc.doc_id,
+                              title: doc.title || doc.source_file || '该文档',
+                            })
                           }}
                           className="text-xs flex items-center gap-2 text-destructive focus:text-destructive cursor-pointer"
                         >
@@ -281,6 +329,87 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
           )}
         </div>
       </ScrollArea>
+
+      <ImportMaterialModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} />
+
+      {/* Delete Document Confirmation Dialog */}
+      <Dialog open={!!docToDelete} onOpenChange={(open) => !open && setDocToDelete(null)}>
+        <DialogContent className="sm:max-w-[420px] p-5">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2 text-destructive">
+              <Trash2 className="w-4 h-4" />
+              <span>确认删除文档</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1.5 leading-relaxed">
+              确定要删除文档《<strong className="text-foreground">{docToDelete?.title}</strong>》吗？
+              <br />
+              此操作将同步清除该文档的所有章节、双语对齐段落及研学历史，不可恢复。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-8"
+              onClick={() => setDocToDelete(null)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="text-xs h-8"
+              onClick={async () => {
+                if (docToDelete) {
+                  const id = docToDelete.id
+                  setDocToDelete(null)
+                  await deleteDocument(id)
+                }
+              }}
+            >
+              确定删除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Progress Confirmation Dialog */}
+      <Dialog open={!!docToReset} onOpenChange={(open) => !open && setDocToReset(null)}>
+        <DialogContent className="sm:max-w-[420px] p-5">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <RotateCcw className="w-4 h-4 text-primary" />
+              <span>重置阅读进度</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1.5 leading-relaxed">
+              确定要将文档《<strong className="text-foreground">{docToReset?.title}</strong>》的阅读进度重置为 0% 吗？
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-8"
+              onClick={() => setDocToReset(null)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              className="text-xs h-8"
+              onClick={() => {
+                if (docToReset) {
+                  resetDocProgress(docToReset.id)
+                  setDocToReset(null)
+                }
+              }}
+            >
+              确定重置
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </aside>
   )
 }

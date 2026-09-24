@@ -12,9 +12,11 @@ def get_chats_dir(doc_dir: str) -> str:
     os.makedirs(chats_dir, exist_ok=True)
     return chats_dir
 
-def get_chat_file_path(doc_dir: str, chat_type: str, chapter_id: str, paragraph_id: Optional[str] = None) -> str:
+def get_chat_file_path(doc_dir: str, chat_type: str, chapter_id: str = "", paragraph_id: Optional[str] = None) -> str:
     chats_dir = get_chats_dir(doc_dir)
-    if chat_type == "chapter":
+    if chat_type == "document":
+        return os.path.join(chats_dir, "document_global.json")
+    elif chat_type == "chapter":
         return os.path.join(chats_dir, f"chapter_{chapter_id}.json")
     else:
         p_id = paragraph_id or "general"

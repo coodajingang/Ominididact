@@ -7,3 +7,4 @@ pymupdf4llm>=0.0.17
 python-pptx>=0.6.21
 python-docx>=1.1.0
 pillow>=10.0.0
+beautifulsoup4>=4.12.0

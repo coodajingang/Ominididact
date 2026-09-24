@@ -9,10 +9,21 @@ import { ProviderSettingsModal } from '@/components/modals/ProviderSettingsModal
 import { DocSettingsModal } from '@/components/modals/DocSettingsModal'
 import { NoteModal } from '@/components/modals/NoteModal'
 import { QuickFlashcardModal } from '@/components/modals/QuickFlashcardModal'
+import { AssetInspectionModal } from '@/components/modals/AssetInspectionModal'
 import { ModelTerminalPage } from '@/components/terminal/ModelTerminalPage'
 
 export default function App() {
-  const { theme, fontFamily, chatFontSize, loadDocuments, loadProvidersData } = useStore()
+  const {
+    theme,
+    fontFamily,
+    chatFontSize,
+    loadDocuments,
+    loadProvidersData,
+    isAssetInspectionModalOpen,
+    setAssetInspectionModalOpen,
+    assetInspectionDocId,
+    activeDoc,
+  } = useStore()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   // Route detection: route /chat directly renders the modern ModelTerminalPage
@@ -86,6 +97,12 @@ export default function App() {
         <DocSettingsModal />
         <NoteModal />
         <QuickFlashcardModal />
+        <AssetInspectionModal
+          open={isAssetInspectionModalOpen}
+          onOpenChange={(open) => setAssetInspectionModalOpen(open)}
+          docId={assetInspectionDocId || activeDoc?.doc_id || ''}
+          docTitle={activeDoc?.title || activeDoc?.filename || ''}
+        />
       </div>
     </TooltipProvider>
   )

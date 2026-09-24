@@ -19,6 +19,46 @@ function formatMarkdownListHelper(text: string): string {
   formatted = formatted.replace(/([^\n])\s+(\d+)\.\s+/g, '$1\n$2. ')
   return formatted
 }
+
+/**
+ * Normalizes relative image paths (both HTML <img src="..."> and Markdown ![alt](...))
+ * into API endpoints (/api/study/documents/{docId}/images/{filename}) for reliable display.
+ */
+function normalizeDocImageUrls(content: string, docId?: string): string {
+  if (!content) return ''
+  if (!docId) return content
+
+  const encodedDocId = encodeURIComponent(docId)
+
+  // 1. Normalize HTML <img ... src="..." ...> tags
+  let res = content.replace(/<img([^>]+)src=["']([^"']+)["']([^>]*)>/gi, (match, prefix, src, suffix) => {
+    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/api/') || src.startsWith('data:')) {
+      return match
+    }
+    const filename = src.split('/').pop()?.split('?')[0] || ''
+    if (!filename) return match
+    return `<img${prefix}src="/api/study/documents/${encodedDocId}/images/${filename}"${suffix}>`
+  })
+
+  // 2. Normalize Markdown ![alt](url) links
+  res = res.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, target) => {
+    const trimmedTarget = target.trim()
+    if (
+      trimmedTarget.startsWith('http://') ||
+      trimmedTarget.startsWith('https://') ||
+      trimmedTarget.startsWith('/api/') ||
+      trimmedTarget.startsWith('data:')
+    ) {
+      return match
+    }
+    const cleanUrl = trimmedTarget.split(/\s+/)[0]
+    const filename = cleanUrl.split('/').pop()?.split('?')[0] || ''
+    if (!filename) return match
+    return `![${alt}](/api/study/documents/${encodedDocId}/images/${filename})`
+  })
+
+  return res
+}
 import {
   Bot,
   RefreshCw,
@@ -91,6 +131,7 @@ export function ReadingStage() {
     setIsHeaderVisible,
     renameChapter,
     deleteChapter,
+    deleteDocument,
     reloadAfterChapterStructureChange,
     fontFamily,
   } = useStore()
@@ -406,11 +447,96 @@ export function ReadingStage() {
     full: 'max-w-[95%] px-3',
   }[readingWidth]
 
-  if (isLoadingContent) {
+  const isExtracting = activeDoc?.status === 'extracting' || activeDoc?.status === 'processing'
+  const isError = activeDoc?.status === 'error'
+
+  if (isLoadingContent && !isExtracting) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-12 text-muted-foreground gap-3">
         <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
         <span className="text-xs">正在加载文献材料与双语解析...</span>
+      </div>
+    )
+  }
+
+  if (activeDoc && isExtracting) {
+    const prog = activeDoc.progress || {}
+    const percent = Math.min(Math.max(prog.percent ?? activeDoc.progress_percent ?? 0, 0), 100)
+    const current = prog.current_page || 0
+    const total = prog.total_pages || 1
+    const detail = prog.detail || `正在后台抓取清洗网页、本地化图片并切分章节 (第 ${current} / ${total} 篇)...`
+
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-16 text-center animate-in fade-in duration-300">
+        <div className="w-full max-w-md bg-card/90 backdrop-blur border border-border/80 rounded-2xl p-6 shadow-xl space-y-5">
+          {/* Animated Spinner & Icon */}
+          <div className="flex items-center justify-center">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center text-primary">
+                <Sparkles className="w-6 h-6 animate-pulse" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <h3 className="text-base font-bold text-foreground">
+              教材结构化构建中...
+            </h3>
+            <p className="text-xs text-muted-foreground font-medium truncate px-4" title={activeDoc.title || activeDoc.source_file}>
+              《{activeDoc.title || activeDoc.source_file || '研学材料'}》
+            </p>
+          </div>
+
+          {/* Progress Bar & Percentage */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-muted-foreground">处理进度</span>
+              <span className="font-semibold text-primary">{percent}%</span>
+            </div>
+            <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-500 rounded-full"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Dynamic Detail Text */}
+          <div className="p-3 bg-muted/40 rounded-lg border border-border/40 text-[11px] text-muted-foreground text-left leading-relaxed">
+            <div className="flex items-center gap-2 mb-1 text-foreground font-medium">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />
+              <span>{detail}</span>
+            </div>
+            <div className="text-[10px] text-muted-foreground/70">
+              💡 正在自动去除网页多余导航/广告并本地化留存高清图表，构建完成后将自动开启研学精读。
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (activeDoc && isError) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in">
+        <div className="w-full max-w-md bg-destructive/10 border border-destructive/20 rounded-2xl p-6 space-y-4">
+          <div className="text-3xl">⚠️</div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-destructive">材料解析遇到异常</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {(activeDoc as any).error_message || '抓取或解析未能成功完成，请检查网络链接或文件格式'}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => activeDoc.doc_id && deleteDocument(activeDoc.doc_id)}
+            className="text-xs h-8"
+          >
+            删除并重新尝试
+          </Button>
+        </div>
       </div>
     )
   }
@@ -1837,12 +1963,12 @@ function ParagraphCard({
       {para.source_text?.includes('![') ? (
         <div
           className="para-markdown rounded-lg overflow-hidden [&_img]:rounded-lg [&_img]:border [&_img]:border-border/60 [&_img]:shadow-sm [&_img]:max-h-[650px] [&_img]:object-contain [&_img]:bg-muted/10"
-          dangerouslySetInnerHTML={{ __html: marked.parse(para.source_text || '') as string }}
+          dangerouslySetInnerHTML={{ __html: marked.parse(normalizeDocImageUrls(para.source_text || '', activeDoc?.doc_id)) as string }}
         />
       ) : (
         <div
           className="para-markdown prose prose-sm dark:prose-invert max-w-none break-words [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-foreground [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-foreground [&_h2]:mt-1 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-foreground/90 [&_p]:my-1"
-          dangerouslySetInnerHTML={{ __html: marked.parse(para.source_text || '') as string }}
+          dangerouslySetInnerHTML={{ __html: marked.parse(normalizeDocImageUrls(para.source_text || '', activeDoc?.doc_id)) as string }}
         />
       )}
 
@@ -1940,7 +2066,7 @@ function ParagraphCard({
       ) : (
         <div
           className="para-markdown"
-          dangerouslySetInnerHTML={{ __html: marked.parse(para.translated_text || '') as string }}
+          dangerouslySetInnerHTML={{ __html: marked.parse(normalizeDocImageUrls(para.translated_text || '', activeDoc?.doc_id)) as string }}
         />
       )}
     </div>

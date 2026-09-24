@@ -16,7 +16,7 @@ class StreamChunk:
 def chunk_to_sse(chunk: StreamChunk) -> str:
     """Formats StreamChunk into standard SSE data string."""
     if chunk.error:
-        return f"data: {json.dumps({'error': chunk.error})}\n\n"
+        return f"data: {json.dumps({'error': chunk.error}, ensure_ascii=False)}\n\n"
     if chunk.done:
         return "data: [DONE]\n\n"
     delta: Dict[str, Any] = {}
@@ -26,7 +26,7 @@ def chunk_to_sse(chunk: StreamChunk) -> str:
         delta["content"] = chunk.content
     if not delta:
         return ""
-    return f"data: {json.dumps({'choices': [{'delta': delta, 'index': 0}]})}\n\n"
+    return f"data: {json.dumps({'choices': [{'delta': delta, 'index': 0}]}, ensure_ascii=False)}\n\n"
 
 class BaseProvider(ABC):
     """Abstract base class for all LLM providers."""

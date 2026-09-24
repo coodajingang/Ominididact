@@ -303,9 +303,39 @@ async def inspect_document_endpoint(
         raise HTTPException(status_code=500, detail=f"解析文档失败: {str(e)}")
 
 if __name__ == "__main__":
-    host = os.getenv("HOST", "127.0.0.1")
-    port = int(os.getenv("PORT", "8000"))
-    reload = os.getenv("RELOAD", "true").lower() in ("true", "1", "yes")
+    import socket
+
+    # Prevent local loopback requests from being intercepted by Windows system proxy / VPNs
+    if "NO_PROXY" not in os.environ and "no_proxy" not in os.environ:
+        os.environ["NO_PROXY"] = "localhost,127.0.0.1,::1"
+
+    raw_host = (os.getenv("HOST") or "127.0.0.1").strip().strip('"').strip("'")
+    raw_port = (os.getenv("PORT") or "8000").strip().strip('"').strip("'")
+    try:
+        port = int(raw_port)
+    except ValueError:
+        port = 8000
+
+    def resolve_safe_host(target_host: str, target_port: int) -> str:
+        candidates = [target_host]
+        if target_host not in ("127.0.0.1", "0.0.0.0"):
+            candidates.extend(["127.0.0.1", "0.0.0.0"])
+        else:
+            candidates.append("0.0.0.0" if target_host == "127.0.0.1" else "127.0.0.1")
+        candidates.append("localhost")
+
+        for cand in candidates:
+            try:
+                socket.getaddrinfo(cand, target_port, type=socket.SOCK_STREAM)
+                if cand != target_host:
+                    logger.warning(f"Host '{target_host}' failed getaddrinfo on this system; safely fell back to '{cand}'")
+                return cand
+            except Exception:
+                continue
+        return "127.0.0.1"
+
+    host = resolve_safe_host(raw_host, port)
+    reload = os.getenv("RELOAD", "true").strip().strip('"').strip("'").lower() in ("true", "1", "yes")
     logger.info(f"Starting Study & Research Engine on http://{host}:{port} (reload={reload})")
     uvicorn.run("proxy:app", host=host, port=port, reload=reload, log_level="info")
 
