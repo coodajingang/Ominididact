@@ -19,6 +19,12 @@
 
 ---
 
+DEMO:  https://ominididact.fabarun.dpdns.org/study 
+
+导出静态文档DEMO： https://coodajingang.github.io/Ominididact/
+
+---
+
 ## 🌟 为什么诞生 Omnididact？
 
 > *"Education is what remains after one has forgotten what one has learned in school." — Albert Einstein*
@@ -31,10 +37,7 @@
 > 💡 **特别说明**：**Omnididact 不是一个“知识库”，也不是来帮你“整理散落笔记”的。**  
 > 它的核心使命是作为一个**全材料深度研学助手**：以科学的自学与理解方法论为基石，协助你**逐段推敲、就地追问、解构难点，真正系统性地自学并吃透复杂材料，把硬核知识内化为自己的真本事**。
 
----
 
-DEMO: https://ominididact.fabarun.dpdns.org/study 
-导出静态文档DEMO： https://coodajingang.github.io/Ominididact/
 ---
 
 ## 🔄 完整的自我教育与研学链路

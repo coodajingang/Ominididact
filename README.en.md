@@ -17,6 +17,13 @@
 
 </div>
 
+
+---
+
+DEMO:  https://ominididact.fabarun.dpdns.org/study 
+
+导出静态文档DEMO： https://coodajingang.github.io/Ominididact/
+
 ---
 
 ## 🌟 Why Omnididact?
