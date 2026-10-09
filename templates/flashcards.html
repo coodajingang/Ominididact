@@ -1920,6 +1920,7 @@
                 </div>
                 <div class="action-group">
                     <button class="btn btn-secondary" onclick="exportCardsJson()">📤 导出 JSON</button>
+                    <button class="btn btn-secondary" onclick="exportAnkiApkg()" title="导出标准 Anki 牌组文件 (.apkg)">⚡ 导出 Anki (.apkg)</button>
                     <button class="btn btn-secondary" onclick="exportOfflineFlashcardHtml()" title="导出可独立运行的静态离线闪卡学习页 (适用于 Nginx / Cloudflare Pages)">🌐 导出离线 HTML</button>
                     <button class="btn btn-secondary" onclick="document.getElementById('file-import-json').click()">📥 导入 JSON</button>
                     <input type="file" id="file-import-json" accept=".json" style="display: none;" onchange="handleImportJson(event)">
@@ -2288,6 +2289,17 @@
     <script>
         // Global State
         const urlParams = new URLSearchParams(window.location.search);
+        // Clean token parameter from URL to prevent credential leakage in address bar & history
+        const tokenFromUrl = urlParams.get('token') || urlParams.get('api_token');
+        if (tokenFromUrl) {
+            try {
+                localStorage.setItem('omnididact_token', tokenFromUrl.trim());
+            } catch(e) {}
+            urlParams.delete('token');
+            urlParams.delete('api_token');
+            const newQuery = urlParams.toString() ? `?${urlParams.toString()}` : '';
+            window.history.replaceState({}, '', window.location.pathname + newQuery + window.location.hash);
+        }
         const docId = (window.OFFLINE_FLASHCARDS_DATA && window.OFFLINE_FLASHCARDS_DATA.doc_id) || urlParams.get('doc_id');
         const isOfflineMode = !!window.OFFLINE_FLASHCARDS_DATA;
         const initialMode = urlParams.get('mode') || 'manage';
@@ -2330,6 +2342,16 @@
                 return;
             }
             window.open(`/api/study/documents/${docId}/export?format=flashcards_html`, '_blank');
+        }
+
+        function exportAnkiApkg() {
+            if (isOfflineMode) {
+                alert("离线演示模式下暂不支持直接导出二进制 Anki .apkg 牌组，建议连接服务端或导出 JSON 数据。");
+                return;
+            }
+            const token = localStorage.getItem('omnididact_token') || '';
+            const tokenQuery = token.trim() ? `?token=${encodeURIComponent(token.trim())}` : '';
+            window.open(`/api/study/documents/${encodeURIComponent(docId)}/flashcards/export/anki${tokenQuery}`, '_blank');
         }
 
         // Init page

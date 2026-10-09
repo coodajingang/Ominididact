@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import re
 import json
@@ -8,8 +9,12 @@ import asyncio
 import logging
 import unicodedata
 from typing import List, Dict, Any, Optional, Tuple
+from pathlib import Path
 
-import fitz  # PyMuPDF
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    fitz = None
 import config_store
 import doc_converter
 from study.parser import (
@@ -259,15 +264,52 @@ def reset_doc_settings(doc_id: str) -> Dict[str, Any]:
             pass
     return get_study_settings(doc_id)
 
-def get_doc_dir(doc_id: str) -> str:
-    path = os.path.join(BASE_DATA_DIR, doc_id)
-    os.makedirs(os.path.join(path, "images"), exist_ok=True)
-    os.makedirs(os.path.join(path, "chapters"), exist_ok=True)
-    os.makedirs(os.path.join(path, "chats"), exist_ok=True)
+DOC_ID_REGEX = re.compile(r"^[A-Za-z0-9_-]+$")
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"}
+
+def validate_doc_id(doc_id: str) -> str:
+    """Validates doc_id format against strict regex to prevent traversal."""
+    if not doc_id or not isinstance(doc_id, str) or not DOC_ID_REGEX.match(doc_id):
+        raise ValueError(f"Invalid doc_id format: {doc_id}")
+    return doc_id
+
+def validate_image_filename(img_name: str) -> str:
+    """Validates image filename to ensure no path traversal and valid image extension."""
+    if not img_name or not isinstance(img_name, str):
+        raise ValueError("Invalid image filename")
+    stripped = img_name.strip()
+    safe_name = os.path.basename(stripped)
+    if safe_name != stripped or "/" in stripped or "\\" in stripped or ".." in stripped:
+        raise ValueError("Path traversal or separators detected in image filename")
+    if safe_name in (".", ".."):
+        raise ValueError("Invalid image filename")
+    ext = os.path.splitext(safe_name)[1].lower()
+    if ext not in IMAGE_EXTENSIONS:
+        raise ValueError(f"Invalid image file extension: {ext}")
+    return safe_name
+
+def get_docs_base_dir() -> str:
+    """Returns the base data directory for documents."""
+    return BASE_DATA_DIR
+
+def get_doc_dir(doc_id: str, create: bool = True) -> str:
+    validate_doc_id(doc_id)
+    base_resolved = Path(BASE_DATA_DIR).resolve()
+    target_resolved = (base_resolved / doc_id).resolve()
+    try:
+        target_resolved.relative_to(base_resolved)
+    except ValueError:
+        raise ValueError(f"Path traversal detected for doc_id: {doc_id}")
+
+    path = str(target_resolved)
+    if create:
+        os.makedirs(os.path.join(path, "images"), exist_ok=True)
+        os.makedirs(os.path.join(path, "chapters"), exist_ok=True)
+        os.makedirs(os.path.join(path, "chats"), exist_ok=True)
     return path
 
 def save_doc_meta(doc_id: str, meta: Dict[str, Any]):
-    doc_dir = get_doc_dir(doc_id)
+    doc_dir = get_doc_dir(doc_id, create=True)
     meta_path = os.path.join(doc_dir, "meta.json")
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=2)
@@ -2533,7 +2575,7 @@ server {{
 
 async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any]:
     doc_id = f"doc_{time.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
-    doc_dir = get_doc_dir(doc_id)
+    doc_dir = get_doc_dir(doc_id, create=True)
     
     ext = os.path.splitext(filename)[1].lower()
     orig_path = os.path.join(doc_dir, f"original{ext}")
@@ -2627,7 +2669,7 @@ async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any
     get_study_settings(doc_id)
     return meta
 
-async def initialize_web_document(url: str, title: str, selected_chapters: List[Dict[str, Any]]) -> Dict[str, Any]:
+async def initialize_web_document(url: str, title: str, selected_chapters: List[Dict[str, Any]], fetch_mode: str = "static") -> Dict[str, Any]:
     """
     Initializes a multi-chapter or single-page document from web URLs.
     """
@@ -2656,7 +2698,8 @@ async def initialize_web_document(url: str, title: str, selected_chapters: List[
         "source_url": url,
         "web_config": {
             "root_url": url,
-            "selected_chapters": selected_chapters
+            "selected_chapters": selected_chapters,
+            "fetch_mode": fetch_mode
         },
         "error_message": "",
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -3751,6 +3794,12 @@ async def refetch_failed_chapters(doc_id: str) -> Dict[str, Any]:
         "failed": fail_cnt,
         "remaining_failed": remaining_cnt
     }
+
+# Backwards-compatible aliases
+process_web_document_pipeline = process_document_pipeline
+shift_paragraphs_across_chapters = shift_chapter_paragraphs
+split_chapter_at_paragraph = split_chapter_from_paragraph
+
 
 
 

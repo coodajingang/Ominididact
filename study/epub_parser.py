@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import re
 import zipfile
@@ -5,7 +6,10 @@ import logging
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Any, Tuple, Optional
 from urllib.parse import unquote
-from bs4 import BeautifulSoup
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    pass
 
 from study.pdf_parser import detect_language, repair_english_paragraph
 from study.text_parser import parse_markdown_content

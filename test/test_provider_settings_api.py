@@ -59,10 +59,11 @@ class TestProviderSettingsAPI(unittest.TestCase):
         post_resp = client.post("/api/study/providers/config", json=new_payload)
         self.assertEqual(post_resp.status_code, 200)
 
-        # 3. Verify changes persisted
+        # 3. Verify changes persisted (api_key is masked in API responses for security)
         verify_resp = client.get("/api/study/providers/config")
         v_data = verify_resp.json()["data"]
-        self.assertEqual(v_data["providers"]["openai_compatible"]["api_key"], "test-key-123")
+        self.assertTrue(v_data["providers"]["openai_compatible"]["api_key"].endswith("-123"))
+        self.assertEqual(config_store.load_config()["providers"]["openai_compatible"]["api_key"], "test-key-123")
         self.assertEqual(v_data["defaults"]["default_translation_model"], "deepseek-chat")
 
     def test_provider_models_endpoint(self):

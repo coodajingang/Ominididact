@@ -17,13 +17,6 @@
 
 </div>
 
-
----
-
-DEMO:  https://ominididact.fabarun.dpdns.org/study 
-
-导出静态文档DEMO： https://coodajingang.github.io/Ominididact/
-
 ---
 
 ## 🌟 Why Omnididact?
@@ -292,18 +285,28 @@ python3 test/test_study_api.py
 python3 test/test_providers.py
 ```
 
+## 🔒 Security & Threat Model
+
+Omnididact is designed with strict production-ready security baselines:
+
+* **Unified API Token Authentication**: Optional zero-friction authentication via `OMNIDIDACT_API_TOKEN` environment variable. Supports standard `Bearer` tokens, `X-API-Token` headers, and query token parameter for streaming SSE and static downloads. Employs constant-time string comparison (`secrets.compare_digest`) against timing attacks.
+* **Secret Sanitization & Preservation**: All API keys, secrets, passwords, and tokens are automatically masked on reads (e.g. `****cdef`). Submitting configuration updates preserves existing stored secrets when masked or empty values are sent.
+* **Cloud-Native 12-Factor Env Injections**: Direct support for `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `NVIDIA_API_KEY`, etc., keeping credentials out of config files on disk.
+* **Strict Path Traversal Protection**: Document IDs and image asset filenames are validated using strict alphanumeric regular expressions and `Path.relative_to` boundary containment checks. All read (GET) endpoints have zero write side-effects (`os.makedirs` removed).
+* **CORS Whitelist & Sanitized Debug Logging**: CORS origins default strictly to `localhost` / `127.0.0.1` and are configurable via `OMNIDIDACT_ALLOWED_ORIGINS`. Debug logs strip authorization headers and mask secret keys in requests and error traces.
+
 ---
 
 ## 🛣️ Roadmap
 
 - [x] Paragraph-level parallel bilingual reader with 4 custom themes
 - [x] Multi-provider LLM abstraction (Ollama, LM Studio, OpenAI, Gemini, Claude, Cloudflare)
-- [x] 3D Spaced-repetition Flashcards with SM-2 algorithm & cloze masks
+- [x] 3D Spaced-repetition Flashcards with standard SM-2 algorithm & cloze masks
+- [x] Native Anki `.apkg` export package generation
 - [x] Multi-document static library portal with search & tag filtering
 - [x] Incremental patch export for Cloudflare Pages / GitHub Pages
 - [x] Docker multi-stage build & Docker Compose 1-click startup
 - [ ] EPUB and MOBI eBook parser integration
-- [ ] Anki export package (`.apkg`) bidirectional sync
 - [ ] Voice synthesis (Web Speech API & Edge-TTS) for ear-training companion
 - [ ] Multi-document semantic vector search across personal study library
 

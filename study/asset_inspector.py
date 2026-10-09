@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import re
 import json
@@ -6,7 +7,10 @@ import hashlib
 import asyncio
 import urllib.parse
 from typing import Dict, Any, List, Tuple, Optional
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
 from study.service import get_doc_dir, load_doc_meta, save_doc_meta, get_study_settings
 from providers import get_provider_for_task

@@ -515,7 +515,7 @@ export function AssistantDrawer() {
 
     try {
       setSavingNoteMsgId(msgId)
-      if (selectedParagraph) {
+      if (isParagraphMode && selectedParagraph) {
         await api.addParagraphNote(activeDoc.doc_id, chId, selectedParagraph.id, content)
       } else {
         await api.saveChapterNote(activeDoc.doc_id, chId, 'header', '全章研读助教总结', content)
@@ -643,7 +643,7 @@ export function AssistantDrawer() {
 
   // Construct context text: Chapter mode vs Paragraph mode
   const getContextText = (isVisionActive = false, currentExtracted?: string) => {
-    if (selectedParagraph) {
+    if (isParagraphMode && selectedParagraph) {
       // Paragraph mode: selected paragraph + steppers
       if (currentIdx === -1) {
         const text = getCleanParagraphText(selectedParagraph, true, isVisionActive, currentExtracted)
@@ -885,7 +885,7 @@ export function AssistantDrawer() {
       }
 
       const contextText = getContextText(visionActive, currentTargetExtracted)
-      const scopeDesc = selectedParagraph
+      const scopeDesc = isParagraphMode && selectedParagraph
         ? `【参考上下文材料】(已带入第 ${startIdx + 1} ~ ${endIdx + 1} 段):\n${contextText}`
         : `【全章参考材料】(章节《${currentChapter?.title || '本章'}》全部 ${paragraphs.length} 段):\n${contextText}`
 
@@ -914,7 +914,7 @@ export function AssistantDrawer() {
         ]
       }
 
-      const systemPrompt = selectedParagraph
+      const systemPrompt = isParagraphMode && selectedParagraph
         ? '你是一位严谨博学的学术研读助教。请根据用户提供的文献段落及前后上下文背景，深入、清晰、详尽地解答用户关于长难句、学术词汇、专业论点的疑问。格式支持规范 Markdown。'
         : `你是一位博学的全章学术研读导师。当前用户正在研读《${currentChapter?.title || '全章节'}》全篇内容。请基于提供的整章所有段落文献，从全局架构、脉络递进、核心观点和对比论证等宏观与微观角度解答疑问。格式支持规范 Markdown。`
 
@@ -1177,7 +1177,7 @@ export function AssistantDrawer() {
 
           <div className="flex items-center gap-1.5 shrink-0">
             {/* Context steppers (only when in paragraph mode, Point 7) */}
-            {selectedParagraph && (
+            {isParagraphMode && selectedParagraph && (
               <div className="flex items-center text-xs bg-muted/70 border border-border/60 rounded-md px-1.5 py-0.5 gap-1">
                 <span className="text-[10px] text-muted-foreground">前带</span>
                 <button
@@ -1243,7 +1243,7 @@ export function AssistantDrawer() {
               variant="ghost"
               size="icon-sm"
               onClick={handleClearChatHistory}
-              title={selectedParagraph ? '清空当前段落会话历史' : '清空本章全章会话历史'}
+              title={isParagraphMode ? '清空当前段落会话历史' : isDocumentMode ? '清空全篇会话历史' : '清空本章全章会话历史'}
               className="text-muted-foreground hover:text-destructive h-7 w-7"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -1386,12 +1386,15 @@ export function AssistantDrawer() {
             </PopoverContent>
           </Popover>
 
-          {/* Quick mode switcher if paragraph is selected */}
-          {selectedParagraph && (
+          {/* Quick mode switcher if in paragraph mode */}
+          {isParagraphMode && selectedParagraph && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setSelectedParagraph(null)}
+              onClick={() => {
+                setSelectedParagraph(null)
+                setAssistantScope('chapter')
+              }}
               className="h-7 px-2 text-[10px] text-muted-foreground hover:text-foreground shrink-0"
               title="清除段落锁定，切换到全章研读模式"
             >
@@ -1416,7 +1419,7 @@ export function AssistantDrawer() {
             </div>
           </div>
         </div>
-      ) : selectedParagraph ? (
+      ) : isParagraphMode && selectedParagraph ? (
         <div className="bg-primary/5 border-b border-border/50 text-xs text-muted-foreground flex flex-col">
           <div className="p-2.5 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
@@ -1620,7 +1623,7 @@ export function AssistantDrawer() {
                             disabled={savingNoteMsgId === msg.id}
                             onClick={() => handleSaveMessageAsNote(msg.id, msg.content)}
                             className="h-6 px-2 text-[11px] gap-1 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-md"
-                            title={selectedParagraph ? '将此回答存为当前段落注解' : '将此回答存为本章总结笔记'}
+                            title={isParagraphMode && selectedParagraph ? '将此回答存为当前段落注解' : '将此回答存为本章总结笔记'}
                           >
                             {savingNoteMsgId === msg.id ? (
                               <Loader2 className="h-3 w-3 animate-spin" />
@@ -1632,7 +1635,7 @@ export function AssistantDrawer() {
                             <span>
                               {savedNoteMsgIds.has(msg.id)
                                 ? '已存为笔记'
-                                : selectedParagraph
+                                : isParagraphMode && selectedParagraph
                                 ? '存为段落笔记'
                                 : '存为章节笔记'}
                             </span>
@@ -1702,8 +1705,10 @@ export function AssistantDrawer() {
             }
           }}
           placeholder={
-            selectedParagraph
+            isParagraphMode && selectedParagraph
               ? `针对第 ${currentIdx + 1} 段提问 (Enter 发送, Shift+Enter 换行)...`
+              : isDocumentMode
+              ? '就整篇文献跨章节对比、全局架构或核心考点向全书导师提问 (Enter 发送)...'
               : '针对全章文献提问 (Enter 发送, Shift+Enter 换行)...'
           }
           className="min-h-[42px] max-h-28 text-xs resize-none flex-1 py-2 leading-relaxed"

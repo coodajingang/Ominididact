@@ -13,6 +13,8 @@ import {
   Minus,
   Plus,
   MessageSquare,
+  ShieldCheck,
+  KeyRound,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import {
@@ -101,6 +103,8 @@ export function ProviderSettingsModal() {
   const [modelsCache, setModelsCache] = useState<Record<string, string[]>>({})
   const [testStatus, setTestStatus] = useState<Record<string, { loading: boolean; success?: boolean; message?: string }>>({})
   const [isSaving, setIsSaving] = useState(false)
+  const [apiToken, setApiToken] = useState(() => api.getStoredApiToken())
+  const [tokenSavedNotice, setTokenSavedNotice] = useState(false)
 
   // Initialize config from store
   useEffect(() => {
@@ -171,6 +175,7 @@ export function ProviderSettingsModal() {
   const handleSave = async () => {
     try {
       setIsSaving(true)
+      api.setStoredApiToken(apiToken)
       await api.saveProvidersConfig(config)
       await loadProvidersData()
       setProviderModalOpen(false)
@@ -405,6 +410,64 @@ export function ProviderSettingsModal() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Section 0.7: 全站统一访问令牌 (Omnididact API Token) */}
+          <div className="p-4 rounded-xl bg-muted/20 border border-border/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <span>🔒 站点访问令牌 (Omnididact API Token)</span>
+              </h3>
+              <span className="text-[11px] text-muted-foreground font-mono">
+                {apiToken.trim() ? '已配置 (Bearer Auth)' : '未配置 (匿名模式)'}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              若服务端启动时设置了 <code>OMNIDIDACT_API_TOKEN</code> 环境变量，调用任何后端配置、代理与研学接口均需出示此凭证。
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <div className="relative flex-1 min-w-0">
+                <Input
+                  type="password"
+                  placeholder="未配置令牌（若后端未开启鉴权可留空）..."
+                  value={apiToken}
+                  onChange={(e) => {
+                    setApiToken(e.target.value)
+                    setTokenSavedNotice(false)
+                  }}
+                  className="font-mono text-xs pr-16"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  api.setStoredApiToken(apiToken)
+                  setTokenSavedNotice(true)
+                  setTimeout(() => setTokenSavedNotice(false), 2500)
+                }}
+                className="text-xs shrink-0"
+              >
+                {tokenSavedNotice ? '✓ 已保存' : '保存令牌'}
+              </Button>
+              {apiToken && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setApiToken('')
+                    api.setStoredApiToken('')
+                    setTokenSavedNotice(false)
+                  }}
+                  className="text-xs text-muted-foreground hover:text-destructive shrink-0"
+                >
+                  清除
+                </Button>
+              )}
             </div>
           </div>
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import json
 import time
@@ -45,11 +46,13 @@ def load_doc_flashcards(doc_id: str) -> Dict[str, Any]:
 def save_doc_flashcards(doc_id: str, data: Dict[str, Any]):
     path = get_flashcards_path(doc_id)
     try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
     except Exception as e:
         logger.error(f"Failed to save flashcards for doc {doc_id}: {e}")
         raise
+
 
 def list_flashcards(
     doc_id: str,
@@ -264,17 +267,96 @@ def delete_flashcards_by_paragraph(doc_id: str, paragraph_id: str) -> int:
         save_doc_flashcards(doc_id, data)
     return deleted_count
 
+def calculate_sm2_review(
+    rating: int,
+    reps: int = 0,
+    lapses: int = 0,
+    ease_factor: float = 2.5,
+    interval_days: int = 0,
+    is_mistake: bool = False,
+    mistake_streak: int = 0
+) -> Dict[str, Any]:
+    """
+    Standard SuperMemo SM-2 algorithm calculation.
+    Supports 1-4 UI rating mapping (1: Again, 2: Hard, 3: Good, 4: Easy) or standard 0-5 quality score.
+    """
+    # 1. Quality score mapping (0-5)
+    if rating in (0, 1, 2, 3, 4, 5) and rating > 4:
+        q = rating
+    elif rating == 1:
+        q = 1  # Again / Failed recall
+    elif rating == 2:
+        q = 3  # Hard / Serious difficulty
+    elif rating == 3:
+        q = 4  # Good / Correct after hesitation
+    elif rating == 4:
+        q = 5  # Easy / Perfect recall
+    else:
+        q = max(0, min(5, rating))
+
+    now_ts = int(time.time())
+    ease = ease_factor if ease_factor >= 1.3 else 2.5
+    graduated_from_mistakes = False
+
+    # 2. Update Easiness Factor (EF)
+    # EF' = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+    ef_delta = 0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)
+    ease = max(1.3, ease + ef_delta)
+
+    # 3. Interval & Repetition calculation
+    if q < 3:
+        # Failed recall -> Reset repetition sequence
+        lapses += 1
+        reps = 0
+        interval = 0
+        state = "learning"
+        next_review_ts = now_ts + 600  # 10 minutes later
+        is_mistake = True
+        mistake_streak = 0
+    else:
+        # Successful recall
+        if reps == 0:
+            interval = 1
+        elif reps == 1:
+            interval = 6
+        else:
+            interval = max(1, int(round(interval_days * ease)))
+
+        reps += 1
+        state = "mastered" if q == 5 else "review"
+        next_review_ts = now_ts + interval * 86400
+
+        if is_mistake:
+            mistake_streak += 1
+            if mistake_streak >= 2 or q == 5:
+                is_mistake = False
+                mistake_streak = 0
+                graduated_from_mistakes = True
+
+    return {
+        "reps": reps,
+        "lapses": lapses,
+        "state": state,
+        "ease_factor": round(ease, 2),
+        "interval_days": interval,
+        "last_reviewed": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(now_ts)),
+        "next_review": next_review_ts,
+        "is_mistake": is_mistake,
+        "mistake_streak": mistake_streak,
+        "graduated_from_mistakes": graduated_from_mistakes
+    }
+
 def record_card_review(doc_id: str, card_id: str, rating: int) -> Dict[str, Any]:
     """
-    Records review result using simplified SM-2 spaced repetition:
+    Records review result using standard SM-2 spaced repetition:
     rating:
-      1 = Again (忘记/又错了)
-      2 = Hard (困难/模糊)
-      3 = Good (良好/记得)
-      4 = Easy (熟练/掌握)
+      1 = Again (忘记/又错了, q=1)
+      2 = Hard (困难/模糊, q=3)
+      3 = Good (良好/记得, q=4)
+      4 = Easy (熟练/掌握, q=5)
     """
-    if rating not in (1, 2, 3, 4):
-        raise ValueError("Rating must be an integer between 1 and 4")
+    if rating not in (1, 2, 3, 4, 5):
+        raise ValueError("Rating must be an integer between 1 and 5")
         
     data = load_doc_flashcards(doc_id)
     target = None
@@ -293,77 +375,21 @@ def record_card_review(doc_id: str, card_id: str, rating: int) -> Dict[str, Any]
     interval = stats.get("interval_days", 0)
     is_mistake = stats.get("is_mistake", lapses > 0)
     mistake_streak = stats.get("mistake_streak", 0)
-    graduated_from_mistakes = False
-    now_ts = int(time.time())
     
-    if rating == 1:
-        # Lapse / Forgot: Enter mistake pool, reset streak
-        lapses += 1
-        reps = 0
-        interval = 0
-        state = "learning"
-        ease = max(1.3, ease - 0.2)
-        next_review_ts = now_ts + 600  # 10 minutes later
-        is_mistake = True
-        mistake_streak = 0
-    elif rating == 2:
-        # Hard: Keep in mistake pool, reset streak
-        reps += 1
-        if interval == 0:
-            interval = 1
-        else:
-            interval = max(1, int(interval * 1.2))
-        state = "learning"
-        ease = max(1.3, ease - 0.15)
-        next_review_ts = now_ts + interval * 86400
-        mistake_streak = 0
-    elif rating == 3:
-        # Good: If in mistake pool, consecutive streak + 1; 2 consecutive Goods graduate card
-        reps += 1
-        if reps == 1:
-            interval = 1
-        elif reps == 2:
-            interval = 3
-        else:
-            interval = max(1, int(interval * ease))
-        state = "review"
-        next_review_ts = now_ts + interval * 86400
-        if is_mistake:
-            mistake_streak += 1
-            if mistake_streak >= 2:
-                is_mistake = False
-                mistake_streak = 0
-                graduated_from_mistakes = True
-    else:
-        # Easy (Rating 4): Mastered, directly graduate from mistake pool
-        reps += 1
-        if reps == 1:
-            interval = 4
-        elif reps == 2:
-            interval = 7
-        else:
-            interval = max(1, int(interval * ease * 1.3))
-        state = "mastered"
-        ease = min(3.0, ease + 0.15)
-        next_review_ts = now_ts + interval * 86400
-        if is_mistake:
-            is_mistake = False
-            mistake_streak = 0
-            graduated_from_mistakes = True
+    result = calculate_sm2_review(
+        rating=rating,
+        reps=reps,
+        lapses=lapses,
+        ease_factor=ease,
+        interval_days=interval,
+        is_mistake=is_mistake,
+        mistake_streak=mistake_streak
+    )
 
-    stats["reps"] = reps
-    stats["lapses"] = lapses
-    stats["state"] = state
-    stats["ease_factor"] = round(ease, 2)
-    stats["interval_days"] = interval
-    stats["last_reviewed"] = time.strftime("%Y-%m-%d %H:%M:%S")
-    stats["next_review"] = next_review_ts
-    stats["is_mistake"] = is_mistake
-    stats["mistake_streak"] = mistake_streak
-    
+    stats.update(result)
     target["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
     save_doc_flashcards(doc_id, data)
-    target["graduated_from_mistakes"] = graduated_from_mistakes
+    target["graduated_from_mistakes"] = result["graduated_from_mistakes"]
     return target
 
 def clear_card_errors(doc_id: str, card_id: Optional[str] = None) -> int:
@@ -448,3 +474,10 @@ def update_flashcard_settings(doc_id: str, new_settings: Dict[str, Any]) -> Dict
     current.update(new_settings)
     save_doc_flashcards(doc_id, data)
     return current
+
+
+# Compatibility aliases
+add_flashcard = create_flashcard
+get_flashcards_stats = get_flashcard_statistics
+save_flashcard_settings = update_flashcard_settings
+

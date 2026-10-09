@@ -7,13 +7,17 @@
 ========================================================================
 """
 
+from __future__ import annotations
 import os
 import re
 import logging
 from typing import List, Dict, Any, Tuple, Optional
 from collections import Counter
 
-import fitz  # PyMuPDF
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    fitz = None
 
 logger = logging.getLogger("study-pdf-parser-legacy")
 

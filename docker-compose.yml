@@ -16,3 +16,11 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8000
+      # Security & Auth Configuration (P0 Security)
+      # - OMNIDIDACT_API_TOKEN=your_strong_secret_token_here
+      # - OMNIDIDACT_ALLOWED_ORIGINS=https://your-domain.com,http://localhost:8000
+      # - OMNIDIDACT_ENABLE_DEBUG=false
+      # Provider API Key Injections (P1 Stability)
+      # - OPENAI_API_KEY=
+      # - DEEPSEEK_API_KEY=
+      # - NVIDIA_API_KEY=

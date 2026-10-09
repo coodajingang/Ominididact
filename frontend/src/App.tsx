@@ -10,6 +10,7 @@ import { DocSettingsModal } from '@/components/modals/DocSettingsModal'
 import { NoteModal } from '@/components/modals/NoteModal'
 import { QuickFlashcardModal } from '@/components/modals/QuickFlashcardModal'
 import { AssetInspectionModal } from '@/components/modals/AssetInspectionModal'
+import { TokenAuthModal } from '@/components/modals/TokenAuthModal'
 import { ModelTerminalPage } from '@/components/terminal/ModelTerminalPage'
 
 export default function App() {
@@ -25,6 +26,16 @@ export default function App() {
     activeDoc,
   } = useStore()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isAuthModalOpen, setAuthModalOpen] = useState(false)
+
+  // Listen for 401 Unauthorized events to pop up token authentication modal
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setAuthModalOpen(true)
+    }
+    window.addEventListener('omnididact_unauthorized', handleUnauthorized)
+    return () => window.removeEventListener('omnididact_unauthorized', handleUnauthorized)
+  }, [])
 
   // Route detection: route /chat directly renders the modern ModelTerminalPage
   const isChatRoute =
@@ -70,6 +81,7 @@ export default function App() {
     return (
       <TooltipProvider>
         <ModelTerminalPage />
+        <TokenAuthModal open={isAuthModalOpen} onOpenChange={setAuthModalOpen} />
       </TooltipProvider>
     )
   }
@@ -103,6 +115,7 @@ export default function App() {
           docId={assetInspectionDocId || activeDoc?.doc_id || ''}
           docTitle={activeDoc?.title || activeDoc?.filename || ''}
         />
+        <TokenAuthModal open={isAuthModalOpen} onOpenChange={setAuthModalOpen} />
       </div>
     </TooltipProvider>
   )

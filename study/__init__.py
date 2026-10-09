@@ -1,4 +1,8 @@
+from __future__ import annotations
 from study.service import (
+    validate_doc_id,
+    validate_image_filename,
+    get_docs_base_dir,
     get_study_settings,
     save_study_settings,
     reset_doc_settings,
@@ -10,7 +14,9 @@ from study.service import (
     delete_chapter,
     rename_chapter,
     shift_chapter_paragraphs,
+    shift_paragraphs_across_chapters,
     split_chapter_from_paragraph,
+    split_chapter_at_paragraph,
     write_chapter_files,
     assemble_full_document_markdown,
     assemble_full_document_html,
@@ -25,6 +31,7 @@ from study.service import (
     initialize_document,
     initialize_web_document,
     process_document_pipeline,
+    process_web_document_pipeline,
     pause_document_pipeline,
     refetch_failed_chapters,
     check_web_doc_has_missing_or_failed,
@@ -78,6 +85,12 @@ from study.batch_translator import (
     start_document_translation,
     stop_document_translation,
     get_document_translation_status,
+    start_chapter_batch_translation,
+    stop_chapter_batch_translation,
+    get_chapter_batch_translation_status,
+    start_document_batch_translation,
+    stop_document_batch_translation,
+    get_document_batch_translation_status,
     ACTIVE_CHAPTER_TRANSLATIONS,
     CHAPTER_STOP_EVENTS,
     ACTIVE_DOC_TRANSLATIONS,
@@ -90,6 +103,7 @@ from study.notes_manager import (
     add_chapter_note,
     update_chapter_note,
     delete_chapter_note,
+    delete_chapter_notes,
     load_chapter_data,
     save_chapter_data
 )
@@ -144,7 +158,10 @@ from study.flashcard_manager import (
     record_card_review,
     clear_card_errors,
     get_flashcard_statistics,
-    update_flashcard_settings
+    update_flashcard_settings,
+    add_flashcard,
+    get_flashcards_stats,
+    save_flashcard_settings
 )
 from study.flashcard_chat import (
     stream_flashcard_chat

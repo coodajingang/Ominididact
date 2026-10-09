@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import re
 import json
@@ -5,7 +6,10 @@ import asyncio
 import logging
 from typing import List, Dict, Any, Optional
 
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
 import config_store
 from providers import get_provider, get_provider_for_task
 from providers.base import chunk_to_sse

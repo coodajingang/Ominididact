@@ -19,12 +19,6 @@
 
 ---
 
-DEMO:  https://ominididact.fabarun.dpdns.org/study 
-
-导出静态文档DEMO： https://coodajingang.github.io/Ominididact/
-
----
-
 ## 🌟 为什么诞生 Omnididact？
 
 > *"Education is what remains after one has forgotten what one has learned in school." — Albert Einstein*
@@ -36,7 +30,6 @@ DEMO:  https://ominididact.fabarun.dpdns.org/study
 
 > 💡 **特别说明**：**Omnididact 不是一个“知识库”，也不是来帮你“整理散落笔记”的。**  
 > 它的核心使命是作为一个**全材料深度研学助手**：以科学的自学与理解方法论为基石，协助你**逐段推敲、就地追问、解构难点，真正系统性地自学并吃透复杂材料，把硬核知识内化为自己的真本事**。
-
 
 ---
 
@@ -257,22 +250,37 @@ Omnididact 允许你把所有深入研读、中英对照、AI 深度答疑与自
 
 ```text
 omnididact/
-├── proxy.py                      # FastAPI 主应用入口
+├── proxy.py                      # FastAPI 主应用入口 (安全 CORS、全站鉴权)
+├── auth.py                       # 全站统一 API Token 鉴权引擎
+├── config_store.py               # 配置脱敏、安全合并与环境变量注入
 ├── config.json                   # 配置文件 (模型服务商、Prompt模板)
 ├── study/                        # 核心研学引擎模块
-│   ├── service.py                # 核心业务层 (组装阅读器/闪卡/全站Zip)
+│   ├── service.py                # 核心业务层 (路径校验、组装离线大厅/全站Zip)
+│   ├── routers/                  # 业务域模块化路由 (documents, chat, flashcards, ...)
 │   ├── parser.py                 # 文档结构化解析与章节拆分
-│   ├── flashcard_manager.py      # 闪卡生成、SM-2 算法调度
+│   ├── flashcard_manager.py      # 闪卡生成、标准 SM-2 算法调度
+│   ├── anki_exporter.py          # 纯 Python 官方 Anki .apkg 导出器
 │   └── ...
 ├── providers/                    # 统一模型接入层 (OpenAI/Ollama/LM Studio...)
 ├── plugins/                      # 可扩展网关插件目录
 ├── templates/
 │   ├── portal.html               # 静态多文档研学大厅门户 SPA
-│   ├── flashcards.html           # 离线 3D 闪卡交互 SPA
-│   └── study.html                # 桌面研学主工作台
+│   └── flashcards.html           # 离线 3D 闪卡交互 SPA
 ├── frontend/                     # React 19 + TypeScript + Tailwind 现代化前端
 └── docs/                         # 技术架构白皮书与详细指引
 ```
+
+---
+
+## 🔒 安全与威胁模型 (Security & Threat Model)
+
+Omnididact 严格遵循生产级安全基线设计：
+
+* **全站统一 API Token 鉴权**：通过 `OMNIDIDACT_API_TOKEN` 环境变量启用全局鉴权，前端与静态导出自动适配，采用恒定时间比对防御计时攻击；
+* **配置接口敏感凭证自动脱敏与保持**：所有 API Key、Secret 在读取与前端展示时自动掩码（如 `****cdef`），保存时自动保留本地已有真实密钥；
+* **环境变量优先覆盖 (12-Factor App)**：支持 `OPENAI_API_KEY`、`DEEPSEEK_API_KEY` 等环境变量直接注入，无需在 `config.json` 中保存明文密钥；
+* **路径遍历与写副作用防御**：所有 `doc_id` 和静态图片路径均经白名单正则与 `Path.relative_to` 封闭性强校验，纯读 GET 请求彻底移除写副作用；
+* **CORS 来源白名单与 Debug 日志脱敏**：默认仅允许 `localhost` / `127.0.0.1` 跨域，严禁通配符携带凭证，Debug 日志强制过滤 Header 敏感字段与截断超长 Body。
 
 ---
 
@@ -281,9 +289,9 @@ omnididact/
 - [x] 多格式学术文献解析与图文混排高保真提取
 - [x] 句段平行双语精读与上下文滑动窗口 AI 助教
 - [x] 3D 翻转考点闪卡与 SuperMemo SM-2 科学记忆复现
+- [x] 导出 Anki 官方 `.apkg` 格式闪卡包
 - [x] 纯静态离线研学成果大厅与增量 Patch 合并规范
 - [ ] 知识概念解构与逻辑推导图谱自动生成（Mermaid / 3D 概念脉络图）
-- [ ] 导出 Anki 官方 `.apkg` 格式闪卡包
 
 ---
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import json
 import time
@@ -7,13 +8,25 @@ from typing import List, Dict, Any, Optional, AsyncGenerator
 
 logger = logging.getLogger("study-chat-manager")
 
-def get_chats_dir(doc_dir: str) -> str:
+def resolve_doc_dir(doc_dir_or_id: str, create: bool = False) -> str:
+    """
+    Resolves a doc_id or doc directory path to the canonical document directory.
+    Uses get_doc_dir to enforce path traversal validation and prevent GET write side effects.
+    """
+    from study.service import get_doc_dir
+    if os.path.isabs(doc_dir_or_id) or os.path.sep in doc_dir_or_id:
+        return doc_dir_or_id
+    return get_doc_dir(doc_dir_or_id, create=create)
+
+def get_chats_dir(doc_dir_or_id: str, create: bool = False) -> str:
+    doc_dir = resolve_doc_dir(doc_dir_or_id, create=create)
     chats_dir = os.path.join(doc_dir, "chats")
-    os.makedirs(chats_dir, exist_ok=True)
+    if create:
+        os.makedirs(chats_dir, exist_ok=True)
     return chats_dir
 
-def get_chat_file_path(doc_dir: str, chat_type: str, chapter_id: str = "", paragraph_id: Optional[str] = None) -> str:
-    chats_dir = get_chats_dir(doc_dir)
+def get_chat_file_path(doc_dir: str, chat_type: str, chapter_id: str = "", paragraph_id: Optional[str] = None, create: bool = False) -> str:
+    chats_dir = get_chats_dir(doc_dir, create=create)
     if chat_type == "document":
         return os.path.join(chats_dir, "document_global.json")
     elif chat_type == "chapter":
@@ -22,8 +35,8 @@ def get_chat_file_path(doc_dir: str, chat_type: str, chapter_id: str = "", parag
         p_id = paragraph_id or "general"
         return os.path.join(chats_dir, f"para_{chapter_id}_{p_id}.json")
 
-def load_chat_history(doc_dir: str, chat_type: str, chapter_id: str, paragraph_id: Optional[str] = None) -> List[Dict[str, Any]]:
-    path = get_chat_file_path(doc_dir, chat_type, chapter_id, paragraph_id)
+def load_chat_history(doc_dir: str, chat_type: str, chapter_id: str = "", paragraph_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    path = get_chat_file_path(doc_dir, chat_type, chapter_id, paragraph_id, create=False)
     if not os.path.exists(path):
         return []
     try:
@@ -35,7 +48,7 @@ def load_chat_history(doc_dir: str, chat_type: str, chapter_id: str, paragraph_i
         return []
 
 def save_chat_history(doc_dir: str, chat_type: str, chapter_id: str, messages: List[Dict[str, Any]], paragraph_id: Optional[str] = None):
-    path = get_chat_file_path(doc_dir, chat_type, chapter_id, paragraph_id)
+    path = get_chat_file_path(doc_dir, chat_type, chapter_id, paragraph_id, create=True)
     try:
         with open(path, "w", encoding="utf-8") as f:
             json.dump({

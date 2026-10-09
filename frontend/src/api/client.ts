@@ -10,15 +10,92 @@ import {
 
 const BASE_URL = ''
 
+function getCookie(name: string): string {
+  if (typeof document === 'undefined') return ''
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) {
+    return decodeURIComponent(parts.pop()?.split(';').shift() || '').trim()
+  }
+  return ''
+}
+
+// Auto-detect and store token from URL parameter (e.g. ?token=secret) on load
+if (typeof window !== 'undefined') {
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const tokenFromUrl = params.get('token') || params.get('api_token')
+    if (tokenFromUrl && tokenFromUrl.trim()) {
+      const cleanToken = tokenFromUrl.trim()
+      localStorage.setItem('omnididact_token', cleanToken)
+      document.cookie = `omnididact_token=${encodeURIComponent(cleanToken)}; path=/; max-age=2592000; SameSite=Lax`
+      // Clean query parameter from URL to prevent token leakage in history or bookmarks
+      params.delete('token')
+      params.delete('api_token')
+      const newSearch = params.toString() ? `?${params.toString()}` : ''
+      window.history.replaceState({}, '', window.location.pathname + newSearch + window.location.hash)
+    } else {
+      const stored = localStorage.getItem('omnididact_token')
+      if (stored && stored.trim()) {
+        document.cookie = `omnididact_token=${encodeURIComponent(stored.trim())}; path=/; max-age=2592000; SameSite=Lax`
+      } else {
+        const fromCookie = getCookie('omnididact_token')
+        if (fromCookie) {
+          localStorage.setItem('omnididact_token', fromCookie)
+        }
+      }
+    }
+  } catch {}
+}
+
+export function getStoredApiToken(): string {
+  const local = (typeof localStorage !== 'undefined' ? localStorage.getItem('omnididact_token') : null) || ''
+  if (local && local.trim()) return local.trim()
+  return getCookie('omnididact_token')
+}
+
+export function setStoredApiToken(token: string): void {
+  if (typeof localStorage !== 'undefined') {
+    if (token.trim()) {
+      localStorage.setItem('omnididact_token', token.trim())
+      document.cookie = `omnididact_token=${encodeURIComponent(token.trim())}; path=/; max-age=2592000; SameSite=Lax`
+    } else {
+      localStorage.removeItem('omnididact_token')
+      document.cookie = `omnididact_token=; path=/; max-age=0; SameSite=Lax`
+    }
+  }
+}
+
+export function getAuthHeaders(extraHeaders?: Record<string, string>): Record<string, string> {
+  const token = getStoredApiToken()
+  const headers: Record<string, string> = {
+    ...extraHeaders,
+  }
+  if (token.trim()) {
+    headers['Authorization'] = `Bearer ${token.trim()}`
+  }
+  return headers
+}
+
 export async function apiRequest<T>(url: string, options?: RequestInit): Promise<T> {
+  const mergedHeaders = getAuthHeaders({
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string>),
+  })
+
   const resp = await fetch(`${BASE_URL}${url}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers: mergedHeaders,
   })
   if (!resp.ok) {
+    if (resp.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('omnididact_unauthorized', { detail: { url } }))
+      const path = window.location.pathname
+      if (path !== '/login' && path !== '/auth') {
+        const redirect = encodeURIComponent(window.location.pathname + window.location.search)
+        window.location.href = `/login?redirect=${redirect}`
+      }
+    }
     const errorText = await resp.text()
     throw new Error(`HTTP ${resp.status}: ${errorText || resp.statusText}`)
   }
@@ -102,6 +179,7 @@ export async function uploadDocument(file: File): Promise<DocumentMeta> {
   formData.append('file', file)
   const resp = await fetch('/api/study/documents/upload', {
     method: 'POST',
+    headers: getAuthHeaders(),
     body: formData,
   })
   if (!resp.ok) throw new Error(`Upload failed: ${resp.statusText}`)
@@ -166,6 +244,7 @@ export async function importFolderFiles(files: File[], folderName: string = 'Mar
 
   const resp = await fetch('/api/study/documents/import-folder', {
     method: 'POST',
+    headers: getAuthHeaders(),
     body: formData,
   })
   if (!resp.ok) {
@@ -213,10 +292,10 @@ export async function getChapterDetail(
   chapterId: string
 ): Promise<{ chapter: ChapterItem; paragraphs: ParagraphItem[] }> {
   const res = await apiRequest<any>(
-    `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}`
+    `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}`
   )
-  const ch = res.chapter || {}
-  const rawParagraphs: any[] = ch.paragraphs || []
+  const ch = res.chapter || res || {}
+  const rawParagraphs: any[] = ch.paragraphs || res.paragraphs || []
 
   const paragraphs: ParagraphItem[] = rawParagraphs.map((p, idx) => ({
     id: p.id || `p_${idx}`,
@@ -535,24 +614,24 @@ export async function getDocFlashcardsCount(docId: string): Promise<number> {
   }
 }
 
-// Batch Translation
+// Batch Translation (Item 08: standardized on /chapters/)
 export async function startChapterTranslation(docId: string, chapterId: string): Promise<BatchTranslationStatus> {
   return apiRequest<BatchTranslationStatus>(
-    `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}/translate_start`,
+    `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}/translate_start`,
     { method: 'POST' }
   )
 }
 
 export async function stopChapterTranslation(docId: string, chapterId: string): Promise<BatchTranslationStatus> {
   return apiRequest<BatchTranslationStatus>(
-    `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}/translate_stop`,
+    `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}/translate_stop`,
     { method: 'POST' }
   )
 }
 
 export async function getChapterTranslationStatus(docId: string, chapterId: string): Promise<BatchTranslationStatus> {
   return apiRequest<BatchTranslationStatus>(
-    `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}/translate_status`
+    `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}/translate_status`
   )
 }
 
@@ -633,7 +712,7 @@ export async function resetDocSettings(docId: string): Promise<void> {
   })
 }
 
-// Notes
+// Notes (Item 08: standardized on /chapters/)
 export async function saveChapterNote(
   docId: string,
   chapterId: string,
@@ -644,7 +723,7 @@ export async function saveChapterNote(
 ): Promise<void> {
   if (noteId) {
     await apiRequest(
-      `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}/notes/${encodeURIComponent(noteId)}`,
+      `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}/notes/${encodeURIComponent(noteId)}`,
       {
         method: 'PUT',
         body: JSON.stringify({ position: type, type, title, content }),
@@ -652,7 +731,7 @@ export async function saveChapterNote(
     )
   } else {
     await apiRequest(
-      `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}/notes`,
+      `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}/notes`,
       {
         method: 'POST',
         body: JSON.stringify({ position: type, type, title, content }),
@@ -668,7 +747,7 @@ export async function deleteChapterNote(
   noteId: string
 ): Promise<void> {
   await apiRequest(
-    `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}/notes/${encodeURIComponent(noteId)}?position=${encodeURIComponent(type)}`,
+    `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}/notes/${encodeURIComponent(noteId)}?position=${encodeURIComponent(type)}`,
     { method: 'DELETE' }
   )
 }
@@ -680,7 +759,7 @@ export async function addParagraphNote(
   content: string
 ): Promise<any> {
   const res = await apiRequest<{ code: number; data: any }>(
-    `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}/paragraph/${encodeURIComponent(paragraphId)}/notes`,
+    `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}/paragraph/${encodeURIComponent(paragraphId)}/notes`,
     {
       method: 'POST',
       body: JSON.stringify({ content }),
@@ -697,7 +776,7 @@ export async function updateParagraphNote(
   content: string
 ): Promise<any> {
   const res = await apiRequest<{ code: number; data: any }>(
-    `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}/paragraph/${encodeURIComponent(paragraphId)}/notes/${encodeURIComponent(noteId)}`,
+    `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}/paragraph/${encodeURIComponent(paragraphId)}/notes/${encodeURIComponent(noteId)}`,
     {
       method: 'PUT',
       body: JSON.stringify({ content }),
@@ -713,9 +792,19 @@ export async function deleteParagraphNote(
   noteId: string
 ): Promise<void> {
   await apiRequest(
-    `/api/study/documents/${encodeURIComponent(docId)}/chapter/${encodeURIComponent(chapterId)}/paragraph/${encodeURIComponent(paragraphId)}/notes/${encodeURIComponent(noteId)}`,
+    `/api/study/documents/${encodeURIComponent(docId)}/chapters/${encodeURIComponent(chapterId)}/paragraph/${encodeURIComponent(paragraphId)}/notes/${encodeURIComponent(noteId)}`,
     { method: 'DELETE' }
   )
+}
+
+// Anki Export (Item 14)
+export function getAnkiExportUrl(docId?: string): string {
+  const token = (typeof localStorage !== 'undefined' ? localStorage.getItem('omnididact_token') : null) || ''
+  const tokenQuery = token.trim() ? `?token=${encodeURIComponent(token.trim())}` : ''
+  if (docId) {
+    return `/api/study/documents/${encodeURIComponent(docId)}/flashcards/export/anki${tokenQuery}`
+  }
+  return `/api/study/flashcards/export/anki${tokenQuery}`
 }
 
 // Chat History Persistence

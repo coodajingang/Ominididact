@@ -95,8 +95,32 @@ def test_upload_and_document_workflow():
     assert del_res.status_code == 200
     print("✓ Document workflow test passed!")
 
+def test_import_web_document_route():
+    print("Testing /api/study/documents/import-url with fetch_mode ...")
+    payload = {
+        "url": "https://example.com/guide/intro",
+        "title": "测试网页教材",
+        "selected_chapters": [
+            {"title": "第一节 快速入门", "url": "https://example.com/guide/intro"}
+        ],
+        "fetch_mode": "static"
+    }
+    res = client.post("/api/study/documents/import-url", json=payload)
+    assert res.status_code == 200, res.text
+    data = res.json()["data"]
+    doc_id = data["doc_id"]
+    assert data["filename"] == "测试网页教材"
+    assert data["web_config"]["fetch_mode"] == "static"
+    
+    # Verify cleanup
+    del_res = client.delete(f"/api/study/documents/{doc_id}")
+    assert del_res.status_code == 200
+    print("✓ /api/study/documents/import-url test passed!")
+
 if __name__ == "__main__":
     test_study_page_route()
     test_study_settings_api()
     test_upload_and_document_workflow()
+    test_import_web_document_route()
     print("\nAll Study API tests passed successfully! 🎉")
+

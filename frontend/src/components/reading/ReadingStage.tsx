@@ -115,6 +115,7 @@ export function ReadingStage() {
     layoutMode,
     isLoadingContent,
     setSelectedParagraph,
+    setAssistantScope,
     setAssistantOpen,
     openNoteModal,
     openQuickFlashcardModal,
@@ -438,6 +439,7 @@ export function ReadingStage() {
 
   const handleAskAssistant = (para: ParagraphItem) => {
     setSelectedParagraph(para)
+    setAssistantScope('paragraph')
     setAssistantOpen(true)
   }
 
@@ -577,58 +579,44 @@ export function ReadingStage() {
                   </span>
                 </div>
 
-                {/* Chapter Actions: Batch Translate */}
-                <div className="flex items-center gap-2">
-
-                  {chapterBatchStatus?.is_running ? (
-                    <Button
-                      variant="subtle"
-                      size="sm"
-                      onClick={() => stopChapterTranslate()}
-                      className="text-xs h-7 gap-1.5 text-amber-500 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20"
-                      title="点击暂停/停止当前章节批量翻译"
-                    >
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                      </span>
-                      <span>
-                        ⏸️ 停止本章翻译 ({chapterBatchStatus.completed}/{chapterBatchStatus.total}, {chapterBatchStatus.percent}%)
-                      </span>
-                    </Button>
-                  ) : docBatchStatus?.is_doc_level_running ? (
-                    <Button
-                      variant="subtle"
-                      size="sm"
-                      onClick={() => stopDocTranslate()}
-                      className="text-xs h-7 gap-1.5 text-amber-500 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20"
-                      title="点击暂停/停止全篇批量翻译"
-                    >
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                      </span>
-                      <span>
-                        ⏸️ 全篇批量翻译中 ({docBatchStatus.percent}%)
-                      </span>
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="subtle"
-                      size="sm"
-                      onClick={() => {
-                        if (activeDoc?.doc_id && currentChapter?.chapter_id) {
-                          startChapterTranslate(activeDoc.doc_id, currentChapter.chapter_id)
-                        }
-                      }}
-                      className="text-xs h-7 gap-1 text-primary hover:bg-primary/10 border border-primary/20"
-                      title="批量并发翻译本章未完成的段落"
-                    >
-                      <Zap className="h-3 w-3" />
-                      <span>⚡ 批量翻译本章</span>
-                    </Button>
-                  )}
-                </div>
+                {/* Chapter Actions: Batch Translate Running Indicator */}
+                {(chapterBatchStatus?.is_running || docBatchStatus?.is_doc_level_running) && (
+                  <div className="flex items-center gap-2">
+                    {chapterBatchStatus?.is_running ? (
+                      <Button
+                        variant="subtle"
+                        size="sm"
+                        onClick={() => stopChapterTranslate()}
+                        className="text-xs h-7 gap-1.5 text-amber-500 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20"
+                        title="点击暂停/停止当前章节批量翻译"
+                      >
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                        </span>
+                        <span>
+                          ⏸️ 停止本章翻译 ({chapterBatchStatus.completed}/{chapterBatchStatus.total}, {chapterBatchStatus.percent}%)
+                        </span>
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="subtle"
+                        size="sm"
+                        onClick={() => stopDocTranslate()}
+                        className="text-xs h-7 gap-1.5 text-amber-500 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20"
+                        title="点击暂停/停止全篇批量翻译"
+                      >
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                        </span>
+                        <span>
+                          ⏸️ 全篇批量翻译中 ({docBatchStatus?.percent || 0}%)
+                        </span>
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
               <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
                 <span className="w-2.5 h-6 rounded-full bg-primary inline-block shrink-0" />

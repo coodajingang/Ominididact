@@ -1,11 +1,19 @@
+from __future__ import annotations
 import os
 import re
 import hashlib
 import logging
 import urllib.parse
 from typing import List, Dict, Any, Tuple, Optional
-import httpx
-from bs4 import BeautifulSoup
+try:
+    import httpx
+except ImportError:
+    httpx = None
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
 
 from study.pdf_parser import detect_language
 from study.text_parser import parse_markdown_content

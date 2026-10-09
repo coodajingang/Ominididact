@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import json
 import time
@@ -160,3 +161,14 @@ def delete_chapter_note(doc_id: str, chapter_id: str, position: str, note_id: st
         save_chapter_data(doc_id, ch_data)
         return True
     return False
+
+def delete_chapter_notes(doc_id: str, chapter_id: str, position: str = "header") -> Dict[str, Any]:
+    """
+    Clears all chapter notes for header or footer.
+    """
+    pos_key = "header_notes" if position == "header" else "footer_notes"
+    ch_data = load_chapter_data(doc_id, chapter_id)
+    ch_data[pos_key] = []
+    save_chapter_data(doc_id, ch_data)
+    return ch_data
+

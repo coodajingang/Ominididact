@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import json
 import asyncio
@@ -345,5 +346,15 @@ async def _run_document_batch_translation(doc_id: str, stop_event: asyncio.Event
     finally:
         ACTIVE_DOC_TRANSLATIONS.pop(doc_id, None)
         DOC_STOP_EVENTS.pop(doc_id, None)
+
+
+# Compatibility aliases
+start_chapter_batch_translation = start_chapter_translation
+stop_chapter_batch_translation = stop_chapter_translation
+get_chapter_batch_translation_status = get_chapter_translation_status
+start_document_batch_translation = start_document_translation
+stop_document_batch_translation = stop_document_translation
+get_document_batch_translation_status = get_document_translation_status
+
 
 

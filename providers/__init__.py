@@ -1,3 +1,4 @@
+from __future__ import annotations
 from providers.base import BaseProvider, StreamChunk, chunk_to_sse
 from providers.openai_provider import OpenAICompatibleProvider
 from providers.ollama_provider import OllamaProvider

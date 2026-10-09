@@ -13,6 +13,7 @@ import {
   Plus,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import * as api from '@/api/client'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -227,7 +228,7 @@ export function TopHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
               ) : (
                 <>
                   <Zap className="h-3.5 w-3.5 text-sky-500" />
-                  <span>⚡ 批量翻译</span>
+                  <span>批量翻译</span>
                 </>
               )}
             </Button>
@@ -255,7 +256,7 @@ export function TopHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
                   }}
                 >
                   <Pause className="h-3.5 w-3.5" />
-                  <span>⏸️ 停止当前后台批量翻译</span>
+                  <span>停止当前后台批量翻译</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </>
@@ -343,7 +344,7 @@ export function TopHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
                   alert('请先选择或上传文档')
                   return
                 }
-                window.open(`/study/flashcards?doc_id=${activeDoc.doc_id}&mode=study`, '_blank')
+                window.open(`/study/flashcards?doc_id=${encodeURIComponent(activeDoc.doc_id)}&mode=study`, '_blank')
               }}
             >
               🧠 开始闪卡自测 (智能记忆) ↗
@@ -354,7 +355,7 @@ export function TopHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
                   alert('请先选择或上传文档')
                   return
                 }
-                window.open(`/study/flashcards?doc_id=${activeDoc.doc_id}&mode=review`, '_blank')
+                window.open(`/study/flashcards?doc_id=${encodeURIComponent(activeDoc.doc_id)}&mode=review`, '_blank')
               }}
             >
               🎯 错题攻坚复习 (艾宾浩斯) ↗
@@ -365,12 +366,19 @@ export function TopHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
                   alert('请先选择或上传文档')
                   return
                 }
-                window.open(`/study/flashcards?doc_id=${activeDoc.doc_id}`, '_blank')
+                window.open(`/study/flashcards?doc_id=${encodeURIComponent(activeDoc.doc_id)}`, '_blank')
               }}
             >
               ⚙️ 闪卡工作台与卡片管理 ↗
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => {
+                if (!activeDoc) return
+                window.open(api.getAnkiExportUrl(activeDoc.doc_id), '_blank')
+              }}
+            >
+              ⚡ 导出 Anki 牌组 (.apkg)
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 if (!activeDoc) return
@@ -391,6 +399,22 @@ export function TopHeader({ onToggleSidebar }: { onToggleSidebar: () => void }) 
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              onClick={() => {
+                if (!activeDoc) return
+                window.open(api.getAnkiExportUrl(activeDoc.doc_id), '_blank')
+              }}
+            >
+              ⚡ 导出本篇 Anki 牌组 (.apkg)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                window.open(api.getAnkiExportUrl(), '_blank')
+              }}
+            >
+              📦 导出全库 Anki 牌组 (.apkg)
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
                 if (!activeDoc) return

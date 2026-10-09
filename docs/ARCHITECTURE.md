@@ -58,12 +58,40 @@
 - **云端服务**：支持 Cloudflare Workers AI、NVIDIA NIM、AMD AI 等；
 - **插件扩展**：通过 `plugins/` 目录可零侵入热插拔私有网关或专有模型协议。
 
-### 3.3 离线闪卡与 SM-2 记忆系统 (`templates/flashcards.html`)
-- 纯前端单页应用（SPA），数据完整内嵌；
-- 3D 卡片翻转交互、Cloze 挖空高亮遮蔽与逐个揭晓；
-- 实现完整 SuperMemo SM-2 间隔重复算法，支持遗忘曲线智能调度复习。
+### 3.3 离线闪卡与 SM-2 记忆系统 (`study/flashcard_manager.py`, `study/anki_exporter.py`, `templates/flashcards.html`)
+- **标准 SuperMemo SM-2 间隔算法**：严格遵循经典 SM-2 公式更新简易度因子 $EF' = \max(1.3, EF + (0.1 - (5 - q) \cdot (0.08 + (5 - q) \cdot 0.02)))$，动态计算复习间隔（1天 -> 6天 -> $I \times EF$）；
+- **错题池毕业机制**：遗忘卡片自动归入错题池重置为学习态，连续答对两次或直接选 Easy 即可毕业；
+- **官方 Anki .apkg 原生导出**：纯 Python + SQLite + ZIP 规范打包，无缝导入桌面与移动端 Anki 生态，支持 Cloze 多空自动序号转换 `{{c1::...}}`。
 
 ### 3.4 纯静态知识库门户与增量 Patch 规范 (`templates/portal.html`)
 - 数据驱动：根目录 `index.html` 动态读取 `./docs.json` 清单；
 - 双向闭环：子文档支持一键返回知识库大厅；
 - 增量发布：新文档导出增量 Patch 包，解压后仅需将 `patch_entry.json` 追加至根目录 `docs.json` 即可完成热更新。
+
+---
+
+## 4. 安全架构与威胁模型 (Security & Threat Model)
+
+### 4.1 核心防护红线
+1. **全站统一 API Token 鉴权 (`OMNIDIDACT_API_TOKEN`)**：
+   - 支持环境变量 `OMNIDIDACT_API_TOKEN` 开启全局保护；
+   - 支持标准 `Authorization: Bearer <token>`、`X-API-Token` 请求头与针对静态下载 / SSE 流式通信的 Query Token；
+   - 鉴权比对采用 `secrets.compare_digest` 防御计时攻击（Timing Attacks）；
+   - `/health` 与静态预检路由保持匿名放行保障可用性探测。
+
+2. **配置接口脱敏与秘钥保持 (Secret Sanitization & Preservation)**：
+   - 递归脱敏所有 API Key、Secret、Password 与 Token 字段，返回给前端的仅为掩码字符串（如 `****cdef`）；
+   - 保存配置时，自动识别掩码或空字段并保持本地已有真实秘钥，杜绝覆盖破坏；
+   - 优先支持环境变量（如 `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`）注入，实现云原生免明文落盘。
+
+3. **Debug 日志凭证脱敏与环形缓冲区**：
+   - 严格遵循 HTTP 请求头白名单过滤，彻底切断 `Authorization` / `Cookie` / `X-API-Key` 的泄露风险；
+   - 请求体与错误栈自动递归脱敏敏感键值；
+   - 限制内存环形缓冲区容量上限，避免长期运行内存泄漏。
+
+4. **严格 CORS 策略与路径遍历阻断**：
+   - 关闭通配符 `*` 搭配 `allow_credentials=True` 的不安全模式，通过 `OMNIDIDACT_ALLOWED_ORIGINS` 严格限定来源；
+   - `doc_id` 采用白名单正则 `^[A-Za-z0-9_-]+$` 强制校验；
+   - 图片与静态资源访问采用 `Path.relative_to` 路径封闭性检查；
+   - 彻底移除纯读（GET）请求中的写副作用（如 `os.makedirs`），保障服务幂等性。
+

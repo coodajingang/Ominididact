@@ -1,7 +1,11 @@
+from __future__ import annotations
 import json
 import logging
 from typing import List, Dict, Any, Optional, AsyncGenerator
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
 from providers.base import BaseProvider, StreamChunk
 
 logger = logging.getLogger("provider-openai")
