@@ -24,17 +24,19 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.11"
-          cache: 'pip'
+          version: "latest"
+          enable-cache: true
 
-      - name: Install Python Dependencies & Verify Tests
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install Python Dependencies & Verify Tests with uv
         run: |
-          pip install -r requirements.txt
-          pip install httpx
-          python -m unittest discover -s test
+          uv sync --frozen
+          uv run python -m unittest discover -s test
 
       - name: Install Frontend Dependencies & Build
         working-directory: frontend
