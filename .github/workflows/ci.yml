@@ -8,35 +8,33 @@ on:
 
 jobs:
   test-backend:
-    name: Backend Tests (Python ${{ matrix.python-version }})
+    name: Backend Tests (uv / Python 3.12)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          version: "latest"
+          enable-cache: true
 
-      - name: Install Dependencies
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install Dependencies with uv
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install httpx
+          uv sync --frozen
 
       - name: Run Test Suite
         run: |
-          python -m unittest discover -s test
-          python test/test_study_api.py
-          python test/test_flashcard_service.py
-          python test/test_e2e_study.py
+          uv run python -m unittest discover -s test
+          uv run python test/test_study_service.py
+          uv run python test/test_study_api.py
+          uv run python test/test_flashcard_service.py
+          uv run python test/test_e2e_study.py
 
   build-frontend:
     name: Frontend Build & Typecheck
