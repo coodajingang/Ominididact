@@ -31,8 +31,8 @@ TARGET_DIR="$STAGE_DIR/$PKG_NAME"
 mkdir -p "$TARGET_DIR"
 
 # Copy essential runtime files
-cp -r config_store.py config_app.py doc_converter.py proxy.py study_router.py study_service.py "$TARGET_DIR/"
-cp -r config.example.json requirements.txt Dockerfile docker-compose.yml "$TARGET_DIR/"
+cp -r auth.py config_store.py config_app.py doc_converter.py proxy.py study_router.py study_service.py "$TARGET_DIR/"
+cp -r config.example.json .env.example start.sh start.bat requirements.txt Dockerfile docker-compose.yml "$TARGET_DIR/" 2>/dev/null || true
 cp -r README.md README.en.md "$TARGET_DIR/" 2>/dev/null || cp README.md "$TARGET_DIR/"
 cp -r providers "$TARGET_DIR/"
 cp -r plugins "$TARGET_DIR/"
