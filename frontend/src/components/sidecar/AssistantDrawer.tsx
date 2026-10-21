@@ -111,6 +111,7 @@ export function AssistantDrawer() {
   // Custom quick prompts from doc settings
   const [customParagraphPrompts, setCustomParagraphPrompts] = useState<QuickPromptItem[]>([])
   const [customChapterPrompts, setCustomChapterPrompts] = useState<QuickPromptItem[]>([])
+  const [customDocumentPrompts, setCustomDocumentPrompts] = useState<QuickPromptItem[]>([])
 
   // Load custom quick prompts from doc settings
   useEffect(() => {
@@ -123,6 +124,9 @@ export function AssistantDrawer() {
       }
       if (settings.chapter_quick_prompts && settings.chapter_quick_prompts.length > 0) {
         setCustomChapterPrompts(settings.chapter_quick_prompts)
+      }
+      if (settings.document_quick_prompts && settings.document_quick_prompts.length > 0) {
+        setCustomDocumentPrompts(settings.document_quick_prompts)
       }
     }).catch(() => {})
     return () => {
@@ -574,7 +578,7 @@ export function AssistantDrawer() {
   const activeQuickPrompts = isParagraphMode
     ? (customParagraphPrompts.length > 0 ? customParagraphPrompts : defaultParagraphPrompts)
     : isDocumentMode
-    ? defaultDocumentPrompts
+    ? (customDocumentPrompts.length > 0 ? customDocumentPrompts : defaultDocumentPrompts)
     : (customChapterPrompts.length > 0 ? customChapterPrompts : defaultChapterPrompts)
 
   const isVision = (modelName: string) => {
@@ -846,20 +850,29 @@ export function AssistantDrawer() {
         if (match) targetImgUrl = match[1]
       }
 
-      // If text model & referenced paragraphs contain images without extracted text -> Auto-extract OCR first!
+      // Auto-extract OCR for referenced images without extracted text
       let currentTargetExtracted = selectedParagraph?.extracted_text || ''
-      if (!visionActive && docId && chapterId) {
+      if (docId && chapterId) {
         const imageParasToExtract: ParagraphItem[] = []
-        if (selectedParagraph && isImageParagraph(selectedParagraph) && !selectedParagraph.extracted_text) {
-          imageParasToExtract.push(selectedParagraph)
-        }
-        for (const cp of contextParagraphs) {
-          if (
-            isImageParagraph(cp) &&
-            !cp.extracted_text &&
-            !imageParasToExtract.some((item) => item.id === cp.id)
-          ) {
-            imageParasToExtract.push(cp)
+        if (isParagraphMode) {
+          if (selectedParagraph && isImageParagraph(selectedParagraph) && !selectedParagraph.extracted_text) {
+            imageParasToExtract.push(selectedParagraph)
+          }
+          for (const cp of contextParagraphs) {
+            if (
+              isImageParagraph(cp) &&
+              !cp.extracted_text &&
+              !imageParasToExtract.some((item) => item.id === cp.id)
+            ) {
+              imageParasToExtract.push(cp)
+            }
+          }
+        } else if (!isDocumentMode) {
+          // Chapter mode
+          for (const p of paragraphs) {
+            if (isImageParagraph(p) && !p.extracted_text) {
+              imageParasToExtract.push(p)
+            }
           }
         }
 
@@ -937,7 +950,9 @@ export function AssistantDrawer() {
           headers: { 'Content-Type': 'application/json' },
           signal: abortControllerRef.current.signal,
           body: JSON.stringify({
+            prompt: query,
             message: query,
+            chat_history: activeHistory.slice(-20).map((m) => ({ role: m.role, content: m.content })),
             history: activeHistory.slice(-20).map((m) => ({ role: m.role, content: m.content })),
             provider: activeAssistantProvider || undefined,
             model: activeAssistantModel || undefined,

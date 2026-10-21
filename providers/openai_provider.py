@@ -117,19 +117,45 @@ class OpenAICompatibleProvider(BaseProvider):
 
         url = f"{self.base_url}/chat/completions"
         headers = self._get_headers()
-        timeout = httpx.Timeout(opts.get("timeout", 90.0), connect=10.0)
+        timeout_val = float(opts.get("timeout", 180.0))
+        timeout = httpx.Timeout(timeout_val, connect=15.0)
 
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.post(url, json=payload, headers=headers)
-            if resp.status_code == 200:
-                data = resp.json()
-                choice = data.get("choices", [{}])[0]
-                message = choice.get("message", {})
-                return message.get("content", "").strip()
-            else:
-                err_text = resp.text
-                logger.error(f"OpenAICompatible non-stream failed {resp.status_code}: {err_text}")
-                raise RuntimeError(f"HTTP {resp.status_code}: {err_text}")
+        logger.info(f"[{self.provider_id}] Sending non-stream chat to {url} (model={model}, timeout={timeout_val}s)")
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                resp = await client.post(url, json=payload, headers=headers)
+                logger.info(f"[{self.provider_id}] Received response status: {resp.status_code}")
+                if resp.status_code == 200:
+                    try:
+                        data = resp.json()
+                    except Exception as json_err:
+                        logger.error(f"[{self.provider_id}] JSON decode error from {url}: {json_err}, raw text: {resp.text[:300]}")
+                        raise RuntimeError(f"无法解析模型服务返回的 JSON 数据: {json_err}") from json_err
+
+                    choices = data.get("choices")
+                    if not choices or not isinstance(choices, list) or len(choices) == 0:
+                        logger.warning(f"[{self.provider_id}] Empty choices list in response: {data}")
+                        return ""
+
+                    choice = choices[0] or {}
+                    message = choice.get("message") or {}
+                    content = message.get("content")
+                    if content is None:
+                        # Fallback for thinking models that put output in reasoning_content or reasoning
+                        content = message.get("reasoning_content") or message.get("reasoning") or ""
+
+                    logger.info(f"[{self.provider_id}] Extracted content length: {len(str(content))}, preview: {repr(str(content)[:80]) if content else 'EMPTY'}")
+                    return str(content).strip()
+                else:
+                    err_text = resp.text
+                    logger.error(f"[{self.provider_id}] Non-stream request failed with status {resp.status_code}: {err_text}")
+                    raise RuntimeError(f"模型服务返回错误 HTTP {resp.status_code}: {err_text}")
+        except httpx.TimeoutException as te:
+            logger.error(f"[{self.provider_id}] Request timed out after {timeout_val}s: {te or repr(te)}")
+            raise RuntimeError(f"模型请求超时（已等待 {timeout_val} 秒未收到回复），请检查本地模型运行状态或增大超时时间") from te
+        except httpx.RequestError as re:
+            logger.error(f"[{self.provider_id}] Connection error to {url}: {re or repr(re)}")
+            raise RuntimeError(f"无法连接到模型服务 ({url}): {re or repr(re)}") from re
 
     async def list_models(self) -> List[str]:
         url = f"{self.base_url}/models"

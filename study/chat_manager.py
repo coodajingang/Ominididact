@@ -47,7 +47,15 @@ def load_chat_history(doc_dir: str, chat_type: str, chapter_id: str = "", paragr
         logger.warning(f"Failed to read chat history from {path}: {e}")
         return []
 
-def save_chat_history(doc_dir: str, chat_type: str, chapter_id: str, messages: List[Dict[str, Any]], paragraph_id: Optional[str] = None):
+def save_chat_history(
+    doc_dir: str,
+    chat_type: str,
+    chapter_id: Optional[str] = "",
+    messages: Optional[List[Dict[str, Any]]] = None,
+    paragraph_id: Optional[str] = None
+):
+    chapter_id = chapter_id or ""
+    messages = messages if messages is not None else []
     path = get_chat_file_path(doc_dir, chat_type, chapter_id, paragraph_id, create=True)
     try:
         with open(path, "w", encoding="utf-8") as f:

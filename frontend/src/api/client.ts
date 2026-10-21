@@ -174,18 +174,37 @@ export async function refetchFailedChapters(docId: string): Promise<{
   })
 }
 
-export async function uploadDocument(file: File): Promise<DocumentMeta> {
+export async function uploadDocument(file: File, asImages: boolean = false): Promise<DocumentMeta> {
+  const docs = await uploadDocuments([file], asImages)
+  if (docs.length === 0) throw new Error('上传返回数据为空')
+  return docs[0]
+}
+
+export async function uploadDocuments(files: File[], asImages: boolean = false): Promise<DocumentMeta[]> {
   const formData = new FormData()
-  formData.append('file', file)
+  for (const file of files) {
+    formData.append('files', file)
+  }
+  if (asImages) {
+    formData.append('as_images', 'true')
+    formData.append('parse_mode', 'images')
+  }
   const resp = await fetch('/api/study/documents/upload', {
     method: 'POST',
     headers: getAuthHeaders(),
     body: formData,
   })
-  if (!resp.ok) throw new Error(`Upload failed: ${resp.statusText}`)
+  if (!resp.ok) {
+    let msg = `Upload failed: ${resp.statusText}`
+    try {
+      const errJson = await resp.json()
+      if (errJson.detail) msg = errJson.detail
+    } catch {}
+    throw new Error(msg)
+  }
   const json = await resp.json()
-  const d = json.data
-  return {
+  const rawList = Array.isArray(json.docs) ? json.docs : (json.data ? [json.data] : [])
+  return rawList.map((d: any) => ({
     doc_id: d.doc_id,
     title: d.filename || '未命名文档',
     source_file: d.filename || '',
@@ -201,8 +220,9 @@ export async function uploadDocument(file: File): Promise<DocumentMeta> {
       header_notes: [],
       footer_notes: [],
     })),
-  }
+  }))
 }
+
 
 export async function inspectWebUrl(url: string) {
   return await apiRequest<import('@/types').WebInspectResult>('/api/study/documents/inspect-url', {
@@ -867,5 +887,25 @@ export async function clearChatHistory(
     `/api/study/documents/${encodeURIComponent(docId)}/chat_history?${params.toString()}`,
     { method: 'DELETE' }
   )
+}
+
+export async function reparseDocument(docId: string, parseMode: 'images' | 'auto' = 'images'): Promise<any> {
+  const resp = await fetch(`/api/study/documents/${encodeURIComponent(docId)}/reparse`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ parse_mode: parseMode }),
+  })
+  if (!resp.ok) {
+    let msg = `Reparse failed: ${resp.statusText}`
+    try {
+      const errJson = await resp.json()
+      if (errJson.detail) msg = errJson.detail
+    } catch {}
+    throw new Error(msg)
+  }
+  return resp.json()
 }
 

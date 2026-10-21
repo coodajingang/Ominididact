@@ -55,7 +55,7 @@ DEFAULT_TRANSLATION_PROMPT = (
     "你是一位资深信息安全（InfoSec / Cybersecurity）专家及 CISSP 官方知识体系（CBK 八大领域）双语翻译导师。\n"
     "请将待翻译的英文学术与认证备考材料翻译为严谨、地道、符合信息安全专业规范的中文译文。\n\n"
     "【核心翻译与排版规范】：\n"
-    "1. 【仅输出译文，严禁输出原文】：输出内容必须严格仅包含目标段落的中文翻译。严禁在输出中重复出现英文原文，严禁输出任何多余的开场白、问候语、翻译说明或结尾总结。\n"
+    "1. 【仅输出译文，严禁输出原文】：输出内容必须严格仅包含目标段落的中文翻译。严禁在输出中重复出现英文原文，严禁输出任何多余的开场白（如“以下为待翻译段落”、“中文译文：”等）、问候语、翻译说明或结尾总结。严禁翻译或复述任何【前文参考背景】内容。\n"
     "2. 【CISSP 专业术语精准对应】：严格遵循 CISSP 官方教材与考试大纲权威中文术语规范（如：主体/客体 Subject/Object、机密性/完整性/可用性 CIA 三要素、身份标识/鉴别/授权/问责制 IAAA、访问控制 Access Control、隐含拒绝 Implicit Deny、最小特权 Least Privilege、职责分离 Separation of Duties、防御纵深 Defense-in-Depth 等）。对于核心考点术语，建议在首次出现的中文译名后保留带括号的英文术语（如：隐含拒绝（Implicit Deny）），方便备考记忆与对照。\n"
     "3. 【引用块排版格式】：所有中文译文必须严格采用 Markdown 引用块（以 `> ` 开头）展示。如果原文包含多个逻辑自然段，各段译文均以 `> ` 开头，段落之间用空行隔开。\n"
     "4. 【格式标记严格继承】：严格保留原文中的 Markdown 加粗（`**...**`）、斜体（`*...*`）、行内代码（`` `...` ``）等强调标记，将中文译文中对应的重点词句或考点关键词做相同标记。\n"
@@ -80,6 +80,14 @@ DEFAULT_CHAPTER_QUICK_PROMPTS = [
     {"label": "🗂️ 生成本章考点闪卡", "prompt": "请根据本章全局核心脉络与关键考点，提炼生成 3~5 张高频复习闪卡（涵盖 QA 问答与 Cloze 镂空题型）。\n请务必严格使用如下格式输出每张闪卡：\n:::flashcard\ntype: qa\nfront: 正面考点问题或包含{{挖空词}}的语句\nback: 答案、详细解析与备考要点\ntags: CISSP, 章节考点\n:::"}
 ]
 
+DEFAULT_DOCUMENT_QUICK_PROMPTS = [
+    {"label": "🗺️ 全书架构脑图", "prompt": "请根据整本文档全部章节的高浓缩知识图谱，全面梳理全书的完整架构体系脑图、章节演进脉络与核心逻辑。"},
+    {"label": "⚖️ 跨章机制对比", "prompt": "请对比全书中各章节所探讨的核心机制与技术方案，深入分析它们在理论依据、底层实现与攻防/应用权衡上的异同。"},
+    {"label": "📝 全书要点清单", "prompt": "请针对整篇文档提炼出最核心的 5~8 条结论性要点与研学备考重点。"},
+    {"label": "🗂️ 全书核心闪卡", "prompt": "请基于整本书的全局知识体系，提炼生成 5 张高含金量的综合性考点记忆闪卡（涵盖问答 QA 与 Cloze 镂空填空题型）。\n请严格使用如下格式输出每张闪卡：\n:::flashcard\ntype: qa 或 cloze\nfront: 正面问题或包含{{挖空词}}的语句\nback: 答案、详细解析与备考要点\ntags: 全书重点, 核心机制\n:::"},
+    {"label": "🔍 全局引申实战", "prompt": "结合全书探讨的完整体系，有哪些前沿延伸方向或企业级工程实战落地建议？"}
+]
+
 DEFAULT_QUICK_PROMPTS = DEFAULT_PARAGRAPH_QUICK_PROMPTS
 
 # ==========================================================
@@ -97,6 +105,7 @@ def get_study_settings(doc_id: Optional[str] = None) -> Dict[str, Any]:
     
     para_prompts = global_settings.get("paragraph_quick_prompts") or global_settings.get("chat_quick_prompts") or DEFAULT_PARAGRAPH_QUICK_PROMPTS
     chap_prompts = global_settings.get("chapter_quick_prompts") or global_settings.get("chapter_chat_quick_prompts") or DEFAULT_CHAPTER_QUICK_PROMPTS
+    doc_prompts = global_settings.get("document_quick_prompts") or global_settings.get("document_chat_quick_prompts") or DEFAULT_DOCUMENT_QUICK_PROMPTS
 
     defaults = {
         "translation_prompt_template": global_settings.get("translation_prompt_template", DEFAULT_TRANSLATION_PROMPT),
@@ -136,6 +145,8 @@ def get_study_settings(doc_id: Optional[str] = None) -> Dict[str, Any]:
         "paragraph_quick_prompts": para_prompts,
         "chapter_quick_prompts": chap_prompts,
         "chapter_chat_quick_prompts": chap_prompts,
+        "document_quick_prompts": doc_prompts,
+        "document_chat_quick_prompts": doc_prompts,
         "is_doc_level": False
     }
 
@@ -177,10 +188,13 @@ def get_study_settings(doc_id: Optional[str] = None) -> Dict[str, Any]:
                 result.update(doc_settings)
                 doc_para = doc_settings.get("paragraph_quick_prompts") or doc_settings.get("chat_quick_prompts") or para_prompts
                 doc_chap = doc_settings.get("chapter_quick_prompts") or doc_settings.get("chapter_chat_quick_prompts") or chap_prompts
+                doc_doc = doc_settings.get("document_quick_prompts") or doc_settings.get("document_chat_quick_prompts") or doc_prompts
                 result["paragraph_quick_prompts"] = doc_para
                 result["chat_quick_prompts"] = doc_para
                 result["chapter_quick_prompts"] = doc_chap
                 result["chapter_chat_quick_prompts"] = doc_chap
+                result["document_quick_prompts"] = doc_doc
+                result["document_chat_quick_prompts"] = doc_doc
                 # Ensure task models fallback to defaults if unset
                 if not result.get("chat_provider"):
                     result["chat_provider"] = result.get("default_chat_provider", "openai_compatible")
@@ -234,6 +248,11 @@ def save_study_settings(new_settings: Dict[str, Any], doc_id: Optional[str] = No
         norm_settings["chapter_chat_quick_prompts"] = norm_settings["chapter_quick_prompts"]
     elif "chapter_chat_quick_prompts" in norm_settings:
         norm_settings["chapter_quick_prompts"] = norm_settings["chapter_chat_quick_prompts"]
+
+    if "document_quick_prompts" in norm_settings:
+        norm_settings["document_chat_quick_prompts"] = norm_settings["document_quick_prompts"]
+    elif "document_chat_quick_prompts" in norm_settings:
+        norm_settings["document_quick_prompts"] = norm_settings["document_chat_quick_prompts"]
 
     if doc_id:
         doc_dir = get_doc_dir(doc_id)
@@ -584,12 +603,15 @@ def shift_chapter_paragraphs(
     doc_id: str,
     chapter_id: str,
     paragraph_id: str,
-    direction: str = "prev"
+    direction: str = "prev",
+    scope: str = "slice"
 ) -> Dict[str, Any]:
     """
-    Shifts a slice of paragraphs from chapter_id into the adjacent chapter:
-    - 'prev': paragraphs from index 0 up to paragraph_id (inclusive) are moved to the END of the previous chapter.
-    - 'next': paragraphs from paragraph_id to the end (inclusive) are moved to the BEGINNING of the next chapter.
+    Shifts paragraphs from chapter_id into the adjacent chapter:
+    - scope == 'single': only paragraph_id is moved (appended to previous chapter for 'prev', prepended to next chapter for 'next').
+    - scope != 'single' (e.g. 'slice', 'range', 'all'):
+      - 'prev': paragraphs from index 0 up to paragraph_id (inclusive) are moved to the END of the previous chapter.
+      - 'next': paragraphs from paragraph_id to the end (inclusive) are moved to the BEGINNING of the next chapter.
     If all paragraphs in chapter_id are moved away, chapter_id is automatically deleted.
     """
     if direction not in ("prev", "next"):
@@ -644,20 +666,30 @@ def shift_chapter_paragraphs(
     if p_idx == -1:
         raise ValueError(f"Paragraph {paragraph_id} not found in chapter {chapter_id}")
 
-    if direction == "prev":
-        moved_paras = src_paras[:p_idx + 1]
-        remaining_paras = src_paras[p_idx + 1:]
-        # Update chapter_id in moved paragraphs and append to dest
+    if str(scope).strip().lower() == "single":
+        moved_paras = [src_paras[p_idx]]
+        remaining_paras = src_paras[:p_idx] + src_paras[p_idx + 1:]
         for p in moved_paras:
             p["chapter_id"] = dest_chapter_id
-        dest_paras = dest_paras + moved_paras
+        if direction == "prev":
+            dest_paras = dest_paras + moved_paras
+        else:
+            dest_paras = moved_paras + dest_paras
     else:
-        moved_paras = src_paras[p_idx:]
-        remaining_paras = src_paras[:p_idx]
-        # Update chapter_id in moved paragraphs and prepend to dest
-        for p in moved_paras:
-            p["chapter_id"] = dest_chapter_id
-        dest_paras = moved_paras + dest_paras
+        if direction == "prev":
+            moved_paras = src_paras[:p_idx + 1]
+            remaining_paras = src_paras[p_idx + 1:]
+            # Update chapter_id in moved paragraphs and append to dest
+            for p in moved_paras:
+                p["chapter_id"] = dest_chapter_id
+            dest_paras = dest_paras + moved_paras
+        else:
+            moved_paras = src_paras[p_idx:]
+            remaining_paras = src_paras[:p_idx]
+            # Update chapter_id in moved paragraphs and prepend to dest
+            for p in moved_paras:
+                p["chapter_id"] = dest_chapter_id
+            dest_paras = moved_paras + dest_paras
 
     dest_ch["paragraphs"] = dest_paras
     lang = meta.get("language", "en")
@@ -1022,9 +1054,11 @@ def assemble_full_document_html(
             ch_blocks.append('<div class="notes-box-header">📌 【本章总览与研学总结】</div>')
             for hn in header_notes:
                 c = hn.get("content", "").strip()
-                if c:
+                t = hn.get("title", "").strip()
+                if c or t:
                     esc_raw = html.escape(c, quote=True)
-                    ch_blocks.append(f'<div class="note-entry"><div class="note-body md-render" data-raw="{esc_raw}">{_format_html_text(c, doc_id)}</div><div class="note-time">{hn.get("created_at", "")}</div></div>')
+                    title_html = f'<div class="note-title"><strong>{html.escape(t)}</strong></div>' if t else ''
+                    ch_blocks.append(f'<div class="note-entry">{title_html}<div class="note-body md-render" data-raw="{esc_raw}">{_format_html_text(c, doc_id)}</div><div class="note-time">{hn.get("created_at", "")}</div></div>')
             ch_blocks.append('</div>')
 
         # 2. Paragraphs
@@ -1085,9 +1119,11 @@ def assemble_full_document_html(
             ch_blocks.append('<div class="notes-box-header">🎯 【本章回顾与核心考点】</div>')
             for fn in footer_notes:
                 c = fn.get("content", "").strip()
-                if c:
+                t = fn.get("title", "").strip()
+                if c or t:
                     esc_fn = html.escape(c, quote=True)
-                    ch_blocks.append(f'<div class="note-entry"><div class="note-body md-render" data-raw="{esc_fn}">{_format_html_text(c, doc_id)}</div><div class="note-time">{fn.get("created_at", "")}</div></div>')
+                    title_html = f'<div class="note-title"><strong>{html.escape(t)}</strong></div>' if t else ''
+                    ch_blocks.append(f'<div class="note-entry">{title_html}<div class="note-body md-render" data-raw="{esc_fn}">{_format_html_text(c, doc_id)}</div><div class="note-time">{fn.get("created_at", "")}</div></div>')
             ch_blocks.append('</div>')
 
         ch_blocks.append('</section>')
@@ -2573,7 +2609,7 @@ server {{
 # Document Inspection & Initialization
 # ==========================================================
 
-async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any]:
+async def initialize_document(file_bytes: bytes, filename: str, parse_mode: str = "auto") -> Dict[str, Any]:
     doc_id = f"doc_{time.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
     doc_dir = get_doc_dir(doc_id, create=True)
     
@@ -2583,7 +2619,7 @@ async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any
         f.write(file_bytes)
         
     if ext in (".ppt", ".pptx"):
-        raise ValueError("PPT 演示文稿请在 PowerPoint、WPS 或 Keynote 中点击【文件 -> 另存为 / 导出为 PDF】后再上传，以确保完整保留幻灯片图表与排版！")
+        raise ValueError("PPT 演示文稿请在 PowerPoint、WPS 或 Keynote 中点击【文件 -> 另存为 / 导出为 PDF】后再上传，上传时勾选【按整页图片/幻灯片模式解析】，即可完美保留幻灯片图表与排版！")
 
     is_scanned = False
     if ext == ".pdf":
@@ -2601,23 +2637,34 @@ async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any
         file_type = "epub"
     elif ext in (".zip", ".tar", ".tar.gz"):
         file_type = "folder"
+    elif ext in (".xlsx", ".xlsm", ".xltx", ".xltm"):
+        file_type = "excel"
     else:
         file_type = "other"
 
     total_pages = 1
     
     if ext == ".pdf":
-        try:
-            doc = fitz.open(orig_path)
-            total_pages = len(doc)
-            check_pages = min(total_pages, 10)
-            total_chars = sum(len(doc[p].get_text().strip()) for p in range(check_pages))
-            avg_chars = total_chars / max(check_pages, 1)
-            is_scanned = (avg_chars < 30)
-            doc.close()
-        except Exception as e:
-            logger.error(f"PDF inspection error: {e}")
+        if parse_mode == "images":
             is_scanned = True
+            try:
+                doc = fitz.open(orig_path)
+                total_pages = len(doc)
+                doc.close()
+            except Exception:
+                total_pages = 1
+        else:
+            try:
+                doc = fitz.open(orig_path)
+                total_pages = len(doc)
+                check_pages = min(total_pages, 10)
+                total_chars = sum(len(doc[p].get_text().strip()) for p in range(check_pages))
+                avg_chars = total_chars / max(check_pages, 1)
+                is_scanned = (avg_chars < 30)
+                doc.close()
+            except Exception as e:
+                logger.error(f"PDF inspection error: {e}")
+                is_scanned = True
     elif ext in (".docx", ".doc"):
         info = doc_converter.inspect_document(file_bytes, filename)
         total_pages = info.get("total_pages", 1)
@@ -2643,12 +2690,22 @@ async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any
         except Exception:
             total_pages = 1
         is_scanned = False
+    elif ext in (".xlsx", ".xlsm", ".xltx", ".xltm"):
+        try:
+            from study.excel_parser import inspect_excel
+            excel_info = inspect_excel(orig_path)
+            total_pages = max(1, excel_info.get("sheets_count", 1))
+        except Exception as e:
+            logger.warning(f"Excel inspect warning: {e}")
+            total_pages = 1
+        is_scanned = False
         
     meta = {
         "doc_id": doc_id,
         "filename": filename,
         "file_type": file_type,
         "is_scanned": is_scanned,
+        "parse_mode": parse_mode,
         "language": "en",
         "total_pages": total_pages,
         "total_paragraphs": 0,
@@ -2668,6 +2725,94 @@ async def initialize_document(file_bytes: bytes, filename: str) -> Dict[str, Any
     # Initialize per-document settings by inheriting global defaults
     get_study_settings(doc_id)
     return meta
+
+async def reparse_document(doc_id: str, parse_mode: str = "images") -> Dict[str, Any]:
+    """
+    Reparses an existing document (e.g. PDF) with a specific parse mode:
+    - 'images': force page-by-page rendering into images (for PPT-converted PDFs, complex graphics)
+    - 'auto': standard text/layout native extraction
+    """
+    doc_dir = get_doc_dir(doc_id, create=False)
+    if not os.path.exists(doc_dir):
+        raise ValueError(f"Document {doc_id} not found")
+
+    meta = load_doc_meta(doc_id)
+    if not meta:
+        raise ValueError(f"Metadata for document {doc_id} not found")
+
+    # Locate the original uploaded file
+    orig_file = None
+    ext = ""
+    for candidate in os.listdir(doc_dir):
+        if candidate.startswith("original."):
+            orig_file = os.path.join(doc_dir, candidate)
+            ext = os.path.splitext(candidate)[1].lower()
+            break
+
+    if not orig_file or not os.path.exists(orig_file):
+        raise ValueError(f"Original file for document {doc_id} not found")
+
+    is_scanned = False
+    total_pages = meta.get("total_pages", 1)
+
+    if ext == ".pdf":
+        if parse_mode == "images":
+            is_scanned = True
+            try:
+                doc = fitz.open(orig_file)
+                total_pages = len(doc)
+                doc.close()
+            except Exception:
+                pass
+        else:
+            try:
+                doc = fitz.open(orig_file)
+                total_pages = len(doc)
+                check_pages = min(total_pages, 10)
+                total_chars = sum(len(doc[p].get_text().strip()) for p in range(check_pages))
+                avg_chars = total_chars / max(check_pages, 1)
+                is_scanned = (avg_chars < 30)
+                doc.close()
+            except Exception as e:
+                logger.error(f"PDF inspection error during reparse: {e}")
+                is_scanned = True
+    elif ext in (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".svg", ".docx", ".doc"):
+        is_scanned = True
+
+    # Clean previous chapter files
+    chapters_dir = os.path.join(doc_dir, "chapters")
+    if os.path.exists(chapters_dir):
+        import shutil
+        shutil.rmtree(chapters_dir, ignore_errors=True)
+    os.makedirs(chapters_dir, exist_ok=True)
+
+    # Clean previous images
+    images_dir = os.path.join(doc_dir, "images")
+    if os.path.exists(images_dir):
+        import shutil
+        shutil.rmtree(images_dir, ignore_errors=True)
+    os.makedirs(images_dir, exist_ok=True)
+
+    meta["is_scanned"] = is_scanned
+    meta["parse_mode"] = parse_mode
+    meta["total_pages"] = total_pages
+    meta["status"] = "uploaded"
+    meta["chapters"] = []
+    meta["total_paragraphs"] = 0
+    meta["translated_paragraphs"] = 0
+    meta["progress"] = {
+        "current_page": 0,
+        "total_pages": total_pages,
+        "percent": 0
+    }
+    meta["error_message"] = ""
+    meta["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    save_doc_meta(doc_id, meta)
+
+    import asyncio
+    asyncio.create_task(process_document_pipeline(doc_id))
+    return meta
+
 
 async def initialize_web_document(url: str, title: str, selected_chapters: List[Dict[str, Any]], fetch_mode: str = "static") -> Dict[str, Any]:
     """
@@ -2846,6 +2991,11 @@ async def process_document_pipeline(doc_id: str):
             lang, chapters = extract_epub_content(
                 doc_id, doc_dir, meta.get("filename", ""), progress_callback=on_progress
             )
+        elif meta.get("file_type") == "excel":
+            from study.excel_parser import extract_excel_content
+            lang, chapters = extract_excel_content(
+                doc_id, doc_dir, meta.get("filename", ""), progress_callback=on_progress
+            )
         elif meta.get("file_type") in ("folder", "zip"):
             from study.folder_importer import extract_folder_content
             lang, chapters = extract_folder_content(
@@ -2940,7 +3090,13 @@ def pause_document_pipeline(doc_id: str):
 # On-Demand Translation Operations
 # ==========================================================
 
-async def translate_single_paragraph(doc_id: str, chapter_id: str, paragraph_id: str) -> Dict[str, Any]:
+async def translate_single_paragraph(
+    doc_id: str,
+    chapter_id: str,
+    paragraph_id: str,
+    provider_override: Optional[str] = None,
+    model_override: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Translates a single paragraph on-demand when user clicks 'Translate'.
     Carries sliding context window (preceding paragraph) for terminology & pronoun consistency.
@@ -3009,7 +3165,9 @@ async def translate_single_paragraph(doc_id: str, chapter_id: str, paragraph_id:
                         prompt_template,
                         settings,
                         prev_english=prev_english,
-                        prev_chinese=prev_chinese
+                        prev_chinese=prev_chinese,
+                        provider_override=provider_override,
+                        model_override=model_override
                     )
                     target_p["chinese"] = cn_trans
             else:
@@ -3028,7 +3186,9 @@ async def translate_single_paragraph(doc_id: str, chapter_id: str, paragraph_id:
                     prompt_template,
                     settings,
                     prev_english=prev_english,
-                    prev_chinese=prev_chinese
+                    prev_chinese=prev_chinese,
+                    provider_override=provider_override,
+                    model_override=model_override
                 )
                 target_p["chinese"] = cn_trans
         else:
@@ -3050,7 +3210,14 @@ async def translate_single_paragraph(doc_id: str, chapter_id: str, paragraph_id:
     assemble_full_document_markdown(doc_id)
     return target_p
 
-async def extract_paragraph_text_content(doc_id: str, chapter_id: str, paragraph_id: str) -> Dict[str, Any]:
+retranslate_paragraph = translate_single_paragraph
+
+async def extract_paragraph_text_content(
+    doc_id: str,
+    chapter_id: str,
+    paragraph_id: str,
+    force: bool = True
+) -> Dict[str, Any]:
     """
     Extracts high-fidelity text/OCR from a scanned page or image paragraph using VLM,
     and persists it into paragraph's `extracted_text`.
@@ -3075,6 +3242,9 @@ async def extract_paragraph_text_content(doc_id: str, chapter_id: str, paragraph
     if not target_p:
         raise ValueError(f"Paragraph {paragraph_id} not found")
 
+    if not force and target_p.get("extracted_text"):
+        return target_p
+
     settings = get_study_settings(doc_id)
     img_url = target_p.get("image_url", "")
     if not img_url and "![" in target_p.get("english", ""):
@@ -3098,6 +3268,73 @@ async def extract_paragraph_text_content(doc_id: str, chapter_id: str, paragraph
     if not target_p.get("extracted_text"):
         target_p["extracted_text"] = target_p.get("english", "")
     return target_p
+
+extract_paragraph_image_text = extract_paragraph_text_content
+
+async def ensure_chapter_images_extracted(
+    doc_id: str,
+    chapter_id: str,
+    force: bool = False
+) -> Dict[str, Any]:
+    """
+    Scans all paragraphs in the specified chapter.
+    For any image or scanned_page paragraphs that have not been OCR-extracted yet,
+    calls VLM to perform OCR extraction, updates their `extracted_text`, and persists the chapter.
+    Returns the updated chapter data dictionary.
+    """
+    doc_dir = get_doc_dir(doc_id)
+    ch_json_path = os.path.join(doc_dir, "chapters", f"{chapter_id}.json")
+    if not os.path.exists(ch_json_path):
+        return {}
+
+    with open(ch_json_path, "r", encoding="utf-8") as f:
+        ch_data = json.load(f)
+
+    paragraphs = ch_data.get("paragraphs", [])
+    settings = get_study_settings(doc_id)
+    meta = load_doc_meta(doc_id) or {}
+
+    unextracted = []
+    for idx, p in enumerate(paragraphs):
+        p_type = p.get("type", "text")
+        is_img = p_type in ("scanned_page", "image") or bool(p.get("image_url")) or "![" in p.get("english", "")
+        if is_img and (force or not p.get("extracted_text")):
+            unextracted.append((idx, p))
+
+    if not unextracted:
+        return ch_data
+
+    logger.info(f"Chapter {chapter_id} has {len(unextracted)} unextracted images. Starting auto VLM extraction...")
+    has_changes = False
+
+    for i, (idx, p) in enumerate(unextracted, 1):
+        img_url = p.get("image_url", "")
+        if not img_url and "![" in p.get("english", ""):
+            m = re.search(r'\((/api/study/documents/[^/]+/images/[^)]+)\)', p.get("english", ""))
+            if m:
+                img_url = m.group(1)
+
+        if img_url:
+            img_filename = os.path.basename(img_url)
+            img_path = os.path.join(doc_dir, "images", img_filename)
+            if os.path.exists(img_path):
+                try:
+                    with open(img_path, "rb") as f_img:
+                        b64_img = base64.b64encode(f_img.read()).decode("utf-8")
+                    ocr_text = await call_vllm_ocr(b64_img, settings)
+                    if ocr_text:
+                        p["extracted_text"] = ocr_text.strip()
+                        p["image_url"] = img_url
+                        has_changes = True
+                        logger.info(f"Auto-extracted text for paragraph {p.get('id')} ({i}/{len(unextracted)})")
+                except Exception as e:
+                    logger.warning(f"VLM OCR failed for paragraph {p.get('id')}: {e}")
+
+    if has_changes:
+        write_chapter_files(doc_id, ch_data, meta.get("language", "en"))
+
+    return ch_data
+
 
 def edit_paragraph_content(
     doc_id: str,
@@ -3528,12 +3765,22 @@ async def chat_with_paragraph(
 
     is_target_img = target_p.get("type") in ("scanned_page", "image") or bool(target_p.get("image_url")) or "![" in target_p.get("english", "")
 
-    # If target is image and model is text-only, and no extracted_text yet -> Auto OCR extract!
-    if is_target_img and not is_vision and not target_p.get("extracted_text"):
-        try:
-            target_p = await extract_paragraph_text_content(doc_id, chapter_id, paragraph_id)
-        except Exception as e:
-            logger.warning(f"Auto OCR extraction failed in chat_with_paragraph: {e}")
+    # Identify paragraphs that will be included in context (target + surrounding prev/next windows)
+    start_idx = max(0, target_idx - prev_count)
+    end_idx = min(len(paragraphs), target_idx + next_count + 1)
+    scope_paras = paragraphs[start_idx:end_idx]
+
+    # Auto OCR any image paragraphs in active context window if missing extracted text
+    for p in scope_paras:
+        p_is_img = p.get("type") in ("scanned_page", "image") or bool(p.get("image_url")) or "![" in p.get("english", "")
+        if p_is_img and not p.get("extracted_text"):
+            try:
+                updated_p = await extract_paragraph_text_content(doc_id, chapter_id, p["id"])
+                p["extracted_text"] = updated_p.get("extracted_text", "")
+                if p["id"] == target_p["id"]:
+                    target_p["extracted_text"] = p["extracted_text"]
+            except Exception as e:
+                logger.warning(f"Auto OCR extraction failed for para {p.get('id')}: {e}")
 
     def format_para_chat_text(p: Dict[str, Any], is_target: bool) -> str:
         is_img = p.get("type") in ("scanned_page", "image") or bool(p.get("image_url")) or "![" in p.get("english", "")

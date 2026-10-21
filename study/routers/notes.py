@@ -99,7 +99,7 @@ async def save_chapter_note_endpoint(request: Request, doc_id: str, chapter_id: 
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON body")
 
-    note_type = body.get("type", "header")
+    note_type = body.get("position") or body.get("type") or "header"
     title = body.get("title", "")
     content = body.get("content", "")
 
@@ -107,10 +107,16 @@ async def save_chapter_note_endpoint(request: Request, doc_id: str, chapter_id: 
         raise HTTPException(status_code=400, detail="content is required")
 
     try:
-        updated_chapter = study_service.save_chapter_note(doc_id, chapter_id, note_type, title, content)
+        saved_note = study_service.save_chapter_note(
+            doc_id=doc_id,
+            chapter_id=chapter_id,
+            position=note_type,
+            title=title,
+            content=content
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    return {"code": 200, "data": updated_chapter, "message": "章节笔记已保存"}
+    return {"code": 200, "data": saved_note, "message": "章节笔记已保存"}
 
 @router.post("/api/study/documents/{doc_id}/chapter/{chapter_id}/notes", include_in_schema=False)
 async def save_chapter_note_legacy(doc_id: str, chapter_id: str):
@@ -129,7 +135,7 @@ async def update_chapter_note_endpoint(request: Request, doc_id: str, chapter_id
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON body")
 
-    note_type = body.get("type", "header")
+    note_type = body.get("position") or body.get("type") or "header"
     title = body.get("title", "")
     content = body.get("content", "")
 
@@ -137,12 +143,19 @@ async def update_chapter_note_endpoint(request: Request, doc_id: str, chapter_id
         raise HTTPException(status_code=400, detail="content is required")
 
     try:
-        updated_chapter = study_service.update_chapter_note(doc_id, chapter_id, note_id, note_type, title, content)
+        updated_note = study_service.update_chapter_note(
+            doc_id=doc_id,
+            chapter_id=chapter_id,
+            position=note_type,
+            note_id=note_id,
+            new_content=content,
+            title=title
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    if not updated_chapter:
+    if not updated_note:
         raise HTTPException(status_code=404, detail="章节或笔记不存在")
-    return {"code": 200, "data": updated_chapter, "message": "章节笔记已更新"}
+    return {"code": 200, "data": updated_note, "message": "章节笔记已更新"}
 
 @router.put("/api/study/documents/{doc_id}/chapter/{chapter_id}/notes/{note_id}", include_in_schema=False)
 async def update_chapter_note_legacy(doc_id: str, chapter_id: str, note_id: str):

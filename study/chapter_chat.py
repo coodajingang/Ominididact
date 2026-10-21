@@ -4,7 +4,7 @@ import json
 import logging
 from typing import List, Dict, Any, Optional
 
-from study.service import get_doc_dir, get_study_settings
+from study.service import get_doc_dir, get_study_settings, ensure_chapter_images_extracted
 from providers import get_provider, get_provider_for_task
 from providers.base import chunk_to_sse
 
@@ -13,26 +13,39 @@ logger = logging.getLogger("study-chapter-chat")
 async def stream_chapter_chat(
     doc_id: str,
     chapter_id: str,
-    user_message: str,
+    user_message: Optional[str] = None,
     history: Optional[List[Dict[str, str]]] = None,
     provider_override: Optional[str] = None,
-    model_override: Optional[str] = None
+    model_override: Optional[str] = None,
+    *,
+    user_prompt: Optional[str] = None,
+    chat_history: Optional[List[Dict[str, str]]] = None,
 ):
     """
     Performs streaming AI chat discussing the whole chapter.
+    Automatically ensures any scanned/image slides are OCR-extracted using VLM before chat.
     Assembles all readable text paragraphs of the chapter as broad context.
     """
+    actual_message = user_message or user_prompt or ""
+    actual_history = history if history is not None else (chat_history or [])
     ch_path = os.path.join(get_doc_dir(doc_id), "chapters", f"{chapter_id}.json")
     if not os.path.exists(ch_path):
         yield f"data: {json.dumps({'error': f'章节 {chapter_id} 不存在'})}\n\n"
         return
 
     try:
-        with open(ch_path, "r", encoding="utf-8") as f:
-            ch_data = json.load(f)
+        ch_data = await ensure_chapter_images_extracted(doc_id, chapter_id)
+        if not ch_data or not ch_data.get("paragraphs"):
+            with open(ch_path, "r", encoding="utf-8") as f:
+                ch_data = json.load(f)
     except Exception as e:
-        yield f"data: {json.dumps({'error': f'读取章节数据失败: {str(e)}'})}\n\n"
-        return
+        logger.warning(f"Auto OCR chapter images warning: {e}")
+        try:
+            with open(ch_path, "r", encoding="utf-8") as f:
+                ch_data = json.load(f)
+        except Exception as e2:
+            yield f"data: {json.dumps({'error': f'读取章节数据失败: {str(e2)}'})}\n\n"
+            return
 
     ch_title = ch_data.get("title") or chapter_id
     paras = ch_data.get("paragraphs", [])
@@ -54,6 +67,9 @@ async def stream_chapter_chat(
                 if chn and chn != content_text and not chn.startswith("[OCR"):
                     line += f"\n[{page_info} 译文/精读]:\n{chn}"
                 chapter_body_lines.append(line)
+                idx += 1
+            else:
+                chapter_body_lines.append(f"[{page_info} 幻灯片图片单元: 暂无识别文字]")
                 idx += 1
         elif eng:
             if chn:
@@ -79,13 +95,13 @@ async def stream_chapter_chat(
     )
     
     messages = [{"role": "system", "content": system_prompt}]
-    if history:
-        for h in history[-30:]:
+    if actual_history:
+        for h in actual_history[-30:]:
             role = h.get("role", "user")
             content = (h.get("content") or "").strip()
             if content and role in ("user", "assistant"):
                 messages.append({"role": role, "content": content})
-    messages.append({"role": "user", "content": user_message})
+    messages.append({"role": "user", "content": actual_message})
     
     settings = get_study_settings(doc_id)
     provider = get_provider_for_task("chat", settings, provider_override=provider_override, model_override=model_override)

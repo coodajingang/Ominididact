@@ -50,13 +50,13 @@ async def extract_paragraph_text_endpoint(request: Request, doc_id: str):
 
     chapter_id = body.get("chapter_id")
     paragraph_id = body.get("paragraph_id")
-    force = body.get("force", False)
+    force = body.get("force", True)
 
     if not chapter_id or not paragraph_id:
         raise HTTPException(status_code=400, detail="chapter_id and paragraph_id are required")
 
     try:
-        res = await study_service.extract_paragraph_image_text(doc_id, chapter_id, paragraph_id, force=force)
+        res = await study_service.extract_paragraph_text_content(doc_id, chapter_id, paragraph_id, force=force)
         return {"code": 200, "data": res, "message": "图件文字提取完成"}
     except Exception as e:
         logger.exception("Extract paragraph text failed")

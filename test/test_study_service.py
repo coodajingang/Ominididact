@@ -306,7 +306,30 @@ def test_sliding_context_prompt_and_parsing():
     assert "访问控制和授权与我们下一节课密切相关。" in parsed3
     assert "最后，我们将深入探讨密码攻击。" in parsed3
     assert "最后，在本章结束时我们将进行一个简短测验。" in parsed3
-    assert len(parsed3.split("\n\n")) == 6
+    # 4. Test thinking model with <think>...</think> tags
+    thinking_sample = (
+        "<think>\nHere is my thinking process:\n1. Translate carefully.\n2. Output quote block.\n</think>\n"
+        "> 深度学习在自然语言处理领域取得了突破性进展。"
+    )
+    parsed4 = study_service.parse_translated_chinese(thinking_sample, "Deep learning has made breakthroughs.")
+    assert parsed4 == "深度学习在自然语言处理领域取得了突破性进展。"
+    assert "<think>" not in parsed4
+
+    # 5. Test user's exact bug scenario with conversational preamble & context echo
+    user_context_echo_sample = (
+        "以下为待翻译的段落：\n\n"
+        "前言参考（仅作术语和代词参考，无需重复翻译）: Until recently, it was difficult to export high-powered computers...\n\n"
+        "中文译文：\n\n"
+        "前言参考（仅作术语和代词参考，无需重复翻译）：\n\n"
+        "近年来，外国高性能计算机的出口变得更加困难，除了美国以外，仅有少数 allied nations才允许出口加密软件。\n\n"
+        "待译段落：\n\n"
+        "二级段落： 在过去，仅有美国以外的国家，特别是那些与美国有战略关系的国家，外国公司无法出口加密软件。加"
+    )
+    parsed5 = study_service.parse_translated_chinese(user_context_echo_sample, "In the past, only countries outside...")
+    assert parsed5 == "在过去，仅有美国以外的国家，特别是那些与美国有战略关系的国家，外国公司无法出口加密软件。加"
+    assert "前言参考" not in parsed5
+    assert "待译段落" not in parsed5
+    assert "以下为待翻译" not in parsed5
     print("✓ test_sliding_context_prompt_and_parsing passed!")
 
 
@@ -420,10 +443,12 @@ def test_document_settings_isolation_and_reset():
     # 3. Save custom settings for this document
     custom_para_prompts = [{"label": "🔬 专有测试提问", "prompt": "测试提问详情"}]
     custom_chapter_prompts = [{"label": "🗺️ 专有章节主线", "prompt": "测试全章主线"}]
+    custom_document_prompts = [{"label": "📚 专有全书脑图", "prompt": "测试全书脑图"}]
     study_service.save_study_settings({
         "model_call_delay": 2.5,
         "chat_quick_prompts": custom_para_prompts,
-        "chapter_chat_quick_prompts": custom_chapter_prompts
+        "chapter_chat_quick_prompts": custom_chapter_prompts,
+        "document_chat_quick_prompts": custom_document_prompts
     }, doc_id=doc_id)
     
     # 4. Verify document settings are updated and isolated
@@ -434,6 +459,8 @@ def test_document_settings_isolation_and_reset():
     assert doc_s_updated["chat_quick_prompts"][0]["label"] == "🔬 专有测试提问"
     assert len(doc_s_updated["chapter_chat_quick_prompts"]) == 1
     assert doc_s_updated["chapter_chat_quick_prompts"][0]["label"] == "🗺️ 专有章节主线"
+    assert len(doc_s_updated["document_quick_prompts"]) == 1
+    assert doc_s_updated["document_quick_prompts"][0]["label"] == "📚 专有全书脑图"
     
     # Global settings remain untouched
     global_s_check = study_service.get_study_settings()

@@ -54,7 +54,13 @@ async def save_chat_history_endpoint(request: Request, doc_id: str):
     paragraph_id = body.get("paragraph_id")
     messages = body.get("messages", [])
 
-    res = save_chat_history(doc_id, chat_type, chapter_id, paragraph_id, messages)
+    res = save_chat_history(
+        doc_dir=doc_id,
+        chat_type=chat_type,
+        chapter_id=chapter_id or "",
+        messages=messages,
+        paragraph_id=paragraph_id
+    )
     return {"code": 200, "data": res, "message": "对话历史已保存"}
 
 @router.post("/api/study/documents/{doc_id}/paragraph_chat")
@@ -78,12 +84,12 @@ async def paragraph_chat_endpoint(request: Request, doc_id: str):
         raise HTTPException(status_code=400, detail="chapter_id, paragraph_id, and prompt are required")
         
     try:
-        gen = study_service.stream_paragraph_chat(
+        gen = study_service.chat_with_paragraph(
             doc_id=doc_id,
             chapter_id=chapter_id,
             paragraph_id=paragraph_id,
-            user_prompt=user_prompt,
-            chat_history=chat_history,
+            user_message=user_prompt,
+            history=chat_history,
             prev_count=prev_count,
             next_count=next_count,
             provider_override=provider_override,
@@ -115,8 +121,8 @@ async def chapter_chat_endpoint(request: Request, doc_id: str):
         gen = study_service.stream_chapter_chat(
             doc_id=doc_id,
             chapter_id=chapter_id,
-            user_prompt=user_prompt,
-            chat_history=chat_history,
+            user_message=user_prompt,
+            history=chat_history,
             provider_override=provider_override,
             model_override=model_override
         )
@@ -133,8 +139,8 @@ async def document_chat_endpoint(request: Request, doc_id: str):
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON body")
 
-    user_prompt = body.get("prompt")
-    chat_history = body.get("chat_history", [])
+    user_prompt = body.get("prompt") or body.get("message")
+    chat_history = body.get("chat_history") or body.get("history") or []
     provider_override = body.get("provider")
     model_override = body.get("model")
 
@@ -145,8 +151,8 @@ async def document_chat_endpoint(request: Request, doc_id: str):
         from study.document_chat import stream_document_chat
         gen = stream_document_chat(
             doc_id=doc_id,
-            user_prompt=user_prompt,
-            chat_history=chat_history,
+            user_message=user_prompt,
+            history=chat_history,
             provider_override=provider_override,
             model_override=model_override
         )

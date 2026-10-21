@@ -1002,6 +1002,9 @@ def render_chapter_markdown(chapter: Dict[str, Any], language: str = "en") -> st
     if header_notes:
         lines.append("> 📌 **【全章导读与核心总览】**\n")
         for n in header_notes:
+            t = n.get("title", "").strip()
+            if t:
+                lines.append(f"> **{t}**\n")
             content = n.get("content", "").replace("\n", "\n> ")
             lines.append(f"> {content}\n")
         lines.append("\n---\n\n")
@@ -1037,6 +1040,9 @@ def render_chapter_markdown(chapter: Dict[str, Any], language: str = "en") -> st
     if footer_notes:
         lines.append("> 🎯 **【本章回顾与考点复盘】**\n")
         for n in footer_notes:
+            t = n.get("title", "").strip()
+            if t:
+                lines.append(f"> **{t}**\n")
             content = n.get("content", "").replace("\n", "\n> ")
             lines.append(f"> {content}\n")
         lines.append("\n---\n\n")

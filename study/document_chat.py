@@ -54,6 +54,9 @@ def get_chapter_readable_text(doc_dir: str, chapter_id: str) -> Tuple[str, str, 
             if content:
                 lines.append(f"[第 {idx} 单元: 图文内容]:\n{content}")
                 idx += 1
+            else:
+                lines.append(f"[第 {idx} 单元: 幻灯片图片]")
+                idx += 1
         elif src:
             if trans:
                 lines.append(f"[第 {idx} 段]: {src}\n[译文/精读]: {trans}")
@@ -146,6 +149,13 @@ async def get_or_build_chapter_digest(
     doc_dir = get_doc_dir(doc_id)
     digests_dir = get_digests_dir(doc_dir)
     digest_path = os.path.join(digests_dir, f"{chapter_id}.json")
+
+    # Automatically ensure slide images in chapter are OCR-extracted before digest
+    try:
+        from study.service import ensure_chapter_images_extracted
+        await ensure_chapter_images_extracted(doc_id, chapter_id)
+    except Exception as e:
+        logger.warning(f"Auto OCR images before digest warning: {e}")
 
     ch_title, raw_text, char_count = get_chapter_readable_text(doc_dir, chapter_id)
     if not raw_text:
@@ -317,15 +327,20 @@ async def assemble_document_global_context(
 
 async def stream_document_chat(
     doc_id: str,
-    user_message: str,
+    user_message: Optional[str] = None,
     history: Optional[List[Dict[str, str]]] = None,
     provider_override: Optional[str] = None,
-    model_override: Optional[str] = None
+    model_override: Optional[str] = None,
+    *,
+    user_prompt: Optional[str] = None,
+    chat_history: Optional[List[Dict[str, str]]] = None
 ) -> AsyncGenerator[str, None]:
     """
     Performs streaming AI chat across the whole document.
     Assembles all chapter digests into global context.
     """
+    actual_message = user_message or user_prompt or ""
+    actual_history = history if history is not None else chat_history
     try:
         context_data = await assemble_document_global_context(
             doc_id, provider_override=provider_override, model_override=model_override
@@ -351,13 +366,13 @@ async def stream_document_chat(
     )
 
     messages = [{"role": "system", "content": system_prompt}]
-    if history:
-        for h in history[-30:]:
+    if actual_history:
+        for h in actual_history[-30:]:
             role = h.get("role", "user")
             content = (h.get("content") or "").strip()
             if content and role in ("user", "assistant"):
                 messages.append({"role": role, "content": content})
-    messages.append({"role": "user", "content": user_message})
+    messages.append({"role": "user", "content": actual_message})
 
     settings = get_study_settings(doc_id)
     provider = get_provider_for_task("chat", settings, provider_override=provider_override, model_override=model_override)

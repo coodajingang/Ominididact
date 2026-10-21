@@ -102,7 +102,7 @@ def delete_paragraph_note(doc_id: str, chapter_id: str, paragraph_id: str, note_
 # Chapter Notes (Multiple Notes for Header & Footer)
 # ==========================================================
 
-def add_chapter_note(doc_id: str, chapter_id: str, position: str, content: str) -> Dict[str, Any]:
+def add_chapter_note(doc_id: str, chapter_id: str, position: str = "header", content: str = "", title: str = "") -> Dict[str, Any]:
     """
     Adds a note to the chapter's 'header_notes' or 'footer_notes' list.
     """
@@ -117,9 +117,10 @@ def add_chapter_note(doc_id: str, chapter_id: str, position: str, content: str) 
         ch_data[pos_key] = []
         
     prefix = "hn" if position == "header" else "fn"
-    note_obj = {
+    note_obj: Dict[str, Any] = {
         "id": f"{prefix}_{int(time.time())}_{uuid.uuid4().hex[:6]}",
         "position": position,
+        "title": title.strip() if title else "",
         "content": content,
         "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
     }
@@ -127,10 +128,51 @@ def add_chapter_note(doc_id: str, chapter_id: str, position: str, content: str) 
     save_chapter_data(doc_id, ch_data)
     return note_obj
 
-def update_chapter_note(doc_id: str, chapter_id: str, position: str, note_id: str, new_content: str) -> Dict[str, Any]:
+def save_chapter_note(
+    doc_id: str,
+    chapter_id: str,
+    position: str = "header",
+    title: str = "",
+    content: str = "",
+    **kwargs: Any
+) -> Dict[str, Any]:
+    """
+    Alias / wrapper for saving chapter note (header or footer).
+    Supports (doc_id, chapter_id, position, title, content) as well as keyword arguments.
+    """
+    if not content and "content" in kwargs:
+        content = kwargs["content"]
+    if not title and "title" in kwargs:
+        title = kwargs["title"]
+    # If called with 4 positional arguments (doc_id, chapter_id, position, content),
+    # title might hold content while content is empty:
+    if not content and title:
+        content = title
+        title = ""
+    return add_chapter_note(doc_id=doc_id, chapter_id=chapter_id, position=position, content=content, title=title)
+
+def update_chapter_note(
+    doc_id: str,
+    chapter_id: str,
+    position: str = "header",
+    note_id: str = "",
+    new_content: str = "",
+    title: Optional[str] = None,
+    **kwargs: Any
+) -> Dict[str, Any]:
     """
     Updates an existing chapter note (header or footer).
+    Supports flexible positional and keyword argument variations.
     """
+    # Guard against swapped position and note_id
+    if position not in ("header", "footer") and note_id in ("header", "footer"):
+        position, note_id = note_id, position
+
+    if not new_content and "content" in kwargs:
+        new_content = kwargs["content"]
+    if title is None and "title" in kwargs:
+        title = kwargs["title"]
+
     new_content = new_content.strip()
     if not new_content:
         raise ValueError("Content cannot be empty")
@@ -138,12 +180,28 @@ def update_chapter_note(doc_id: str, chapter_id: str, position: str, note_id: st
     pos_key = "header_notes" if position == "header" else "footer_notes"
     ch_data = load_chapter_data(doc_id, chapter_id)
     
+    # First search target position list
+    target_note = None
     for note in ch_data.get(pos_key, []):
-        if note["id"] == note_id:
-            note["content"] = new_content
-            note["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
-            save_chapter_data(doc_id, ch_data)
-            return note
+        if note.get("id") == note_id:
+            target_note = note
+            break
+
+    # Fallback to check other position list in case position was mismatched
+    if not target_note:
+        other_key = "footer_notes" if pos_key == "header_notes" else "header_notes"
+        for note in ch_data.get(other_key, []):
+            if note.get("id") == note_id:
+                target_note = note
+                break
+    
+    if target_note:
+        target_note["content"] = new_content
+        if title is not None:
+            target_note["title"] = title.strip()
+        target_note["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        save_chapter_data(doc_id, ch_data)
+        return target_note
             
     raise ValueError(f"Chapter note {note_id} not found in {position}")
 

@@ -408,6 +408,79 @@ export function DocSettingsModal() {
                   )}
                 </div>
               </div>
+
+              {/* Document Quick Prompts */}
+              <div className="space-y-2 pt-3 border-t border-border/40">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-foreground">
+                    📚 全篇研读快捷提问按钮 (整本全局)
+                  </label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-6 text-[11px] px-2 gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                    onClick={() => {
+                      const current = settings.document_quick_prompts || []
+                      setSettings({
+                        ...settings,
+                        document_quick_prompts: [
+                          ...current,
+                          { label: '🗺️ 全书脑图', prompt: '请系统梳理整篇文档的全局架构体系、演进脉络与核心逻辑。' },
+                        ],
+                      })
+                    }}
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>添加全篇提示词</span>
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {(settings.document_quick_prompts || []).length === 0 ? (
+                    <div className="text-[11px] text-muted-foreground/70 py-2 text-center">
+                      暂无全篇快捷提示词，点击上方按钮添加
+                    </div>
+                  ) : (
+                    (settings.document_quick_prompts || []).map((item, idx) => (
+                      <div key={idx} className="flex gap-2 items-center bg-card/60 border border-border/60 rounded-lg p-2 min-w-0">
+                        <Input
+                          value={item.label}
+                          onChange={(e) => {
+                            const updated = [...(settings.document_quick_prompts || [])]
+                            updated[idx] = { ...updated[idx], label: e.target.value }
+                            setSettings({ ...settings, document_quick_prompts: updated })
+                          }}
+                          placeholder="按钮名称 (如 🗺️ 全书架构)"
+                          className="w-36 h-7 text-xs shrink-0"
+                        />
+                        <Input
+                          value={item.prompt}
+                          onChange={(e) => {
+                            const updated = [...(settings.document_quick_prompts || [])]
+                            updated[idx] = { ...updated[idx], prompt: e.target.value }
+                            setSettings({ ...settings, document_quick_prompts: updated })
+                          }}
+                          placeholder="发送给助教的提示词模板"
+                          className="flex-1 h-7 text-xs min-w-0"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                          onClick={() => {
+                            const updated = (settings.document_quick_prompts || []).filter((_, i) => i !== idx)
+                            setSettings({ ...settings, document_quick_prompts: updated })
+                          }}
+                          title="删除此项"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Delay rate limiting */}

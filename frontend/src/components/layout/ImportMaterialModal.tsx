@@ -4,6 +4,7 @@ import {
   FolderArchive,
   BookOpen,
   FileText,
+  FileImage,
   Search,
   CheckSquare,
   Square,
@@ -54,6 +55,9 @@ export function ImportMaterialModal({ open, onOpenChange }: ImportMaterialModalP
 
   // --- Normal File State ---
   const [isUploadingFile, setIsUploadingFile] = useState(false)
+  const [uploadProgressText, setUploadProgressText] = useState('')
+  const [isDragOverFile, setIsDragOverFile] = useState(false)
+  const [parseAsImages, setParseAsImages] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Handle Inspect Web URL
@@ -200,15 +204,17 @@ export function ImportMaterialModal({ open, onOpenChange }: ImportMaterialModalP
     }
   }
 
-  // Execute Regular File Upload
-  const handleNormalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  // Process Normal Files (Single or Multi-file)
+  const processNormalFiles = async (fileList: File[]) => {
+    if (!fileList || fileList.length === 0) return
 
-    const lowerName = file.name.toLowerCase()
-    if (lowerName.endsWith('.ppt') || lowerName.endsWith('.pptx')) {
+    const pptFiles = fileList.filter((f) => {
+      const lower = f.name.toLowerCase()
+      return lower.endsWith('.ppt') || lower.endsWith('.pptx')
+    })
+    if (pptFiles.length > 0) {
       alert(
-        '💡 提示：为了完整保留 PPT 幻灯片的图表与最佳双语精读排版，请在办公软件中将该 PPT 导出为 PDF 后再上传！'
+        `💡 提示：检测到 ${pptFiles.map((f) => f.name).join(', ')} 为 PPT 演示文稿。\n为了完整保留 PPT 幻灯片的图表与最佳排版，请在办公软件中导出为 PDF 后再上传！\n上传时勾选下方的【按整页图片 / 幻灯片模式解析】，即可完美保留整页幻灯片原版排版与图表！`
       )
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
@@ -216,16 +222,44 @@ export function ImportMaterialModal({ open, onOpenChange }: ImportMaterialModalP
 
     try {
       setIsUploadingFile(true)
-      const doc = await api.uploadDocument(file)
-      // Single files (single MD, PDF, image, txt) do not require asset inspection modal
-      await loadDocuments()
-      selectDocument(doc.doc_id)
+      if (fileList.length === 1) {
+        setUploadProgressText('正在上传并启动提取任务...')
+        const doc = await api.uploadDocument(fileList[0], parseAsImages)
+        setJustUploadedDocId(doc.doc_id)
+        await loadDocuments()
+        selectDocument(doc.doc_id)
+      } else {
+        setUploadProgressText(`正在上传 ${fileList.length} 个文件，分别创建独立文档...`)
+        const docs = await api.uploadDocuments(fileList, parseAsImages)
+        if (docs.length > 0) {
+          setJustUploadedDocId(docs[0].doc_id)
+          await loadDocuments()
+          selectDocument(docs[0].doc_id)
+        }
+      }
       onOpenChange(false)
     } catch (err: any) {
       alert('上传失败: ' + err.message)
     } finally {
       setIsUploadingFile(false)
+      setUploadProgressText('')
       if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  // Execute Regular File Upload via input
+  const handleNormalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    await processNormalFiles(Array.from(files))
+  }
+
+  // Handle Drag and Drop for Regular Files
+  const handleFileDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOverFile(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await processNormalFiles(Array.from(e.dataTransfer.files))
     }
   }
 
@@ -293,7 +327,7 @@ export function ImportMaterialModal({ open, onOpenChange }: ImportMaterialModalP
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>单文件 (PDF/Word)</span>
+              <span>PDF / Word 文档</span>
             </button>
           </div>
         </DialogHeader>
@@ -574,33 +608,93 @@ export function ImportMaterialModal({ open, onOpenChange }: ImportMaterialModalP
 
           {/* TAB 4: NORMAL FILE (PDF, WORD, TXT, IMAGE) */}
           {activeTab === 'file' && (
-            <div className="flex flex-col h-full space-y-4">
+            <div className="flex flex-col h-full space-y-3.5">
               <div className="text-xs text-muted-foreground leading-relaxed">
-                上传 PDF 巨著、Word 报告、学术论文或长篇 TXT/MD 单文档。
+                上传 PDF 巨著、Word 报告、学术论文或长篇 TXT/MD 文档。支持一次选择多个文件批量导入，每个文件将作为独立文档创建与解析。
+              </div>
+
+              {/* Mode Toggle: Full Page Image / Slides Mode */}
+              <div
+                onClick={() => setParseAsImages(!parseAsImages)}
+                className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between select-none ${
+                  parseAsImages
+                    ? 'bg-amber-500/10 border-amber-500/40 text-foreground'
+                    : 'bg-card/40 border-border/70 hover:border-border hover:bg-card/80 text-muted-foreground'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                      parseAsImages
+                        ? 'bg-amber-500 text-amber-950 font-bold'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    <FileImage className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <span>按整页图片 / 幻灯片模式解析 PDF</span>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] py-0 px-1.5 h-4 border-amber-500/40 text-amber-600 dark:text-amber-400 font-normal"
+                      >
+                        PPT 导出必备
+                      </Badge>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      将 PDF 逐页光栅化为高清完整图片展示，100% 还原排版，杜绝文字错乱与插图被拆碎
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-medium">
+                  {parseAsImages ? (
+                    <span className="text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1">
+                      <CheckSquare className="w-4 h-4" /> 已开启
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Square className="w-4 h-4" /> 未开启
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-border hover:border-primary/60 bg-card/30 hover:bg-primary/5 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all group"
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setIsDragOverFile(true)
+                }}
+                onDragLeave={() => setIsDragOverFile(false)}
+                onDrop={handleFileDrop}
+                className={`border-2 border-dashed ${
+                  isDragOverFile
+                    ? 'border-primary bg-primary/10 scale-[1.01]'
+                    : 'border-border hover:border-primary/60 bg-card/30 hover:bg-primary/5'
+                } rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all group`}
               >
                 <input
                   type="file"
                   ref={fileInputRef}
                   className="hidden"
-                  accept=".pdf,.docx,.doc,.txt,.md,.markdown,.png,.jpg,.jpeg,.webp,.bmp,.svg"
+                  multiple
+                  accept=".pdf,.docx,.doc,.txt,.md,.markdown,.png,.jpg,.jpeg,.webp,.bmp,.svg,.xlsx,.xlsm,.xltx,.xltm"
                   onChange={handleNormalFileUpload}
                 />
                 <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                   <FileText className="w-7 h-7" />
                 </div>
-                <div className="font-semibold text-sm text-foreground mb-1">选择单个文件上传</div>
+                <div className="font-semibold text-sm text-foreground mb-1">
+                  点击或拖拽上传（支持按住 Ctrl/Cmd 多选文件）
+                </div>
                 <div className="text-xs text-muted-foreground max-w-sm">
-                  支持 PDF、DOCX、TXT、MD、PNG/JPG 图片（PPT 请另存为 PDF 上传）
+                  支持 PDF、DOCX、Excel、TXT、MD、PNG/JPG 图片，每个文件作为一个独立的文档导入（PPT 请另存为 PDF 上传）
                 </div>
                 {isUploadingFile && (
                   <div className="mt-3 flex items-center gap-1.5 text-xs text-primary">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>正在处理文件上传...</span>
+                    <span>{uploadProgressText || '正在处理文件上传...'}</span>
                   </div>
                 )}
               </div>

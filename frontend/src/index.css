@@ -585,3 +585,25 @@ body[data-scroll-locked] {
   overscroll-behavior: contain;
 }
 
+/* =========================================================================
+   Excel & Rich Table Rendering
+   ========================================================================= */
+.excel-table-container {
+  max-width: 100%;
+  scrollbar-width: thin;
+}
+.excel-table-container::-webkit-scrollbar {
+  height: 6px;
+}
+.excel-table-container::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+.excel-table {
+  border-collapse: collapse;
+}
+.excel-table th,
+.excel-table td {
+  box-sizing: border-box;
+}
+

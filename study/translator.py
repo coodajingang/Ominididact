@@ -66,7 +66,9 @@ async def call_llm_translate_paragraph(
     prompt_template: str,
     settings: Dict[str, Any],
     prev_english: Optional[str] = None,
-    prev_chinese: Optional[str] = None
+    prev_chinese: Optional[str] = None,
+    provider_override: Optional[str] = None,
+    model_override: Optional[str] = None
 ) -> str:
     """
     Translates a single English paragraph into Chinese with single concurrency and configurable delay.
@@ -78,31 +80,58 @@ async def call_llm_translate_paragraph(
     
     ref_parts = []
     if prev_english and prev_english.strip():
-        ref_parts.append(f"前文段落: {prev_english.strip()}")
+        ref_parts.append(f"【前文英文原文】: {prev_english.strip()}")
     if prev_chinese and prev_chinese.strip():
-        ref_parts.append(f"前文译文: {prev_chinese.strip()}")
+        ref_parts.append(f"【前文中文译文】: {prev_chinese.strip()}")
         
     if ref_parts:
+        ref_text = "\n".join(ref_parts)
         context_block = (
-            "[上下文参考（仅作术语和代词参考，无需重复翻译）]:\n"
-            + "\n".join(ref_parts) + "\n\n"
-            "[待翻译段落]:\n"
-            + english_para.strip()
+            "【前文背景参考（⚠️ 仅供术语一致性与代词消歧参考，严禁翻译或复述）：】\n"
+            f"{ref_text}\n\n"
+            "【本次唯一需要翻译的目标段落（请且仅请翻译以下内容，以 > 引用块输出译文）：】\n"
+            f"{english_para.strip()}"
         )
     else:
-        context_block = english_para.strip()
+        context_block = (
+            "【待翻译目标段落（请且仅请翻译以下内容，以 > 引用块输出译文）：】\n"
+            f"{english_para.strip()}"
+        )
         
-    prompt = prompt_template.format(text=context_block)
+    if "【待处理英文段落】：\n{text}" in prompt_template:
+        prompt = prompt_template.replace("【待处理英文段落】：\n{text}", context_block)
+    elif "【待处理英文段落】：{text}" in prompt_template:
+        prompt = prompt_template.replace("【待处理英文段落】：{text}", context_block)
+    elif "{text}" in prompt_template:
+        prompt = prompt_template.format(text=context_block)
+    else:
+        prompt = f"{prompt_template}\n\n{context_block}"
     
     async with MODEL_LOCK:
         try:
-            provider = get_provider_for_task("translation", settings)
+            provider = get_provider_for_task(
+                "translation",
+                settings,
+                provider_override=provider_override,
+                model_override=model_override
+            )
+            timeout = float(settings.get("request_timeout") or settings.get("timeout") or 180.0)
+            logger.info(
+                f"[Translator] Requesting translation: provider={provider.provider_id}, "
+                f"model={getattr(provider, 'default_model', '')}, "
+                f"prompt_len={len(prompt)}, timeout={timeout}s"
+            )
+            logger.debug(f"[Translator] Prompt snippet: {repr(prompt[:200])}")
             messages = [{"role": "user", "content": prompt}]
-            ans = await provider.chat(messages, {"temperature": 0.3})
-            return parse_translated_chinese(ans, english_para)
+            ans = await provider.chat(messages, {"temperature": 0.3, "timeout": timeout})
+            logger.info(f"[Translator] Raw model output received (length={len(ans)}): {repr(ans[:120]) if ans else 'EMPTY'}")
+            parsed = parse_translated_chinese(ans, english_para)
+            logger.info(f"[Translator] Final parsed translation (length={len(parsed)}): {repr(parsed[:120]) if parsed else 'EMPTY'}")
+            return parsed
         except Exception as e:
-            logger.error(f"Error calling LLM translation: {e}")
-            return f"[翻译调用异常: {str(e)}]"
+            err_msg = f"{type(e).__name__}: {str(e) or repr(e)}"
+            logger.error(f"[Translator] Error calling LLM translation [{err_msg}]", exc_info=True)
+            return f"[翻译调用异常: {err_msg}]"
         finally:
             delay = settings.get("model_call_delay", 1.0)
             await asyncio.sleep(delay)
@@ -112,16 +141,29 @@ def parse_translated_chinese(model_output: str, original_english: str) -> str:
     Parses model output to extract the complete Chinese translation of the target paragraph.
     Handles outputs with `> ` quotes, multiple sections separated by '---', or plain text.
     Preserves all translated sections while filtering out echoed reference context.
+    Filters out <think>...</think> reasoning traces if present.
     """
     if not model_output or not model_output.strip():
         return ""
 
-    # Strip explicit prompt delimiters if echoed by model
-    cleaned_output = model_output
-    for marker in ("[待翻译段落]:", "[待翻译段落]", "【待翻译段落】：", "【待翻译段落】", "[待翻译]:", "【待翻译】："):
-        if marker in cleaned_output:
-            cleaned_output = cleaned_output.split(marker, 1)[1].strip()
-            break
+    # Strip <think>...</think> reasoning traces if present
+    cleaned_output = re.sub(r'<think>.*?</think>', '', model_output, flags=re.DOTALL).strip()
+    if not cleaned_output:
+        # If model output is missing closing </think>
+        cleaned_output = re.sub(r'^<think>.*', '', model_output, flags=re.DOTALL).strip()
+    if not cleaned_output:
+        cleaned_output = model_output
+
+    # 1. Check if model partitioned response with explicit target paragraph markers (as standalone headings/tags)
+    pat = r'(?:\[(?:待翻译段落|待翻译|目标段落)\][:：]?|【(?:待翻译段落|待翻译|目标段落|本次待翻译的目标段落|待处理英文段落|本次唯一需要翻译的目标段落.*?|待翻译英文段落|待翻译目标段落)】[:：]?|(?:^|[\n\r])\s*(?:待译段落|待翻译目标段落|待翻译段落|目标段落|目标译文|本次待翻译)[:：])'
+    matches = list(re.finditer(pat, cleaned_output))
+    if matches:
+        tail = cleaned_output[matches[-1].end():].strip()
+        if re.search(r'[\u4e00-\u9fa5]', tail):
+            cleaned_output = tail
+
+    # 2. Strip leading section prefixes like '二级段落：', '中文译文：', '译文：'
+    cleaned_output = re.sub(r'^(?:(?:一|二|三|四|五|六|七|八|九|十|\d+)级段落|段落\s*\d*|正文|译文|中文译文|翻译结果|译文如下)[:：]\s*', '', cleaned_output).strip()
 
     sections = [s.strip() for s in cleaned_output.split("---") if s.strip()]
     if not sections:
@@ -140,10 +182,14 @@ def parse_translated_chinese(model_output: str, original_english: str) -> str:
 
     def _is_context_echo(sec: str) -> bool:
         first_line = sec.strip().splitlines()[0].strip().lstrip("> ").strip()
-        context_markers = ("前文段落", "前文译文", "前文参考", "上下文参考", "前文内容", "【前文", "[前文")
+        context_markers = (
+            "前文段落", "前文译文", "前文参考", "前文内容", "【前文", "[前文",
+            "前言段落", "前言译文", "前言参考", "前言内容", "【前言", "[前言",
+            "上下文参考", "背景参考", "参考背景", "前文背景", "前言背景"
+        )
         if any(marker in first_line for marker in context_markers):
             return True
-        if first_line.startswith("前文") or sec.strip().startswith("> 前文"):
+        if first_line.startswith(("前文", "前言", "背景", "上下文")) or sec.strip().startswith(("> 前文", "> 前言", "> 背景", "> 上下文")):
             return True
         return False
 

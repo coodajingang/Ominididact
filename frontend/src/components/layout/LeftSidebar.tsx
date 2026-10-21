@@ -9,6 +9,7 @@ import {
   RotateCcw,
   FolderDown,
   RefreshCw,
+  FileImage,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/button'
@@ -64,13 +65,17 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    const fileList = Array.from(files)
 
-    const lowerName = file.name.toLowerCase()
-    if (lowerName.endsWith('.ppt') || lowerName.endsWith('.pptx')) {
+    const pptFiles = fileList.filter((f) => {
+      const lower = f.name.toLowerCase()
+      return lower.endsWith('.ppt') || lower.endsWith('.pptx')
+    })
+    if (pptFiles.length > 0) {
       alert(
-        '💡 提示：为了完整保留 PPT 幻灯片的图表、排版与最佳双语研学体验，请在 PowerPoint、WPS 或 Keynote 中将该 PPT【另存为或导出为 PDF】后再上传！'
+        '💡 提示：为了完整保留 PPT 幻灯片的图表、排版与最佳双语研学体验，请在 PowerPoint、WPS 或 Keynote 中将该 PPT【另存为或导出为 PDF】后再上传！\n推荐使用顶部【导入材料】并开启【按整页图片/幻灯片模式解析】，保留 100% 原始排版！'
       )
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
@@ -78,14 +83,30 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
 
     try {
       setIsUploading(true)
-      const doc = await api.uploadDocument(file)
+      const docs = await api.uploadDocuments(fileList)
       await loadDocuments()
-      selectDocument(doc.doc_id)
+      if (docs.length > 0) {
+        selectDocument(docs[0].doc_id)
+      }
     } catch (err) {
       alert('上传失败: ' + (err as Error).message)
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleReparseAsImages = async (docId: string) => {
+    const confirmed = confirm(
+      '确定要将该文档重新按【整页图片 / 幻灯片模式】重新解析吗？\n\n适合 PPT 导出的 PDF 或复杂排版文档，系统将逐页光栅化为高清完整图片呈现，解决排版文字错乱与插图被拆碎的问题。'
+    )
+    if (!confirmed) return
+    try {
+      await api.reparseDocument(docId, 'images')
+      await loadDocuments()
+      selectDocument(docId)
+    } catch (err) {
+      alert('重新解析失败: ' + (err as Error).message)
     }
   }
 
@@ -197,6 +218,10 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
                   ? '📝'
                   : doc.file_type === 'pdf'
                   ? '📕'
+                  : doc.file_type === 'excel'
+                  ? '📊'
+                  : doc.file_type === 'epub'
+                  ? '📚'
                   : '📄'
 
               const isWebDoc = doc.file_type === 'web' || Boolean(doc.source_url)
@@ -259,6 +284,22 @@ export function LeftSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; o
                                   ? `重抓失败 (${doc.failed_chapter_count}章)`
                                   : '失败重抓'}
                               </span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+                        {doc.file_type === 'pdf' && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleReparseAsImages(doc.doc_id)
+                              }}
+                              className="text-xs flex items-center gap-2 cursor-pointer text-amber-600 dark:text-amber-400 focus:text-amber-600 focus:bg-amber-500/10"
+                              title="将 PDF 每一页作为完整高清大图重新解析（适合 PPT 导出的 PDF）"
+                            >
+                              <FileImage className="h-3.5 w-3.5" />
+                              <span>整页图片重析</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                           </>

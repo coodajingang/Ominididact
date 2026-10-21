@@ -50,15 +50,77 @@ async def get_documents_list():
     return {"code": 200, "data": docs}
 
 @router.post("/api/study/documents/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+    files: Optional[List[UploadFile]] = File(None),
+):
     try:
-        content = await file.read()
-        filename = file.filename or "document.pdf"
-        meta = await study_service.initialize_document(content, filename)
-        doc_id = meta["doc_id"]
+        uploaded_files: List[UploadFile] = []
+        parse_mode_val = "auto"
+        try:
+            form = await request.form()
+            as_images_val = form.get("as_images") or form.get("parse_as_images")
+            if as_images_val in ("true", "True", "1", True):
+                parse_mode_val = "images"
+            elif form.get("parse_mode") in ("images", "auto"):
+                parse_mode_val = form.get("parse_mode")
+
+            for k in ("file", "files"):
+                for item in form.getlist(k):
+                    if isinstance(item, UploadFile) and item.filename:
+                        uploaded_files.append(item)
+            if not uploaded_files:
+                for val in form.values():
+                    if isinstance(val, UploadFile) and val.filename:
+                        uploaded_files.append(val)
+        except Exception:
+            pass
+
+        if not uploaded_files:
+            if files:
+                uploaded_files.extend([f for f in files if f.filename])
+            if file and file.filename and file not in uploaded_files:
+                uploaded_files.append(file)
+
+        if not uploaded_files:
+            raise HTTPException(status_code=400, detail="未提供有效的文件")
+
+        metas = []
+        errors = []
         import asyncio
-        asyncio.create_task(study_service.process_document_pipeline(doc_id))
-        return {"code": 200, "data": meta, "message": "文件上传成功，正在启动提取与翻译任务"}
+        for f in uploaded_files:
+            try:
+                content = await f.read()
+                filename = f.filename or "document.pdf"
+                meta = await study_service.initialize_document(content, filename, parse_mode=parse_mode_val)
+                doc_id = meta["doc_id"]
+                asyncio.create_task(study_service.process_document_pipeline(doc_id))
+                metas.append(meta)
+            except Exception as ex:
+                logger.exception(f"Upload document {f.filename} failed: {ex}")
+                errors.append(f"{f.filename or 'unknown'}: {str(ex)}")
+
+        if not metas:
+            raise HTTPException(status_code=500, detail=f"文件上传处理失败: {'; '.join(errors)}")
+
+        msg = (
+            "文件上传成功，正在启动提取与翻译任务"
+            if len(metas) == 1
+            else f"成功上传 {len(metas)} 个文件，已分别创建独立文档任务"
+        )
+        if errors:
+            msg += f"（部分文件失败: {'; '.join(errors)}）"
+
+        return {
+            "code": 200,
+            "data": metas[0],
+            "docs": metas,
+            "total": len(metas),
+            "message": msg,
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("Upload document failed")
         raise HTTPException(status_code=500, detail=f"上传处理失败: {str(e)}")
@@ -182,6 +244,29 @@ async def pause_process(doc_id: str):
     study_service.pause_document_pipeline(doc_id)
     return {"code": 200, "message": "已发送暂停指令"}
 
+@router.post("/api/study/documents/{doc_id}/reparse")
+async def reparse_document_endpoint(doc_id: str, request: Request):
+    validate_doc_id_param(doc_id)
+    try:
+        parse_mode = "images"
+        try:
+            body = await request.json()
+            if isinstance(body, dict):
+                parse_mode = body.get("parse_mode", "images")
+        except Exception:
+            pass
+
+        meta = await study_service.reparse_document(doc_id, parse_mode=parse_mode)
+        mode_desc = "整页图片 / 幻灯片" if parse_mode == "images" else "原生文本排版"
+        return {
+            "code": 200,
+            "data": meta,
+            "message": f"文档正在按【{mode_desc}】模式重新解析"
+        }
+    except Exception as e:
+        logger.exception(f"Reparse document {doc_id} failed: {e}")
+        raise HTTPException(status_code=500, detail=f"重新解析失败: {str(e)}")
+
 @router.get("/api/study/documents/{doc_id}/chapters/{chapter_id}")
 async def get_chapter_detail(doc_id: str, chapter_id: str):
     validate_doc_id_param(doc_id)
@@ -279,15 +364,22 @@ async def rename_chapter_endpoint(doc_id: str, chapter_id: str, request: Request
 async def shift_paragraph_chapter_endpoint(doc_id: str, chapter_id: str, paragraph_id: str, request: Request):
     validate_doc_id_param(doc_id)
     try:
-        body = await request.json()
-        target_direction = body.get("direction", "prev").strip()
-        scope = body.get("scope", "single").strip()
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        target_direction = str(body.get("direction", "prev")).strip()
+        scope = str(body.get("scope", "slice")).strip() if body.get("scope") else "slice"
 
         if target_direction not in ("prev", "next"):
             raise HTTPException(status_code=400, detail="direction 必须为 prev 或 next")
 
         updated_meta = study_service.shift_chapter_paragraphs(
-            doc_id, chapter_id, paragraph_id, target_direction, scope
+            doc_id=doc_id,
+            chapter_id=chapter_id,
+            paragraph_id=paragraph_id,
+            direction=target_direction,
+            scope=scope
         )
         return {
             "code": 200,

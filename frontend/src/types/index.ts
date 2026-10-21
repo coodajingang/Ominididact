@@ -174,6 +174,7 @@ export interface DocSettings {
   vlm_model?: string
   paragraph_quick_prompts?: QuickPromptItem[]
   chapter_quick_prompts?: QuickPromptItem[]
+  document_quick_prompts?: QuickPromptItem[]
   default_translation_provider?: string
   default_translation_model?: string
   default_chat_provider?: string
